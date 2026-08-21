@@ -58,6 +58,7 @@ canvas.connection-weak { filter: blur(1.5px) saturate(.72) brightness(.8); }
 canvas.connection-critical { filter: blur(4px) saturate(.4) brightness(.56); }
 
 .hud { position: absolute; inset: 0; display: flex; justify-content: space-between; align-items: flex-start; padding: 22px; pointer-events: none; }
+.hud.hidden { opacity: 0; }
 .timer-card, .stage-card, .imagination-card, .objective-card {
   display: grid;
   gap: 3px;
