@@ -610,6 +610,7 @@ function startStage() {
   game.nextAttack = 1.1;
   game.nightmareHitCooldown = 0;
   game.watcherResolved = false;
+  game.bottomIsVoid = false;
   game.watcherHitCooldown = 0;
   game.carouselGateOpened = false;
   game.message = stage.hint;
@@ -660,7 +661,7 @@ function setupPuzzle(layout, echoGoal) {
       { x: 175, y: 500, w: 290, h: 40 },
       { x: 555, y: 500, w: 240, h: 40 },
     ];
-  } else if (layout === 'chorus' || layout === 'chorus-memory') {
+  } else if (layout === 'chorus') {
     game.platforms = [
       { x: 0, y: 500, w: 190, h: 40, label: 'CHOIR FLOOR' },
       { x: 246, y: 500, w: 150, h: 40, label: 'ECHO FLOOR' },
@@ -676,6 +677,20 @@ function setupPuzzle(layout, echoGoal) {
       { x: 190, y: 500, w: 56, h: 40 },
       { x: 396, y: 500, w: 50, h: 40 },
       { x: 582, y: 500, w: 68, h: 40 },
+    ];
+  } else if (layout === 'chorus-memory') {
+    // 9스테이지는 중간 바닥을 없애 공명을 유지한 숨은 음계만으로 건너야 한다.
+    game.platforms = [
+      { x: 0, y: 500, w: 190, h: 40, label: 'CHOIR START' },
+      { x: 650, y: 500, w: 310, h: 40, label: 'RESONANCE HALL' },
+      { x: 180, y: 400, w: 96, h: 14, hidden: true, label: '숨은 음계 1' },
+      { x: 344, y: 336, w: 120, h: 14, hidden: true, label: '반향 다리' },
+      { x: 522, y: 276, w: 120, h: 14, hidden: true, label: '기억의 음계' },
+      { x: 712, y: 214, w: 110, h: 14, hidden: true, label: '별빛 파동' },
+    ];
+    game.exit = { x: 862, y: 418, w: 36, h: 82, label: 'SONG GATE' };
+    game.fallZones = [
+      { x: 190, y: 500, w: 460, h: 40 },
     ];
   } else if (layout === 'dash') {
     game.platforms = [
@@ -730,6 +745,9 @@ function setupPuzzle(layout, echoGoal) {
     game.fallZones = [];
   }
   game.layout = layout;
+  // 퍼즐 구역의 화면 맨 아래는 어디서든 꿈의 바깥입니다.
+  // 발판 사이로 빠진 뒤 캔버스 하단을 걸어서 우회하지 못하도록 통일합니다.
+  game.bottomIsVoid = true;
   game.fragments = [];
   const padsByLayout = {
     walk: [],
@@ -1047,7 +1065,7 @@ function updatePuzzle(dt) {
   solidWalls.forEach((wall) => resolveWallVertical(p, wall, oldY));
   if (p.y <= 0) { p.y = 0; p.vy = 0; p.grounded = game.inverted; }
   if (p.y + p.h >= H) {
-    const inPit = (game.fallZones || []).some((zone) => p.x + p.w * 0.5 >= zone.x && p.x + p.w * 0.5 <= zone.x + zone.w);
+    const inPit = game.bottomIsVoid || (game.fallZones || []).some((zone) => p.x + p.w * 0.5 >= zone.x && p.x + p.w * 0.5 <= zone.x + zone.w);
     if (inPit) {
       fallOffStage('낙사! 기억의 발판으로 다시 돌아왔어.');
       return;
