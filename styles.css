@@ -59,7 +59,7 @@ canvas.connection-critical { filter: blur(4px) saturate(.4) brightness(.56); }
 
 .hud { position: absolute; inset: 0; display: flex; justify-content: space-between; align-items: flex-start; padding: 22px; pointer-events: none; }
 .hud.hidden { opacity: 0; }
-.timer-card, .stage-card, .imagination-card, .objective-card {
+.timer-card, .stage-card, .challenge-card, .imagination-card, .objective-card {
   display: grid;
   gap: 3px;
   padding: 10px 13px;
@@ -70,6 +70,13 @@ canvas.connection-critical { filter: blur(4px) saturate(.4) brightness(.56); }
 }
 .timer-card span, .stage-card span, .imagination-card span, .objective-card span { color: #90a0c3; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.12em; }
 .stage-card strong { color: #e9edff; font-size: .84rem; }
+.challenge-card { position: absolute; top: 82px; left: 22px; min-width: 156px; border-color: rgba(255, 180, 112, .48); background: rgba(48, 16, 39, .72); }
+.challenge-card.hidden { display: none; }
+.challenge-card span { color: #ffb77c; }
+.challenge-card strong { color: #fff0ba; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 1.45rem; line-height: 1; letter-spacing: -.05em; }
+.challenge-card small { color: #d5bfd0; font-size: .59rem; line-height: 1.25; }
+.challenge-card.urgent { border-color: rgba(255, 98, 122, .86); box-shadow: 0 0 22px rgba(255, 73, 111, .26); }
+.challenge-card.urgent strong { color: #ff8ea5; }
 .imagination-card { position: absolute; top: 22px; left: 50%; width: min(260px, 30vw); transform: translateX(-50%); gap: 7px; }
 .imagination-card > div:first-child { display: flex; justify-content: space-between; align-items: baseline; }
 .imagination-card strong { color: #ffe37c; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 1.05rem; }
@@ -136,6 +143,7 @@ canvas.connection-critical { filter: blur(4px) saturate(.4) brightness(.56); }
 .stage-select-button { min-height: 110px; padding: 10px; cursor: pointer; border: 1px solid rgba(152, 176, 255, .2); border-radius: 10px; color: #eaf0ff; background: rgba(25, 35, 73, .68); text-align: left; transition: transform .14s, border .14s, background .14s; }
 .stage-select-button:not(:disabled):hover { transform: translateY(-2px); border-color: var(--cyan); background: rgba(26, 73, 100, .76); }
 .stage-select-button:disabled { cursor: not-allowed; opacity: .35; }
+.stage-select-button.locked { border-style: dashed; background: rgba(13, 19, 43, .66); }
 .stage-select-button.current { border-color: #ffe27e; background: linear-gradient(145deg, rgba(91, 67, 51, .76), rgba(43, 45, 98, .82)); }
 .stage-select-button b { display: block; color: var(--cyan); font-family: ui-monospace, monospace; font-size: .62rem; letter-spacing: .08em; }
 .stage-select-button strong { display: block; margin-top: 8px; font-size: .74rem; line-height: 1.32; letter-spacing: -.025em; }
@@ -154,6 +162,8 @@ canvas.connection-critical { filter: blur(4px) saturate(.4) brightness(.56); }
 }
 .primary-button:hover { filter: brightness(1.1); transform: translateY(-1px); }
 .primary-button span { margin-left: 8px; font-size: 1.2em; }
+.route-mode-button { display: inline-flex; margin: 4px auto -2px; padding: 8px 11px; cursor: pointer; border: 1px solid rgba(255, 226, 126, .38); border-radius: 999px; color: #fff0b5; background: rgba(82, 57, 91, .52); font-family: ui-monospace, monospace; font-size: .66rem; font-weight: 800; letter-spacing: .08em; }
+.route-mode-button:hover { border-color: #ffe27e; background: rgba(107, 77, 69, .72); }
 .controls-preview { margin: 22px 0 0; color: #8996b8; font-size: .78rem; }
 .controls-preview b { color: #dce7ff; font-family: ui-monospace, monospace; }
 
@@ -237,6 +247,8 @@ canvas.connection-critical { filter: blur(4px) saturate(.4) brightness(.56); }
   .objective-card { display: none; }
   .imagination-card { top: 12px; width: 46%; }
   .stage-card { padding: 8px 10px; }
+  .challenge-card { top: 70px; left: 12px; min-width: 128px; padding: 8px 10px; }
+  .challenge-card strong { font-size: 1.18rem; }
   .boss-hud { top: 70px; right: 12px; width: 42%; }
   .timer-card { padding: 8px 10px; }
   .timer-card strong { font-size: 1.16rem; }
