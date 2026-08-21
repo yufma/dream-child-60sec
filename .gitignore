@@ -1,0 +1,4 @@
+dist/
+deploy-artifacts/
+.wrangler/
+node_modules/
