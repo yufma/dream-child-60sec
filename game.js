@@ -89,9 +89,9 @@ const STAGES = [
     teaches: ['time'],
   },
   {
-    chapter: '하린 · 잃어버린 웃음', name: '하린의 웃음이 남긴 빛', type: 'puzzle', skills: ['time'], objective: '되찾은 웃음이 비추는 길을 따라 다음 친구의 꿈으로 건너가라',
-    intro: '하린의 웃음이 돌아오자, 그 빛이 다음 꿈의 문까지 길게 이어졌어. 이번에는 싸울 필요가 없어. 되찾은 빛이 가리키는 방향을 따라가며, 다음 친구가 숨어 있는 꿈의 가장자리까지 천천히 건너가자.',
-    layout: 'walk', echoGoal: 0, hint: '그냥 오른쪽 문까지 걸어가며 하린의 웃음빛을 따라가세요.',
+    chapter: '하린 · 잃어버린 웃음', name: '하린의 웃음이 남긴 빛', type: 'puzzle', skills: ['time'], objective: '달빛 등불섬을 건너 다음 친구의 꿈으로 향하라',
+    intro: '하린의 웃음이 돌아오자, 빛은 곧장 길이 되지 않고 어두운 강 위에 작은 등불섬들을 만들었어. 각 섬의 높이가 달라서, 점프의 리듬을 따라 다음 친구가 있는 꿈의 가장자리까지 건너가야 해.',
+    layout: 'lantern-river', echoGoal: 0, hint: '낮은 등불섬에서 높은 등불섬으로 점프하며 오른쪽 꿈의 문까지 건너가세요.',
   },
   {
     chapter: '유나 · 사라진 노래', name: '별빛 합창의 문', type: 'puzzle', skills: ['resonance'], teaches: ['resonance'], objective: '공명으로 숨은 합창길을 드러내라',
@@ -99,10 +99,10 @@ const STAGES = [
     layout: 'chorus', echoGoal: 1, hint: 'V로 숨은 발판을 드러내고, 기억 발판에 과거의 나를 남겨 합창길을 완성하세요.',
   },
   {
-    chapter: '유나 · 사라진 노래', name: '유나의 빈 의자', type: 'puzzle', skills: ['bridge', 'gravity', 'time', 'resonance'], objective: '빈자리를 기억의 메아리로 채워 유나의 꿈을 완성하라',
+    chapter: '유나 · 사라진 노래', name: '유나의 빈 의자', type: 'puzzle', skills: ['bridge', 'gravity', 'time', 'resonance'], objective: '서로 다른 높이의 빈자리를 기억의 메아리로 채워라',
     blockedSkills: ['bridge', 'gravity'],
-    intro: '유나는 늘 누군가의 자리를 기억하던 아이였어. 꿈 추출기는 교실에서 두 개의 자리를 지워 버렸고, 남은 빈 의자가 더 크게 느껴져. 이 교실에서는 잔상 발판과 중력 반전도 닿지 않아. V로 보이지 않는 합창길을 드러내고, C로 두 빈자리에 과거의 나를 남기자.',
-    layout: 'duet', echoGoal: 2, hint: 'V를 누르는 동안만 합창길이 나타납니다. 첫 번째 빈 의자와 두 번째 빈 의자에 기억의 나를 하나씩 남기세요.',
+    intro: '유나는 늘 누군가의 자리를 기억하던 아이였어. 꿈 추출기는 교실의 낮은 자리 하나와 합창 발코니의 높은 자리 하나를 지워 버렸어. 이 교실에서는 잔상 발판과 중력 반전도 닿지 않아. V로 보이지 않는 계단을 드러내고, C로 서로 다른 높이의 두 빈자리를 채우자.',
+    layout: 'choir-balcony', echoGoal: 2, hint: 'V로 발코니 계단을 드러내며 낮은 빈 의자와 높은 빈 의자에 기억의 나를 하나씩 남기세요.',
   },
   {
     chapter: '유나 · 사라진 노래', name: '지워진 악보의 계단', type: 'puzzle', skills: ['resonance'], objective: '사라진 음계를 공명으로 되돌려라',
@@ -110,9 +110,9 @@ const STAGES = [
     layout: 'chorus-memory', echoGoal: 1, hint: '① V를 유지해 세 번째 숨은 음계까지 올라가세요. ② 그 위의 기억 문양에서 C를 두 번 눌러 과거의 나를 남기세요.',
   },
   {
-    chapter: '유나 · 사라진 노래', name: '두 사람의 화음', type: 'puzzle', skills: ['resonance'], objective: '두 빈자리를 채워 잃어버린 화음을 완성하라',
-    intro: '마지막 한 소절에는 두 사람의 목소리가 필요해. 유나는 자신이 혼자 노래하고 있었다고 믿지만, 두 개의 빈자리에 기억의 나를 남기면 잊었던 화음이 돌아올 거야.',
-    layout: 'duet', echoGoal: 2, hint: 'V로 합창길을 보며, 두 빈 의자에 기억의 나를 한 명씩 남기세요.',
+    chapter: '유나 · 사라진 노래', name: '두 사람의 화음', type: 'puzzle', skills: ['resonance'], objective: '나선형 악보 위 두 빈자리를 채워 화음을 완성하라',
+    intro: '마지막 한 소절은 직선이 아니라, 위아래로 감긴 악보에 숨어 있어. 유나는 자신이 혼자 노래하고 있었다고 믿지만, 서로 반대편 높이에 있는 두 빈자리에 기억의 나를 남기면 잊었던 화음이 돌아올 거야.',
+    layout: 'harmony-spiral', echoGoal: 2, hint: 'V로 나선형 음계를 드러내며 낮은 음과 높은 음의 빈자리에 기억의 나를 남기세요.',
   },
   {
     chapter: '유나 · 사라진 노래', name: '침묵을 삼킨 합창단', type: 'boss', skills: ['resonance'], objective: '공명으로 세 개의 잃어버린 음을 되찾아라',
@@ -144,21 +144,21 @@ const STAGES = [
     layout: 'dash', echoGoal: 1, hint: '기억의 나가 출발 신호를 지키면 길이 열립니다. X로 첫 번째 긴 틈을 넘으세요.',
   },
   {
-    chapter: '하늘 · 멈춰 버린 발걸음', name: '바람을 가르는 달리기', type: 'puzzle', skills: ['resonance', 'dash'], objective: '질주와 공명으로 끊긴 계주길을 이어라',
+    chapter: '하늘 · 멈춰 버린 발걸음', name: '바람을 가르는 달리기', type: 'puzzle', skills: ['resonance', 'dash'], objective: '바람 터널의 위아래 길을 질주와 공명으로 이어라',
     blockedSkills: ['bridge', 'gravity'],
-    intro: '이 바람길에서는 잔상 발판도, 중력 반전도 바람에 흩어져 버려. 기억의 나에게 출발 신호를 맡기고, X로 첫 틈을 넘은 뒤 V로 숨은 바람길을 찾아가자.',
-    layout: 'relay', echoGoal: 1, hint: '기억의 나가 출발 신호를 지키면 바람이 잠잠해집니다. X 질주로 긴 틈을 넘고, V로 다음 길을 찾으세요.',
+    intro: '이 바람길에서는 잔상 발판도, 중력 반전도 바람에 흩어져 버려. 거대한 바람 터널은 낮은 길과 높은 길을 번갈아 막아. 기억의 나에게 출발 신호를 맡기고, X로 첫 틈을 넘은 뒤 V로 위쪽 숨은 바람길을 찾아가자.',
+    layout: 'wind-tunnel', echoGoal: 1, hint: '출발 신호에 기억을 남긴 뒤, X로 터널 틈을 넘고 V로 위쪽 바람길을 드러내세요.',
   },
   {
-    chapter: '하늘 · 멈춰 버린 발걸음', name: '역풍의 높은 벽', type: 'puzzle', skills: ['bridge', 'gravity', 'dash'], objective: '상상력 기술을 이어 역풍의 벽을 통과하라',
-    intro: '하늘의 길에는 깊은 틈과 높은 벽이 한꺼번에 나타났다. 잔상 발판으로 틈을 넘고, 2로 중력을 뒤집어 높은 벽 너머로 올라가자. 앞으로 가는 일은 한 가지 방법만으로는 되지 않아.',
-    layout: 'wall', echoGoal: 1, hint: '기억의 나를 약속에 남기고 1로 틈을 넘으세요. 필요하면 2로 벽 위를 지나갈 수 있습니다.',
+    chapter: '하늘 · 멈춰 버린 발걸음', name: '역풍의 높은 벽', type: 'puzzle', skills: ['bridge', 'gravity', 'dash'], objective: '뒤집힌 절벽의 위아래 길을 이어 역풍을 통과하라',
+    intro: '하늘의 길은 이제 벽 하나가 아니라 바닥과 천장이 갈라진 절벽이 되었어. 기억의 나가 붙잡은 잔상 발판으로 첫 틈을 넘고, 2로 하늘 쪽 길에 올라가 거대한 역풍 기둥을 피해 가자. 마지막 좁은 틈은 X 질주로 가른다.',
+    layout: 'inverted-cliff', echoGoal: 1, hint: '① 기억의 나를 출발 약속에 남기기 ② 1로 첫 틈 건너기 ③ 2로 천장 길 이동 ④ X로 마지막 틈 돌파.',
   },
   {
-    chapter: '하늘 · 멈춰 버린 발걸음', name: '되돌아오는 표지판', type: 'puzzle', skills: ['resonance', 'dash'], objective: '거짓 길을 지나 마지막 출발점에 닿아라',
+    chapter: '하늘 · 멈춰 버린 발걸음', name: '되돌아오는 표지판', type: 'puzzle', skills: ['resonance', 'dash'], objective: '층마다 다른 표지판을 지나 진짜 출발점에 닿아라',
     blockedSkills: ['bridge', 'gravity'],
-    intro: '표지판은 계속 출발점으로 돌아가라고 속삭여. 하지만 하늘이의 기억은 진짜 길을 알고 있다. V로 숨은 방향을 보고, X로 망설임보다 빨리 달려가자.',
-    layout: 'relay', echoGoal: 1, hint: '기억의 나를 출발 신호에 남기고, X와 V로 바람길을 끝까지 이어가세요.',
+    intro: '표지판은 계속 출발점으로 돌아가라고 속삭여. 하지만 진짜 길은 위·아래 층을 지그재그로 오르는 바람 미로 안에 있어. V로 숨은 방향을 보고, X로 망설임보다 빨리 다음 층으로 질주하자.',
+    layout: 'signpost-maze', echoGoal: 1, hint: '기억의 나를 출발 신호에 남기고 V로 다음 층을 보며 X로 지그재그 바람길을 이어가세요.',
   },
   {
     chapter: '하늘 · 멈춰 버린 발걸음', name: '하늘이의 바람 끝', type: 'boss', skills: ['resonance', 'dash'], objective: '돌풍을 기억의 나에게 유인하고 질주로 바람길을 뚫어라',
@@ -180,19 +180,19 @@ const STAGES = [
     hint: '① 기억의 나 둘을 출발 깃발에 남기기 ② 돌풍 유인 3회 ③ 열린 바람 고리 4개를 제한 시간 안에 X 질주로 연속 통과하세요.',
   },
   {
-    chapter: '하늘 · 멈춰 버린 발걸음', name: '하늘이의 발걸음이 남긴 길', type: 'puzzle', skills: ['dash'], objective: '되찾은 바람길을 따라 완벽한 꿈의 문으로 향하라',
-    intro: '하늘이의 발걸음이 멈추지 않자, 세 친구의 빛이 한 방향을 가리킨다. 저 멀리, 너무 완벽해서 오히려 낯선 정원이 보인다.',
-    layout: 'walk', echoGoal: 0, hint: '세 친구의 빛을 따라 오른쪽 문으로 걸어가세요.',
+    chapter: '하늘 · 멈춰 버린 발걸음', name: '하늘이의 발걸음이 남긴 길', type: 'puzzle', skills: ['dash'], objective: '바람 위에 남은 발자국 섬을 따라 완벽한 꿈의 문으로 향하라',
+    intro: '하늘이의 발걸음이 멈추지 않자, 세 친구의 빛이 공중의 발자국 섬을 만들었다. 저 멀리 너무 완벽해서 오히려 낯선 정원이 보여. 마지막 길은 점프만으로는 닿지 않는 섬 하나가 있으니, X 질주로 건너가 보자.',
+    layout: 'starlight-ferry', echoGoal: 0, hint: '작은 발자국 섬을 건너고, 가장 긴 간격은 X 질주로 넘어 오른쪽 꿈의 문으로 가세요.',
   },
   {
-    chapter: '딸 · 완벽한 꿈의 균열', name: '완벽한 정원', type: 'puzzle', skills: ['resonance'], objective: '정원 아래 숨은 균열을 찾아라',
-    intro: '수면 과학자의 딸은 이 정원을 완벽한 집이라고 믿고 있어. 하지만 꽃들이 너무 같은 방향만 보고 있고, 땅 아래에는 친구들의 기억이 갇혀 있어. V로 균열의 길을 찾아가자.',
-    layout: 'chorus', echoGoal: 1, hint: 'V로 완벽한 정원 아래의 숨은 길을 드러내고, 기억의 나를 남기세요.',
+    chapter: '딸 · 완벽한 꿈의 균열', name: '완벽한 정원', type: 'puzzle', skills: ['resonance'], objective: '정원의 뿌리 사이 숨은 균열을 찾아라',
+    intro: '수면 과학자의 딸은 이 정원을 완벽한 집이라고 믿고 있어. 하지만 꽃들이 너무 같은 방향만 보고 있고, 땅 아래에는 친구들의 기억이 갇혀 있어. V를 누르면 지상 길이 아니라 뿌리 사이의 층층 길이 드러나. 그 균열을 따라 내려가 보자.',
+    layout: 'garden-roots', echoGoal: 1, hint: 'V로 뿌리 사이 숨은 발판을 드러내며 높은 기억 표식까지 올라가세요.',
   },
   {
-    chapter: '딸 · 완벽한 꿈의 균열', name: '금이 간 교실', type: 'puzzle', skills: ['resonance'], objective: '사라진 친구들의 자리를 되돌려라',
-    intro: '딸의 꿈속 교실에는 친구들이 모두 있지만, 그 모습은 기억을 빼앗긴 뒤의 빈 껍질처럼 조용하다. 두 개의 자리를 기억의 나로 채우면, 딸도 처음으로 이 세계가 이상하다는 것을 보게 될 거야.',
-    layout: 'duet', echoGoal: 2, hint: 'V로 숨은 길을 보며 두 개의 기억 자리에 과거의 나를 남기세요.',
+    chapter: '딸 · 완벽한 꿈의 균열', name: '금이 간 교실', type: 'puzzle', skills: ['resonance'], objective: '갈라진 교실의 서로 다른 층에 있는 친구 자리를 되돌려라',
+    intro: '딸의 꿈속 교실에는 친구들이 모두 있지만, 그 모습은 기억을 빼앗긴 뒤의 빈 껍질처럼 조용하다. 교실 바닥은 금이 가며 위·아래 두 층으로 갈라졌어. V로 균열 사이의 책상 길을 보고, 두 층에 흩어진 친구들의 자리를 기억의 나로 채우자.',
+    layout: 'classroom-fracture', echoGoal: 2, hint: 'V로 균열 사이 책상 길을 보며 낮은 자리와 높은 자리에 기억의 나를 하나씩 남기세요.',
   },
   {
     chapter: '딸 · 완벽한 꿈의 균열', name: '완벽한 꿈의 수호자', type: 'boss', skills: ['resonance', 'dash'], objective: '진짜 기억으로 가짜 풍경을 지우고 수호자의 거울을 깨워라',
@@ -898,6 +898,103 @@ function setupPuzzle(layout, echoGoal) {
       { x: 555, y: 500, w: 105, h: 40 },
       { x: 760, y: 500, w: 105, h: 40 },
     ];
+  } else if (layout === 'lantern-river') {
+    game.platforms = [
+      { x: 0, y: 500, w: 258, h: 40, label: 'LAUGH SHORE' },
+      { x: 314, y: 430, w: 108, h: 16, label: 'LANTERN 01' },
+      { x: 486, y: 348, w: 96, h: 16, label: 'LANTERN 02' },
+      { x: 654, y: 412, w: 106, h: 16, label: 'LANTERN 03' },
+      { x: 806, y: 330, w: 154, h: 16, label: 'NEXT DREAM SHORE' },
+    ];
+    game.exit = { x: 886, y: 248, w: 36, h: 82, label: 'STAR GATE' };
+    game.fallZones = [];
+  } else if (layout === 'choir-balcony') {
+    game.platforms = [
+      { x: 0, y: 500, w: 198, h: 40, label: 'CLASSROOM FLOOR' },
+      { x: 232, y: 430, w: 108, h: 16, hidden: true, label: 'LOW NOTE STAIR' },
+      { x: 362, y: 362, w: 112, h: 18, label: 'LOW BALCONY' },
+      { x: 510, y: 294, w: 102, h: 16, hidden: true, label: 'HIGH NOTE STAIR' },
+      { x: 642, y: 226, w: 132, h: 18, label: 'CHOIR BALCONY' },
+      { x: 788, y: 356, w: 172, h: 18, label: 'EXIT DESCENT' },
+    ];
+    game.exit = { x: 882, y: 274, w: 36, h: 82, label: 'BALCONY GATE' };
+    game.fallZones = [];
+  } else if (layout === 'harmony-spiral') {
+    game.platforms = [
+      { x: 0, y: 500, w: 188, h: 40, label: 'SCORE START' },
+      { x: 222, y: 426, w: 104, h: 16, hidden: true, label: 'SPIRAL NOTE 01' },
+      { x: 342, y: 354, w: 104, h: 18, label: 'SPIRAL NOTE 02' },
+      { x: 470, y: 282, w: 98, h: 16, hidden: true, label: 'SPIRAL NOTE 03' },
+      { x: 588, y: 354, w: 102, h: 18, label: 'SPIRAL NOTE 04' },
+      { x: 716, y: 264, w: 112, h: 16, hidden: true, label: 'FINAL REFRAIN' },
+      { x: 832, y: 414, w: 128, h: 18, label: 'CHORUS EXIT' },
+    ];
+    game.exit = { x: 882, y: 332, w: 36, h: 82, label: 'HARMONY GATE' };
+    game.fallZones = [];
+  } else if (layout === 'wind-tunnel') {
+    game.platforms = [
+      { x: 0, y: 500, w: 194, h: 40, label: 'TUNNEL MOUTH' },
+      { x: 246, y: 428, w: 92, h: 16, label: 'LOW WIND SHELF' },
+      { x: 404, y: 348, w: 94, h: 16, label: 'HIGH WIND SHELF' },
+      { x: 568, y: 418, w: 100, h: 16, hidden: true, label: 'HIDDEN TAILWIND' },
+      { x: 736, y: 336, w: 224, h: 18, label: 'TUNNEL ROOF' },
+    ];
+    game.exit = { x: 870, y: 254, w: 36, h: 82, label: 'WIND GATE' };
+    game.fallZones = [];
+  } else if (layout === 'inverted-cliff') {
+    game.platforms = [
+      { x: 0, y: 500, w: 212, h: 40, label: 'CLIFF START' },
+      { x: 286, y: 86, w: 118, h: 16, label: 'CEILING LEDGE 01' },
+      { x: 478, y: 136, w: 118, h: 16, label: 'CEILING LEDGE 02' },
+      { x: 684, y: 76, w: 116, h: 16, label: 'CEILING LEDGE 03' },
+      { x: 772, y: 500, w: 188, h: 40, label: 'CLIFF END' },
+      { x: 604, y: 178, w: 74, h: 322, wall: true, persistentWall: true, label: 'HEADWIND PILLAR' },
+    ];
+    game.exit = { x: 876, y: 418, w: 36, h: 82, label: 'CLIFF GATE' };
+    game.fallZones = [];
+  } else if (layout === 'signpost-maze') {
+    game.platforms = [
+      { x: 0, y: 500, w: 186, h: 40, label: 'FALSE START' },
+      { x: 218, y: 430, w: 96, h: 16, hidden: true, label: 'HIDDEN ARROW 01' },
+      { x: 350, y: 350, w: 102, h: 18, label: 'UPWARD SIGN' },
+      { x: 492, y: 424, w: 94, h: 16, hidden: true, label: 'HIDDEN ARROW 02' },
+      { x: 624, y: 330, w: 106, h: 18, label: 'TRUE SIGN' },
+      { x: 774, y: 380, w: 186, h: 18, label: 'LAST STARTING LINE' },
+    ];
+    game.exit = { x: 876, y: 298, w: 36, h: 82, label: 'TRUE GATE' };
+    game.fallZones = [];
+  } else if (layout === 'starlight-ferry') {
+    game.platforms = [
+      { x: 0, y: 500, w: 220, h: 40, label: 'WIND SHORE' },
+      { x: 286, y: 430, w: 88, h: 16, label: 'FOOTPRINT 01' },
+      { x: 430, y: 354, w: 86, h: 16, label: 'FOOTPRINT 02' },
+      { x: 566, y: 420, w: 76, h: 16, label: 'FOOTPRINT 03' },
+      { x: 756, y: 340, w: 204, h: 18, label: 'GARDEN APPROACH' },
+    ];
+    game.exit = { x: 874, y: 258, w: 36, h: 82, label: 'GARDEN GATE' };
+    game.fallZones = [];
+  } else if (layout === 'garden-roots') {
+    game.platforms = [
+      { x: 0, y: 500, w: 170, h: 40, label: 'PERFECT LAWN' },
+      { x: 166, y: 424, w: 102, h: 16, hidden: true, label: 'ROOT STEP 01' },
+      { x: 292, y: 350, w: 94, h: 18, label: 'ROOT STEP 02' },
+      { x: 422, y: 402, w: 102, h: 16, hidden: true, label: 'ROOT STEP 03' },
+      { x: 552, y: 318, w: 112, h: 18, label: 'ROOT STEP 04' },
+      { x: 712, y: 350, w: 248, h: 18, label: 'CRACKED GARDEN' },
+    ];
+    game.exit = { x: 876, y: 268, w: 36, h: 82, label: 'ROOT GATE' };
+    game.fallZones = [];
+  } else if (layout === 'classroom-fracture') {
+    game.platforms = [
+      { x: 0, y: 500, w: 196, h: 40, label: 'LOWER CLASSROOM' },
+      { x: 234, y: 404, w: 102, h: 18, label: 'LOW DESK ROW' },
+      { x: 370, y: 326, w: 96, h: 16, hidden: true, label: 'CRACK BRIDGE' },
+      { x: 498, y: 254, w: 112, h: 18, label: 'UPPER DESK ROW' },
+      { x: 650, y: 338, w: 108, h: 16, hidden: true, label: 'WINDOW PATH' },
+      { x: 790, y: 414, w: 170, h: 18, label: 'CLASSROOM EXIT' },
+    ];
+    game.exit = { x: 880, y: 332, w: 36, h: 82, label: 'MIRROR GATE' };
+    game.fallZones = [];
   } else if (layout === 'bridge') {
     game.platforms = [
       { x: 0, y: 500, w: 960, h: 40, label: 'MEMORY WALKWAY' },
@@ -940,6 +1037,7 @@ function setupPuzzle(layout, echoGoal) {
   game.fragments = [];
   const padsByLayout = {
     walk: [],
+    'lantern-river': [],
     bridge: [{ x: 165, y: 462, w: 30, h: 28, label: '첫 약속' }],
     wall: [{ x: 165, y: 462, w: 30, h: 28, label: '별빛 약속' }],
     chorus: [{ x: 382, y: 462, w: 30, h: 28, label: '노래 기억' }],
@@ -949,8 +1047,25 @@ function setupPuzzle(layout, echoGoal) {
       { x: 150, y: 462, w: 30, h: 28, label: '첫 번째 빈 의자' },
       { x: 520, y: 462, w: 30, h: 28, label: '두 번째 빈 의자' },
     ],
+    'choir-balcony': [
+      { x: 274, y: 402, w: 30, h: 28, label: '낮은 빈 의자', hidden: true },
+      { x: 678, y: 198, w: 30, h: 28, label: '높은 빈 의자' },
+    ],
+    'harmony-spiral': [
+      { x: 246, y: 398, w: 30, h: 28, label: '낮은 음의 자리', hidden: true },
+      { x: 750, y: 236, w: 30, h: 28, label: '높은 음의 자리', hidden: true },
+    ],
     relay: [{ x: 135, y: 462, w: 30, h: 28, label: '출발 신호' }],
     dash: [{ x: 138, y: 462, w: 30, h: 28, label: '질주 기억' }],
+    'wind-tunnel': [{ x: 135, y: 462, w: 30, h: 28, label: '터널 출발 신호' }],
+    'inverted-cliff': [{ x: 158, y: 462, w: 30, h: 28, label: '절벽의 약속' }],
+    'signpost-maze': [{ x: 132, y: 462, w: 30, h: 28, label: '진짜 출발 신호' }],
+    'starlight-ferry': [],
+    'garden-roots': [{ x: 574, y: 290, w: 30, h: 28, label: '뿌리의 기억' }],
+    'classroom-fracture': [
+      { x: 266, y: 376, w: 30, h: 28, label: '낮은 친구 자리' },
+      { x: 532, y: 226, w: 30, h: 28, label: '높은 친구 자리' },
+    ],
     carousel: [{ x: 204, y: 462, w: 30, h: 28, label: '회전목마 손잡이' }],
     watcher: [
       { x: 500, y: 462, w: 16, h: 28, label: '회전목마' },
@@ -2450,6 +2565,7 @@ function drawEndingCinematic() {
 
 function drawPuzzle() {
   drawBackground(false);
+  drawLayoutLandmarks();
   const techniques = activeTechniques();
   const gateOpen = (game.echoGoal === 0 || activeMemoryPads(game.memoryPads) >= game.echoGoal) && (game.layout !== 'watcher' || game.watcherResolved);
   (game.fallZones || []).forEach(drawFallZone);
@@ -2480,6 +2596,50 @@ function drawPuzzle() {
   if (game.exit) drawExit();
   if (game.player) drawChild(game.player);
   drawPhaseGuide();
+}
+
+function drawLayoutLandmarks() {
+  const layout = game.layout;
+  const t = game.elapsed || 0;
+  ctx.save();
+  if (layout === 'lantern-river') {
+    ctx.fillStyle = 'rgba(8, 18, 52, .5)'; ctx.fillRect(0, 438, W, 102);
+    ctx.strokeStyle = 'rgba(173, 223, 255, .24)'; ctx.lineWidth = 2;
+    for (let y = 458; y < H; y += 20) { ctx.beginPath(); ctx.moveTo(0, y); ctx.quadraticCurveTo(170, y - 10 + Math.sin(t * 2 + y) * 4, 340, y); ctx.quadraticCurveTo(610, y + 10, W, y); ctx.stroke(); }
+    [368, 534, 704, 850].forEach((x, index) => { ctx.fillStyle = index % 2 ? '#ffcf88' : '#ffb5d7'; ctx.globalAlpha = .35 + Math.sin(t * 4 + index) * .12; ctx.shadowBlur = 20; ctx.shadowColor = ctx.fillStyle; ctx.fillRect(x, 430 - index % 2 * 70, 4, 34); });
+  } else if (layout === 'choir-balcony') {
+    ctx.strokeStyle = 'rgba(158, 255, 215, .25)'; ctx.lineWidth = 3;
+    [210, 348, 490, 624, 778].forEach((x) => { ctx.beginPath(); ctx.moveTo(x, 132); ctx.lineTo(x, 486); ctx.stroke(); });
+    ctx.fillStyle = 'rgba(199, 163, 255, .15)'; ctx.fillRect(26, 246, 870, 7); ctx.fillRect(26, 272, 870, 7); ctx.fillRect(26, 298, 870, 7);
+  } else if (layout === 'harmony-spiral') {
+    ctx.strokeStyle = 'rgba(199, 163, 255, .22)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(116, 458); ctx.bezierCurveTo(286, 242, 442, 244, 486, 330); ctx.bezierCurveTo(562, 480, 752, 180, 892, 336); ctx.stroke();
+    for (let x = 150; x < 860; x += 78) { ctx.fillStyle = 'rgba(158, 255, 215, .28)'; ctx.beginPath(); ctx.arc(x, 110 + (x * 7) % 196, 4, 0, Math.PI * 2); ctx.fill(); }
+  } else if (layout === 'wind-tunnel') {
+    ctx.strokeStyle = 'rgba(166, 239, 255, .22)'; ctx.lineWidth = 3;
+    for (let row = 0; row < 5; row += 1) { const y = 118 + row * 76; ctx.beginPath(); ctx.moveTo(0, y); ctx.bezierCurveTo(240, y - 54, 498, y + 54, W, y - 8); ctx.stroke(); }
+  } else if (layout === 'inverted-cliff') {
+    ctx.fillStyle = 'rgba(5, 16, 39, .46)'; ctx.fillRect(214, 0, 556, H);
+    ctx.strokeStyle = 'rgba(166, 239, 255, .32)'; ctx.lineWidth = 2;
+    [250, 430, 610, 790].forEach((x) => { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x - 56, H); ctx.stroke(); });
+    ctx.fillStyle = 'rgba(255, 226, 126, .38)'; ctx.fillRect(284, 48, 520, 8);
+  } else if (layout === 'signpost-maze') {
+    ctx.strokeStyle = 'rgba(166, 239, 255, .24)'; ctx.lineWidth = 2;
+    [[286, 454], [416, 374], [548, 446], [688, 322]].forEach(([x, y], index) => { ctx.save(); ctx.translate(x, y); ctx.rotate(index % 2 ? Math.PI : 0); ctx.beginPath(); ctx.moveTo(-22, -10); ctx.lineTo(17, -10); ctx.lineTo(17, -20); ctx.lineTo(35, 0); ctx.lineTo(17, 20); ctx.lineTo(17, 10); ctx.lineTo(-22, 10); ctx.closePath(); ctx.stroke(); ctx.restore(); });
+  } else if (layout === 'starlight-ferry') {
+    ctx.strokeStyle = 'rgba(255, 226, 126, .28)'; ctx.lineWidth = 2; ctx.setLineDash([3, 8]);
+    ctx.beginPath(); ctx.moveTo(120, 474); ctx.quadraticCurveTo(420, 282, 822, 312); ctx.stroke();
+    ctx.setLineDash([]); [310, 455, 600, 786].forEach((x, index) => { ctx.fillStyle = '#fff0a6'; ctx.globalAlpha = .25 + index * .1; ctx.beginPath(); ctx.arc(x, 170 + index * 52, 5, 0, Math.PI * 2); ctx.fill(); });
+  } else if (layout === 'garden-roots') {
+    ctx.strokeStyle = 'rgba(184, 255, 207, .22)'; ctx.lineWidth = 5;
+    [138, 330, 514, 702].forEach((x, index) => { ctx.beginPath(); ctx.moveTo(x, 76); ctx.bezierCurveTo(x - 48, 210, x + 86, 344, x + (index % 2 ? -30 : 44), 504); ctx.stroke(); });
+    ctx.fillStyle = 'rgba(255, 181, 223, .13)'; ctx.fillRect(0, 464, W, 76);
+  } else if (layout === 'classroom-fracture') {
+    ctx.strokeStyle = 'rgba(255, 181, 223, .26)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(196, 500); ctx.lineTo(308, 418); ctx.lineTo(420, 352); ctx.lineTo(530, 282); ctx.lineTo(652, 364); ctx.lineTo(790, 420); ctx.stroke();
+    ctx.fillStyle = 'rgba(233, 248, 255, .12)'; [78, 184, 708, 820].forEach((x) => ctx.fillRect(x, 120, 42, 84));
+  }
+  ctx.restore();
 }
 
 function drawWindGate(gate, index, active, cleared) {
