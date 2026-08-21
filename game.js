@@ -1202,14 +1202,32 @@ function activeMemoryPads(pads, includePresentSelf = false) {
   }).length;
 }
 
+function captureMemoryFrame(player, time = 0) {
+  const bossMode = currentStage()?.type === 'boss';
+  const motion = playerMotionState(player, bossMode);
+  return {
+    time,
+    x: player.x,
+    y: player.y,
+    w: player.w,
+    h: player.h,
+    facing: player.facing,
+    vx: player.vx || 0,
+    vy: player.vy || 0,
+    grounded: Boolean(player.grounded),
+    bossMode,
+    motionState: { ...motion },
+  };
+}
+
 function beginMemoryRecording() {
   if (!spend(8)) return;
   const p = game.player;
+  const startFrame = captureMemoryFrame(p, 0);
   game.recording = {
     start: { x: p.x, y: p.y, w: p.w, h: p.h, facing: p.facing },
-    frames: [{ x: p.x, y: p.y, w: p.w, h: p.h, facing: p.facing }],
+    frames: [startFrame],
     duration: 0,
-    sampleClock: 0,
   };
   say('① 기록 시작: 상상력을 조금 사용합니다. ② 목표 발판까지 이동하세요. ③ K를 다시 누르면 되감기고, 기억의 나가 길을 재생합니다.');
 }
@@ -1235,8 +1253,8 @@ function finishMemoryRecording() {
   }
   const echo = {
     frames: recording.frames,
-    step: recording.duration / Math.max(1, recording.frames.length - 1),
     elapsed: 0,
+    playbackIndex: 0,
     x: recording.start.x,
     y: recording.start.y,
     w: recording.start.w,
@@ -1269,19 +1287,16 @@ function toggleMemoryRecording() {
 function updateMemoryLoops(dt) {
   if (game.recording) {
     game.recording.duration += dt;
-    game.recording.sampleClock += dt;
-    if (game.recording.sampleClock >= .055) {
-      const p = game.player;
-      game.recording.frames.push({ x: p.x, y: p.y, w: p.w, h: p.h, facing: p.facing });
-      game.recording.sampleClock = 0;
-    }
+    game.recording.frames.push(captureMemoryFrame(game.player, game.recording.duration));
     if (game.recording.duration >= 5.5) finishMemoryRecording();
   }
   game.echoes.forEach((echo) => {
     echo.elapsed += dt;
     echo.flash = Math.max(0, (echo.flash || 0) - dt);
     echo.baitCooldown = Math.max(0, (echo.baitCooldown || 0) - dt);
-    const index = Math.min(echo.frames.length - 1, Math.floor(echo.elapsed / echo.step));
+    let index = echo.playbackIndex || 0;
+    while (index < echo.frames.length - 1 && echo.frames[index + 1].time <= echo.elapsed) index += 1;
+    echo.playbackIndex = index;
     const frame = echo.frames[index];
     Object.assign(echo, frame);
     echo.holding = index >= echo.frames.length - 1;
@@ -2455,33 +2470,18 @@ function drawMemoryPad(pad, active, index, role = 'normal') {
 }
 
 function drawEcho(echo, index) {
-  const hues = ['#9effea', '#9eb9ff', '#ffb5d7'];
-  const image = playerSprites.idle;
-  drawDreamMist(echo, index * 2.13 + .7, echo.holding ? 1 : .72, echo.holding ? .9 : .62);
-  if (image?.complete && image.naturalWidth > 0) {
-    const pulse = .5 + Math.sin((game.elapsed || 0) * 4.6 + index) * .5;
-    drawSpriteAt(image, echo, false, {
-      alpha: (echo.holding ? .34 : .23) + pulse * .05,
-      composite: 'screen',
-      filter: `blur(${echo.holding ? .45 : 1.15}px) saturate(.62)`,
-      bob: -1 - pulse,
-      scaleX: 1.02 + pulse * .025,
-      scaleY: .98 - pulse * .018,
-    });
-  }
-  ctx.save();
-  ctx.globalAlpha = echo.flash > 0 ? .72 : echo.holding ? .3 : .2;
-  ctx.shadowBlur = echo.flash > 0 ? 24 : 9; ctx.shadowColor = echo.flash > 0 ? '#ffffff' : hues[index % hues.length];
-  ctx.fillStyle = echo.flash > 0 ? '#ffffff' : hues[index % hues.length];
-  ctx.fillRect(echo.x, echo.y + echo.h - 4, echo.w, 4);
-  ctx.strokeStyle = '#e9ffff'; ctx.lineWidth = 1; ctx.setLineDash([2, 3]); ctx.strokeRect(echo.x + .5, echo.y + .5, echo.w - 1, echo.h - 1); ctx.setLineDash([]);
-  ctx.globalAlpha = 1;
-  if (echo.holding && echo.role?.label) {
-    const label = echo.role.id === 'decoy' && echo.baitUses ? `DECOY ${echo.baitUses}` : echo.role.label;
-    ctx.fillStyle = 'rgba(6, 18, 40, .86)'; ctx.fillRect(echo.x - 8, echo.y - 16, Math.max(34, label.length * 5.4), 11);
-    ctx.fillStyle = echo.baitCooldown > 0 ? '#ffc67d' : '#e9ffff'; ctx.font = '800 6px ui-monospace, monospace'; ctx.textAlign = 'left'; ctx.fillText(label, echo.x - 5, echo.y - 8);
-  }
-  ctx.restore();
+  const recordedMotion = echo.holding ? {} : echo.motionState || {};
+  drawDreamMist(echo, index * 2.13 + .7, echo.holding ? .9 : .68, echo.holding ? .62 : .42);
+  const pulse = .5 + Math.sin((game.elapsed || 0) * 4.6 + index) * .5;
+  const flashBoost = echo.flash > 0 ? .16 : 0;
+  drawCharacterMotion(echo, Boolean(echo.bossMode), recordedMotion, {
+    alpha: Math.min(.72, (echo.holding ? .46 : .34) + pulse * .06 + flashBoost),
+    composite: 'screen',
+    filter: `blur(${echo.holding ? .12 : .42}px) saturate(.82) brightness(${echo.flash > 0 ? 1.38 : 1.08})`,
+    bob: (recordedMotion.bob || 0) - 1 - pulse,
+    scaleX: (recordedMotion.scaleX || 1) * (1.02 + pulse * .025),
+    scaleY: (recordedMotion.scaleY || 1) * (.98 - pulse * .018),
+  }, { effectAlpha: .38, fallback: false });
 }
 
 function currentRunFrameIndex() {
@@ -2629,16 +2629,18 @@ function drawDreamTrails(bossMode = false) {
 
 function drawDashStreaks(player, motion) {
   if (!motion.dashing) return;
+  const effectAlpha = motion.effectAlpha ?? 1;
+  const intensity = motion.intensity || 0;
   const direction = player.facing || 1;
   const centerX = player.x + player.w / 2;
   const baseY = player.y + player.h * .55;
   ctx.save();
   ctx.globalCompositeOperation = 'screen';
   for (let index = 0; index < 4; index += 1) {
-    const length = 12 + index * 7 + motion.intensity * 10;
+    const length = 12 + index * 7 + intensity * 10;
     const endX = centerX - direction * (8 + index * 5);
     const startX = endX - direction * length;
-    ctx.globalAlpha = (.32 - index * .055) * motion.intensity;
+    ctx.globalAlpha = (.32 - index * .055) * intensity * effectAlpha;
     ctx.fillStyle = index % 2 ? '#c7a3ff' : index === 2 ? '#ffe37d' : '#9effea';
     ctx.fillRect(Math.min(startX, endX), Math.round(baseY - 10 + index * 7), Math.max(2, Math.abs(endX - startX)), 1);
   }
@@ -2647,13 +2649,14 @@ function drawDashStreaks(player, motion) {
 
 function drawRunFootDust(player, motion) {
   if (!motion.running) return;
+  const effectAlpha = motion.effectAlpha ?? 1;
   const direction = player.facing || 1;
   const phase = Math.sin(motion.phase || 0);
   const heelX = Math.round(player.x + player.w / 2 - direction * (7 + Math.abs(phase) * 2));
   const groundY = Math.round(player.y + player.h - 1);
   ctx.save();
   ctx.globalCompositeOperation = 'screen';
-  ctx.globalAlpha = .3 + Math.abs(phase) * .22;
+  ctx.globalAlpha = (.3 + Math.abs(phase) * .22) * effectAlpha;
   ctx.fillStyle = phase >= 0 ? '#ffe37d' : '#9effea';
   ctx.fillRect(heelX, groundY, 2, 1);
   ctx.fillRect(heelX - direction * 3, groundY - 2, 1, 1);
@@ -2665,20 +2668,30 @@ function drawFallbackChild(player, bossMode = false) {
   ctx.save(); ctx.shadowBlur = 20; ctx.shadowColor = '#ffe57d'; ctx.fillStyle = '#f5b94e'; ctx.fillRect(x, y, w, h); ctx.fillStyle = '#59405e'; ctx.fillRect(x + 3, y + 4, w - 6, 11); ctx.fillStyle = '#ffd4b4'; ctx.fillRect(x + 5, y + 8, w - 10, 8); ctx.fillStyle = '#2c3c66'; ctx.fillRect(x + (player.facing > 0 ? w - 12 : 6), y + 9, 3, 3); ctx.fillStyle = '#e66c75'; ctx.fillRect(x + 4, y + h - 13, w - 8, 8); ctx.fillStyle = '#fff0a6'; ctx.beginPath(); ctx.arc(x + w / 2, y - 4, bossMode ? 5 : 3, 0, Math.PI * 2); ctx.fill(); ctx.restore();
 }
 
-function drawChild(player, bossMode = false) {
-  const motion = playerMotionState(player, bossMode);
+function playerSpriteForMotion(motion = {}) {
   const image = motion.jumping
     ? playerSprites.jump[motion.frameIndex] || playerSprites.idle
     : motion.running || motion.dashing
       ? playerSprites.run[motion.frameIndex] || playerSprites.idle
       : playerSprites.idle;
-  if (!image.complete || image.naturalWidth === 0) {
-    drawFallbackChild(player, bossMode);
-    return;
+  return image;
+}
+
+function drawCharacterMotion(player, bossMode, motion = {}, visualOverrides = {}, options = {}) {
+  const image = playerSpriteForMotion(motion);
+  if (!image?.complete || image.naturalWidth === 0) {
+    if (options.fallback !== false) drawFallbackChild(player, bossMode);
+    return false;
   }
-  drawDashStreaks(player, motion);
-  drawSpriteAt(image, player, bossMode, motion);
-  drawRunFootDust(player, motion);
+  const effectMotion = { ...motion, effectAlpha: options.effectAlpha ?? 1 };
+  drawDashStreaks(player, effectMotion);
+  drawSpriteAt(image, player, bossMode, { ...motion, ...visualOverrides });
+  drawRunFootDust(player, effectMotion);
+  return true;
+}
+
+function drawChild(player, bossMode = false) {
+  drawCharacterMotion(player, bossMode, playerMotionState(player, bossMode));
 }
 
 function drawPhaseGuide() {
@@ -2696,34 +2709,45 @@ function drawPhaseGuide() {
   ctx.restore();
 }
 
-function drawMemoryPath(frames, color, alpha, markerLabel = '') {
+function drawMemoryPath(frames, color, alpha, startIndex = 0, markerLabel = '') {
   if (!frames?.length) return;
+  const firstVisibleIndex = Math.max(0, Math.min(frames.length - 1, startIndex));
+  const visibleFrames = frames.slice(firstVisibleIndex);
+  const last = frames[frames.length - 1];
   ctx.save();
   ctx.globalAlpha = alpha;
-  ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 5]);
+  if (visibleFrames.length > 1) {
+    ctx.beginPath();
+    visibleFrames.forEach((frame, index) => {
+      const x = frame.x + frame.w / 2;
+      const y = frame.y + frame.h / 2;
+      if (index === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
   ctx.beginPath();
-  frames.forEach((frame, index) => {
-    const x = frame.x + frame.w / 2;
-    const y = frame.y + frame.h / 2;
-    if (index === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-  });
-  ctx.stroke(); ctx.setLineDash([]);
-  const first = frames[0];
-  const last = frames[frames.length - 1];
-  ctx.fillStyle = color;
-  ctx.beginPath(); ctx.arc(first.x + first.w / 2, first.y + first.h / 2, 6, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(last.x + last.w / 2, last.y + last.h / 2, 8, 0, Math.PI * 2); ctx.stroke();
+  ctx.arc(last.x + last.w / 2, last.y + last.h / 2, 8, 0, Math.PI * 2);
+  ctx.stroke();
   if (markerLabel) {
-    ctx.font = '800 9px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText(markerLabel, last.x + last.w / 2, last.y - 12);
+    ctx.fillStyle = color;
+    ctx.font = '800 9px ui-monospace, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(markerLabel, last.x + last.w / 2, last.y - 12);
   }
   ctx.restore();
 }
 
 function drawMemoryLoopFeedback() {
-  game.echoes.forEach((echo, index) => drawMemoryPath(echo.frames, ['#9effea', '#9eb9ff', '#ffb5d7'][index % 3], echo.holding ? .22 : .42));
+  game.echoes.forEach((echo, index) => {
+    if (echo.holding) return;
+    drawMemoryPath(echo.frames, ['#9effea', '#9eb9ff', '#ffb5d7'][index % 3], .42, echo.playbackIndex || 0);
+  });
   if (!game.recording) return;
-  const recording = game.recording;
-  drawMemoryPath(recording.frames, '#ffe37d', .85, 'K · REWIND');
+  drawMemoryPath(game.recording.frames, '#ffe37d', .85, 0, 'K · REWIND');
   const p = game.player;
   const pulse = 15 + Math.sin(game.elapsed * 8) * 3;
   ctx.save(); ctx.strokeStyle = '#ffe37d'; ctx.lineWidth = 2; ctx.shadowBlur = 18; ctx.shadowColor = '#ffe37d';
