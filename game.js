@@ -46,7 +46,6 @@ const memoryStatus = document.querySelector('#memory-status');
 const echoCards = [...document.querySelectorAll('[data-echo-slot]')];
 const ruleStates = {
   bridge: document.querySelector('#bridge-state'),
-  gravity: document.querySelector('#gravity-state'),
   time: document.querySelector('#time-state'),
   resonance: document.querySelector('#resonance-state'),
   dash: document.querySelector('#dash-state'),
@@ -66,15 +65,14 @@ const STAGES = [
     layout: 'bridge', echoGoal: 1, hint: '① C 시작 → ② 기억 발판까지 이동 → ③ C 되감기. 기억의 나가 마지막 발판을 지키면 문이 열립니다.',
   },
   {
-    chapter: '하린 · 잃어버린 웃음', name: '달빛 유원지의 벽', type: 'puzzle', skills: ['bridge', 'gravity'], objective: '악몽의 잔상으로 깊은 틈을 넘어라',
-    blockedSkills: ['gravity'],
-    intro: '하린이 좋아하던 달빛 유원지가 기계의 벽에 갇혔어. 이 구역의 추출기는 중력의 규칙을 붙잡아 두고 있어. 달의 방향은 바꿀 수 없지만, 잔상 발판만은 기억의 틈에 나타날 수 있어. 과거의 나에게 첫 약속을 맡긴 뒤, 1로 나타나는 발판을 건너자.',
-    layout: 'wall', echoGoal: 1, hint: '이 구역에서는 중력 반전이 막힙니다. 기억의 나를 발판에 남기고 1의 잔상 발판으로 깊은 틈을 건너세요.',
+    chapter: '하린 · 잃어버린 웃음', name: '달빛 유원지의 벽', type: 'puzzle', skills: ['bridge'], objective: '악몽의 잔상으로 깊은 틈을 넘어라',
+    intro: '하린이 좋아하던 달빛 유원지가 기계의 벽에 갇혔어. 이 구역의 추출기는 바닥을 길게 지워 버렸지만, 잔상 발판만은 기억의 틈에 나타날 수 있어. 과거의 나에게 첫 약속을 맡긴 뒤, 1로 나타나는 발판을 건너자.',
+    layout: 'wall', echoGoal: 1, hint: '기억의 나를 발판에 남기고 1의 잔상 발판으로 깊은 틈을 건너세요.',
   },
   {
-    chapter: '하린 · 잃어버린 웃음', name: '무너지는 회전목마', type: 'puzzle', skills: ['gravity'], teaches: ['gravity'], blockedSkills: ['bridge'], objective: '기억의 나가 돌린 회전목마를 타고 중력의 벽을 넘어라',
-    intro: '회전목마의 벽은 너무 높아서 뛰어넘을 수 없어. 먼저 C로 과거의 나를 회전목마 손잡이에 남겨 줘. 기억의 내가 회전목마를 돌리면, 현재의 네가 올라탈 달빛 발판이 움직여. 그 위에서 2를 눌러 중력을 뒤집고 벽보다 높은 천장 길로 올라가자.',
-    layout: 'carousel', echoGoal: 1, blockedHint: '먼저 기억의 나를 회전목마 손잡이에 남겨야 달의 방향을 바꿀 수 있습니다.', hint: '① C로 회전목마 손잡이에 기억을 남기기 ② 움직이는 달빛 발판에 오르기 ③ 2로 천장 길을 넘어가세요.',
+    chapter: '하린 · 잃어버린 웃음', name: '무너지는 회전목마', type: 'puzzle', skills: [], blockedSkills: ['bridge'], objective: '기억의 나가 돌린 회전목마를 타고 큰 벽을 넘어라',
+    intro: '회전목마의 벽은 너무 높아서 뛰어넘을 수 없어. 먼저 C로 과거의 나를 회전목마 손잡이에 남겨 줘. 기억의 내가 회전목마를 천천히 돌리면, 현재의 네가 올라탈 넓은 달빛 발판이 벽 위까지 올라가. 발판이 널 함께 실어 나르는 동안 점프해 반대편 선반으로 건너가자.',
+    layout: 'carousel', echoGoal: 1, blockedHint: '먼저 기억의 나를 회전목마 손잡이에 남겨야 달빛 발판이 움직입니다.', hint: '① C로 회전목마 손잡이에 기억을 남기기 ② 넓은 달빛 발판에 올라타기 ③ 벽 위에서 점프해 반대편 선반으로 건너기.',
   },
   {
     chapter: '하린 · 잃어버린 웃음', name: '하린이 가장 두려워한 것', type: 'boss', skills: ['time'], objective: '행복한 기억을 맞추고 멈춘 순간으로 하린을 안심시켜라',
@@ -99,9 +97,9 @@ const STAGES = [
     layout: 'chorus', echoGoal: 1, hint: 'V로 숨은 발판을 드러내고, 기억 발판에 과거의 나를 남겨 합창길을 완성하세요.',
   },
   {
-    chapter: '유나 · 사라진 노래', name: '유나의 빈 의자', type: 'puzzle', skills: ['bridge', 'gravity', 'time', 'resonance'], objective: '서로 다른 높이의 빈자리를 기억의 메아리로 채워라',
-    blockedSkills: ['bridge', 'gravity'],
-    intro: '유나는 늘 누군가의 자리를 기억하던 아이였어. 꿈 추출기는 교실의 낮은 자리 하나와 합창 발코니의 높은 자리 하나를 지워 버렸어. 이 교실에서는 잔상 발판과 중력 반전도 닿지 않아. V로 보이지 않는 계단을 드러내고, C로 서로 다른 높이의 두 빈자리를 채우자.',
+    chapter: '유나 · 사라진 노래', name: '유나의 빈 의자', type: 'puzzle', skills: ['bridge', 'time', 'resonance'], objective: '서로 다른 높이의 빈자리를 기억의 메아리로 채워라',
+    blockedSkills: ['bridge'],
+    intro: '유나는 늘 누군가의 자리를 기억하던 아이였어. 꿈 추출기는 교실의 낮은 자리 하나와 합창 발코니의 높은 자리 하나를 지워 버렸어. 이 교실에서는 잔상 발판도 닿지 않아. V로 보이지 않는 계단을 드러내고, C로 서로 다른 높이의 두 빈자리를 채우자.',
     layout: 'choir-balcony', echoGoal: 2, hint: 'V로 발코니 계단을 드러내며 낮은 빈 의자와 높은 빈 의자에 기억의 나를 하나씩 남기세요.',
   },
   {
@@ -145,18 +143,18 @@ const STAGES = [
   },
   {
     chapter: '하늘 · 멈춰 버린 발걸음', name: '바람을 가르는 달리기', type: 'puzzle', skills: ['resonance', 'dash'], objective: '바람 터널의 위아래 길을 질주와 공명으로 이어라',
-    blockedSkills: ['bridge', 'gravity'],
-    intro: '이 바람길에서는 잔상 발판도, 중력 반전도 바람에 흩어져 버려. 거대한 바람 터널은 낮은 길과 높은 길을 번갈아 막아. 기억의 나에게 출발 신호를 맡기고, X로 첫 틈을 넘은 뒤 V로 위쪽 숨은 바람길을 찾아가자.',
+    blockedSkills: ['bridge'],
+    intro: '이 바람길에서는 잔상 발판도 바람에 흩어져 버려. 거대한 바람 터널은 낮은 길과 높은 길을 번갈아 막아. 기억의 나에게 출발 신호를 맡기고, X로 첫 틈을 넘은 뒤 V로 위쪽 숨은 바람길을 찾아가자.',
     layout: 'wind-tunnel', echoGoal: 1, hint: '출발 신호에 기억을 남긴 뒤, X로 터널 틈을 넘고 V로 위쪽 바람길을 드러내세요.',
   },
   {
-    chapter: '하늘 · 멈춰 버린 발걸음', name: '역풍의 높은 벽', type: 'puzzle', skills: ['bridge', 'gravity', 'dash'], objective: '뒤집힌 절벽의 위아래 길을 이어 역풍을 통과하라',
-    intro: '하늘의 길은 이제 벽 하나가 아니라 바닥과 천장이 갈라진 절벽이 되었어. 기억의 나가 붙잡은 잔상 발판으로 첫 틈을 넘고, 2로 하늘 쪽 길에 올라가 거대한 역풍 기둥을 피해 가자. 마지막 좁은 틈은 X 질주로 가른다.',
-    layout: 'inverted-cliff', echoGoal: 1, hint: '① 기억의 나를 출발 약속에 남기기 ② 1로 첫 틈 건너기 ③ 2로 천장 길 이동 ④ X로 마지막 틈 돌파.',
+    chapter: '하늘 · 멈춰 버린 발걸음', name: '역풍의 높은 벽', type: 'puzzle', skills: ['bridge', 'dash'], objective: '절벽의 낮은 길과 높은 길을 이어 역풍을 통과하라',
+    intro: '하늘의 길은 이제 벽 하나가 아니라 여러 높이로 갈라진 절벽이 되었어. 기억의 나가 붙잡은 잔상 발판으로 첫 틈을 넘고, 점프로 높은 바람 선반을 따라가 거대한 역풍 기둥을 피해 가자. 마지막 좁은 틈은 X 질주로 가른다.',
+    layout: 'wind-cliff', echoGoal: 1, hint: '① 기억의 나를 출발 약속에 남기기 ② 1로 첫 틈 건너기 ③ 점프로 높은 바람 선반 오르기 ④ X로 마지막 틈 돌파.',
   },
   {
     chapter: '하늘 · 멈춰 버린 발걸음', name: '되돌아오는 표지판', type: 'puzzle', skills: ['resonance', 'dash'], objective: '층마다 다른 표지판을 지나 진짜 출발점에 닿아라',
-    blockedSkills: ['bridge', 'gravity'],
+    blockedSkills: ['bridge'],
     intro: '표지판은 계속 출발점으로 돌아가라고 속삭여. 하지만 진짜 길은 위·아래 층을 지그재그로 오르는 바람 미로 안에 있어. V로 숨은 방향을 보고, X로 망설임보다 빨리 다음 층으로 질주하자.',
     layout: 'signpost-maze', echoGoal: 1, hint: '기억의 나를 출발 신호에 남기고 V로 다음 층을 보며 X로 지그재그 바람길을 이어가세요.',
   },
@@ -215,7 +213,7 @@ const STAGES = [
     hint: '① C로 딸의 진짜 사진에 기억의 나를 남기기 ② 가짜 풍경이 사라지면 V로 진짜 균열을 드러내기 ③ X 질주로 균열 4개를 통과하세요.',
   },
   {
-    page: 2, chapter: 'PAGE 02 · 현실을 향한 마지막 꿈', name: '수면 과학자의 연구실', type: 'boss', skills: ['bridge', 'gravity', 'time', 'resonance', 'dash'], objective: '기억과 공명을 완성해 거대한 꿈의 수호자를 멈춰라',
+    page: 2, chapter: 'PAGE 02 · 현실을 향한 마지막 꿈', name: '수면 과학자의 연구실', type: 'boss', skills: ['bridge', 'time', 'resonance', 'dash'], objective: '기억과 공명을 완성해 거대한 꿈의 수호자를 멈춰라',
     intro: '딸이 친구들의 꿈을 보자, 완벽한 세계 전체가 무너지기 시작한다. 수면 과학자는 딸의 마지막 행복을 지키려 자기 자신을 거대한 꿈의 수호자로 바꾼다. 이제는 그를 쓰러뜨리는 것만으로는 부족해. 세 친구의 기억으로 봉인을 열고, 빼앗은 꿈 에너지를 되돌려 주며 그의 집착을 멈춰야 해.',
     boss: '수면 과학자', bossConfig: {
       mode: 'final', finalChargeNeeded: 1.4,
@@ -444,7 +442,7 @@ function loadCampaignProgress() {
     return {
       unlocked: Math.max(0, Math.min(STAGES.length - 1, Number(saved.unlocked) || 0)),
       memories: new Set(Array.isArray(saved.memories) ? saved.memories : []),
-      skills: new Set(Array.isArray(saved.skills) ? saved.skills : []),
+      skills: new Set(Array.isArray(saved.skills) ? saved.skills.filter((skill) => skill !== 'gravity') : []),
       cleared: new Set(Array.isArray(saved.cleared) ? saved.cleared.map(Number).filter(Number.isInteger) : []),
       bossRecords: saved.bossRecords && typeof saved.bossRecords === 'object' ? saved.bossRecords : {},
       routeMode: saved.routeMode === 'campaign' ? 'campaign' : 'development',
@@ -488,7 +486,7 @@ function renderCampaignRoute() {
 function newGame() {
   gameHud.classList.remove('hidden');
   game = {
-    phase: 'intro', stageIndex: 0, imagination: 100, elapsed: 0, bridge: false, inverted: false,
+    phase: 'intro', stageIndex: 0, imagination: 100, elapsed: 0, bridge: false,
     player: freshPlayer(), platforms: [], boss: null, dreamShots: [], nightmareShots: [], fireCooldown: 0,
     nextAttack: 1.2, message: '', completed: [], memories: new Set(campaign.memories), learnedSkills: new Set(campaign.skills), fragments: [], echoes: [], recording: null, memoryPads: [], fallZones: [], transition: 'start', stageIntroTimer: null, dashCooldown: 0, dashTimer: 0, dashDirection: 1, watcherResolved: false,
     stageRealElapsed: 0, challenge: null,
@@ -505,12 +503,7 @@ function clearStageIntroTimer() {
 
 function currentStage() { return STAGES[game.stageIndex]; }
 function isSkillBlocked(skill) {
-  const stage = currentStage();
-  // 회전목마에서는 기억의 내가 먼저 손잡이를 돌려야 달의 방향을 바꿀 수 있다.
-  if (stage?.layout === 'carousel' && skill === 'gravity' && game.phase === 'playing') {
-    return activeMemoryPads(game.memoryPads || []) < (game.echoGoal || 1);
-  }
-  return Boolean(stage?.blockedSkills?.includes(skill));
+  return Boolean(currentStage()?.blockedSkills?.includes(skill));
 }
 function hasSkill(skill) {
   return !isSkillBlocked(skill) && Boolean(game.learnedSkills?.has(skill) || currentStage()?.skills.includes(skill));
@@ -547,7 +540,7 @@ function phaseGuide() {
       return { step: 'STEP 1 / 3', text: '회전목마 손잡이까지 C로 기록해, 기억의 나에게 달빛 발판을 돌려 달라고 맡기세요.', compact: '기억의 나로 회전목마를 돌려라' };
     }
     if (stage.layout === 'carousel') {
-      return { step: 'STEP 2 / 3', text: '움직이는 달빛 발판을 타고, 2로 중력을 뒤집어 천장 길을 넘으세요.', compact: '달빛 발판을 타고 2로 벽을 넘어라' };
+      return { step: 'STEP 2 / 3', text: '움직이는 달빛 발판에 올라타세요. 발판이 벽 위까지 실어 주면 점프로 반대편 선반으로 건너세요.', compact: '달빛 발판을 타고 벽 위로 건너라' };
     }
     if (goal > active) return { step: `STEP 1 / 2 · ${active} / ${goal}`, text: 'C로 길을 기록해 과거의 나를 기억 발판에 남기세요.', compact: `기억 발판 ${active} / ${goal}을 채워라` };
     if (goal > 0) return { step: 'STEP 2 / 2', text: '기억의 나가 길을 지키는 동안 꿈의 문으로 가세요.', compact: '열린 꿈의 문으로 가라' };
@@ -778,7 +771,6 @@ function startStage() {
   game.imagination = 100;
   game.elapsed = 0;
   game.bridge = false;
-  game.inverted = false;
   game.player = freshPlayer();
   game.dreamShots = [];
   game.nightmareShots = [];
@@ -871,7 +863,7 @@ function setupPuzzle(layout, echoGoal) {
     game.platforms = [
       { x: 0, y: 500, w: 190, h: 40, label: 'CHOIR START' },
       { x: 650, y: 500, w: 310, h: 40, label: 'RESONANCE HALL' },
-      // 기본 점프로도 닿는 높이: 첫 공명 발판에서 중력 반전을 요구하지 않는다.
+      // 기본 점프로도 닿는 높이: 첫 공명 발판에 무리 없이 접근할 수 있다.
       { x: 180, y: 420, w: 96, h: 14, hidden: true, label: '숨은 음계 1' },
       { x: 344, y: 336, w: 120, h: 14, hidden: true, label: '반향 다리' },
       { x: 522, y: 276, w: 120, h: 14, hidden: true, label: '기억의 음계' },
@@ -941,14 +933,13 @@ function setupPuzzle(layout, echoGoal) {
     ];
     game.exit = { x: 870, y: 254, w: 36, h: 82, label: 'WIND GATE' };
     game.fallZones = [];
-  } else if (layout === 'inverted-cliff') {
+  } else if (layout === 'wind-cliff') {
     game.platforms = [
       { x: 0, y: 500, w: 212, h: 40, label: 'CLIFF START' },
-      { x: 286, y: 86, w: 118, h: 16, label: 'CEILING LEDGE 01' },
-      { x: 478, y: 136, w: 118, h: 16, label: 'CEILING LEDGE 02' },
-      { x: 684, y: 76, w: 116, h: 16, label: 'CEILING LEDGE 03' },
-      { x: 772, y: 500, w: 188, h: 40, label: 'CLIFF END' },
-      { x: 604, y: 178, w: 74, h: 322, wall: true, persistentWall: true, label: 'HEADWIND PILLAR' },
+      { x: 430, y: 420, w: 106, h: 18, label: 'LOW WIND SHELF' },
+      { x: 556, y: 342, w: 92, h: 18, label: 'HIGH WIND SHELF' },
+      { x: 670, y: 360, w: 52, h: 140, wall: true, persistentWall: true, label: 'HEADWIND PILLAR' },
+      { x: 802, y: 420, w: 158, h: 18, label: 'CLIFF END' },
     ];
     game.exit = { x: 876, y: 418, w: 36, h: 82, label: 'CLIFF GATE' };
     game.fallZones = [];
@@ -1058,7 +1049,7 @@ function setupPuzzle(layout, echoGoal) {
     relay: [{ x: 135, y: 462, w: 30, h: 28, label: '출발 신호' }],
     dash: [{ x: 138, y: 462, w: 30, h: 28, label: '질주 기억' }],
     'wind-tunnel': [{ x: 135, y: 462, w: 30, h: 28, label: '터널 출발 신호' }],
-    'inverted-cliff': [{ x: 158, y: 462, w: 30, h: 28, label: '절벽의 약속' }],
+    'wind-cliff': [{ x: 158, y: 462, w: 30, h: 28, label: '절벽의 약속' }],
     'signpost-maze': [{ x: 132, y: 462, w: 30, h: 28, label: '진짜 출발 신호' }],
     'starlight-ferry': [],
     'garden-roots': [{ x: 574, y: 290, w: 30, h: 28, label: '뿌리의 기억' }],
@@ -1246,7 +1237,6 @@ function spend(amount) {
 function activeTechniques() {
   return {
     bridge: game.phase === 'playing' && hasSkill('bridge') && keys.has('Digit1') && game.imagination > 0,
-    gravity: game.phase === 'playing' && hasSkill('gravity') && keys.has('Digit2') && game.imagination > 0,
     time: game.phase === 'playing' && hasSkill('time') && (keys.has('ShiftLeft') || keys.has('ShiftRight')) && game.imagination > 0,
     resonance: game.phase === 'playing' && hasSkill('resonance') && keys.has('KeyV') && game.imagination > 0,
   };
@@ -1271,7 +1261,7 @@ function updateDash(dt) {
 function frozenTime() { return activeTechniques().time; }
 
 function imaginationRegen(dt, techniques) {
-  const drain = (techniques.bridge ? 16 : 0) + (techniques.gravity ? 28 : 0) + (techniques.time ? 28 : 0) + (techniques.resonance ? 14 : 0);
+  const drain = (techniques.bridge ? 16 : 0) + (techniques.time ? 28 : 0) + (techniques.resonance ? 14 : 0);
   if (drain > 0) {
     game.imagination = Math.max(0, game.imagination - drain * dt);
     if (game.imagination <= 0) disconnect();
@@ -1285,9 +1275,9 @@ function getBridge() {
 function getCarouselRide() {
   const progress = game.carouselRideProgress || 0;
   return {
-    x: 286 + progress * 252,
-    y: 414 - progress * 126,
-    w: 126,
+    x: 278 + progress * 238,
+    y: 430 - progress * 190,
+    w: 148,
     h: 18,
     carouselRide: true,
     label: 'MOONLIGHT CAROUSEL',
@@ -1323,13 +1313,12 @@ function resolveWallVertical(player, wall, oldY) {
   if (player.vy >= 0 && oldY + player.h <= wall.y + 6 && player.y + player.h >= wall.y) {
     player.y = wall.y - player.h;
     player.vy = 0;
-    player.grounded = !game.inverted;
+    player.grounded = true;
     return;
   }
   if (player.vy < 0 && oldY >= wall.y + wall.h - 6 && player.y <= wall.y + wall.h) {
     player.y = wall.y + wall.h;
     player.vy = 0;
-    player.grounded = game.inverted;
     return;
   }
   if (!overlaps(player, wall)) return;
@@ -1344,8 +1333,8 @@ function resolveWallVertical(player, wall, oldY) {
   const side = options[0].side;
   if (side === 'left') { player.x = wall.x - player.w; player.vx = 0; }
   else if (side === 'right') { player.x = wall.x + wall.w; player.vx = 0; }
-  else if (side === 'top') { player.y = wall.y - player.h; player.vy = 0; player.grounded = !game.inverted; }
-  else { player.y = wall.y + wall.h; player.vy = 0; player.grounded = game.inverted; }
+  else if (side === 'top') { player.y = wall.y - player.h; player.vy = 0; player.grounded = true; }
+  else { player.y = wall.y + wall.h; player.vy = 0; }
 }
 
 function updatePuzzle(dt) {
@@ -1356,24 +1345,28 @@ function updatePuzzle(dt) {
   updateDash(dt);
   imaginationRegen(dt, techniques);
   if (game.phase !== 'playing') return;
+  const p = game.player;
   if (stage.layout === 'carousel') {
+    const beforeRide = getCarouselRide();
+    const ridingCarousel = p.grounded && p.x + p.w > beforeRide.x + 3 && p.x < beforeRide.x + beforeRide.w - 3 && Math.abs(p.y + p.h - beforeRide.y) < 7;
     const turning = activeMemoryPads(game.memoryPads || []) >= game.echoGoal;
-    game.carouselRideProgress = Math.max(0, Math.min(1, (game.carouselRideProgress || 0) + (turning ? dt * .42 : -dt * .18)));
+    // 탑승한 아이를 함께 실어 나르는 느린 발판: 올라탄 뒤에도 발판이 몸 아래를 빠져나가지 않는다.
+    game.carouselRideProgress = Math.max(0, Math.min(1, (game.carouselRideProgress || 0) + (turning ? dt * .14 : -dt * .08)));
+    const afterRide = getCarouselRide();
+    if (ridingCarousel) {
+      p.x = Math.max(0, Math.min(W - p.w, p.x + afterRide.x - beforeRide.x));
+      p.y += afterRide.y - beforeRide.y;
+    }
   }
   game.bridge = techniques.bridge;
-  if (game.inverted !== techniques.gravity) {
-    game.inverted = techniques.gravity;
-    game.player.vy = game.inverted ? -120 : 120;
-  }
   if (!frozen) game.elapsed += dt;
-  const p = game.player;
   const axis = (keys.has('ArrowRight') ? 1 : 0) - (keys.has('ArrowLeft') ? 1 : 0);
   const accel = p.grounded ? 2100 : 1120;
   if (axis) { p.vx += axis * accel * dt; p.facing = axis; } else p.vx *= Math.pow(0.0007, dt);
   p.vx = Math.max(-290, Math.min(290, p.vx));
   const jump = pressed.has('Space') || pressed.has('ArrowUp');
-  if (jump && p.grounded) { p.vy = game.inverted ? 470 : -470; p.grounded = false; }
-  p.vy += (game.inverted ? -1220 : 1220) * dt;
+  if (jump && p.grounded) { p.vy = -470; p.grounded = false; }
+  p.vy += 1220 * dt;
   p.vy = Math.max(-720, Math.min(720, p.vy));
   const oldX = p.x;
   p.x = Math.max(0, Math.min(W - p.w, p.x + p.vx * dt));
@@ -1398,20 +1391,18 @@ function updatePuzzle(dt) {
   for (const platform of colliders) {
     if (p.x + p.w <= platform.x + 2 || p.x >= platform.x + platform.w - 2) continue;
     if (p.vy >= 0 && oldY + p.h <= platform.y + 5 && p.y + p.h >= platform.y) {
-      p.y = platform.y - p.h; p.vy = 0; p.grounded = !game.inverted;
-    } else if (p.vy < 0 && oldY >= platform.y + platform.h - 5 && p.y <= platform.y + platform.h) {
-      p.y = platform.y + platform.h; p.vy = 0; p.grounded = game.inverted;
+      p.y = platform.y - p.h; p.vy = 0; p.grounded = true;
     }
   }
   solidWalls.forEach((wall) => resolveWallVertical(p, wall, oldY));
-  if (p.y <= 0) { p.y = 0; p.vy = 0; p.grounded = game.inverted; }
+  if (p.y <= 0) { p.y = 0; p.vy = 0; }
   if (p.y + p.h >= H) {
     const inPit = game.bottomIsVoid || (game.fallZones || []).some((zone) => p.x + p.w * 0.5 >= zone.x && p.x + p.w * 0.5 <= zone.x + zone.w);
     if (inPit) {
       fallOffStage('낙사! 기억의 발판으로 다시 돌아왔어.');
       return;
     }
-    p.y = H - p.h; p.vy = 0; p.grounded = !game.inverted;
+    p.y = H - p.h; p.vy = 0; p.grounded = true;
   }
   updateMemoryLoops(dt);
   if (stage.layout === 'watcher' && !game.watcherResolved) {
@@ -2012,7 +2003,6 @@ function updateHud() {
   }
   const techniques = activeTechniques();
   ruleStates.bridge.textContent = techniques.bridge ? 'HOLDING · DRAIN 16 / SEC' : 'HOLD 1 · DRAIN 16 / SEC';
-  ruleStates.gravity.textContent = techniques.gravity ? 'HOLDING · DRAIN 28 / SEC' : 'HOLD 2 · DRAIN 28 / SEC';
   ruleStates.time.textContent = techniques.time ? 'HOLDING · DRAIN 28 / SEC' : 'HOLD SHIFT · DRAIN 28 / SEC';
   if (ruleStates.resonance) ruleStates.resonance.textContent = techniques.resonance ? 'HOLDING · DRAIN 14 / SEC' : 'HOLD V · DRAIN 14 / SEC';
   if (ruleStates.dash) ruleStates.dash.textContent = game.dashCooldown > 0 ? `COOLDOWN ${game.dashCooldown.toFixed(1)}s` : 'HOLD X · DASH FORWARD';
@@ -2182,10 +2172,10 @@ function drawPlatform(item) {
       }
       ctx.fillStyle = '#fff0a2';
       ctx.beginPath(); ctx.moveTo(item.x + item.w / 2, item.y + 30); ctx.lineTo(item.x + 22, item.y + 64); ctx.lineTo(item.x + item.w - 22, item.y + 64); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = '#4a1a51'; ctx.font = '900 22px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText('↑', item.x + item.w / 2, item.y + 57);
+      ctx.fillStyle = '#4a1a51'; ctx.font = '900 22px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText('↗', item.x + item.w / 2, item.y + 57);
       ctx.translate(item.x + item.w / 2, item.y + item.h / 2); ctx.rotate(-Math.PI / 2);
-      ctx.fillStyle = '#fff5c2'; ctx.font = '900 12px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText('GRAVITY WALL', 0, -7);
-      ctx.fillStyle = '#ffcf74'; ctx.font = '800 9px ui-monospace, monospace'; ctx.fillText('HOLD 2 · RISE ABOVE', 0, 11);
+      ctx.fillStyle = '#fff5c2'; ctx.font = '900 12px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText('DREAM WALL', 0, -7);
+      ctx.fillStyle = '#ffcf74'; ctx.font = '800 9px ui-monospace, monospace'; ctx.fillText('JUMP · RIDE · DASH', 0, 11);
       ctx.restore();
       return;
     }
@@ -2618,7 +2608,7 @@ function drawLayoutLandmarks() {
   } else if (layout === 'wind-tunnel') {
     ctx.strokeStyle = 'rgba(166, 239, 255, .22)'; ctx.lineWidth = 3;
     for (let row = 0; row < 5; row += 1) { const y = 118 + row * 76; ctx.beginPath(); ctx.moveTo(0, y); ctx.bezierCurveTo(240, y - 54, 498, y + 54, W, y - 8); ctx.stroke(); }
-  } else if (layout === 'inverted-cliff') {
+  } else if (layout === 'wind-cliff') {
     ctx.fillStyle = 'rgba(5, 16, 39, .46)'; ctx.fillRect(214, 0, 556, H);
     ctx.strokeStyle = 'rgba(166, 239, 255, .32)'; ctx.lineWidth = 2;
     [250, 430, 610, 790].forEach((x) => { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x - 56, H); ctx.stroke(); });
@@ -2821,7 +2811,7 @@ restartButton.addEventListener('click', () => {
   else if (game.phase === 'truth') newGame();
 });
 ruleCards.forEach((card) => {
-  const keyForRule = { bridge: 'Digit1', gravity: 'Digit2', time: 'ShiftLeft', resonance: 'KeyV', dash: 'KeyX' }[card.dataset.rule];
+  const keyForRule = { bridge: 'Digit1', time: 'ShiftLeft', resonance: 'KeyV', dash: 'KeyX' }[card.dataset.rule];
   card.addEventListener('pointerdown', () => {
     if (hasSkill(card.dataset.rule)) {
       if (card.dataset.rule === 'dash') triggerDash();
@@ -2846,10 +2836,10 @@ window.addEventListener('keydown', (event) => {
   }
   if (!keys.has(event.code)) pressed.add(event.code);
   keys.add(event.code);
-  const skillByKey = { Digit1: 'bridge', Digit2: 'gravity', ShiftLeft: 'time', ShiftRight: 'time', KeyV: 'resonance', KeyX: 'dash' };
+  const skillByKey = { Digit1: 'bridge', ShiftLeft: 'time', ShiftRight: 'time', KeyV: 'resonance', KeyX: 'dash' };
   const requestedSkill = skillByKey[event.code];
   if (!event.repeat && requestedSkill && isSkillBlocked(requestedSkill)) say(currentStage().blockedHint || '이 구역의 꿈 규칙 때문에 이 상상력 기술은 사용할 수 없습니다.');
-  if (event.code === 'Digit3' && !event.repeat) say(hasSkill('time') ? '1·2·Shift는 누르고 있는 동안 상상력을 계속 소모합니다.' : '이 기술은 다음 스테이지에서 배웁니다.');
+  if (event.code === 'Digit3' && !event.repeat) say(hasSkill('time') ? '1·Shift·V는 누르고 있는 동안 상상력을 계속 소모합니다.' : '이 기술은 다음 스테이지에서 배웁니다.');
   if (!event.repeat && event.code === 'KeyC') toggleMemoryRecording();
   if (!event.repeat && event.code === 'KeyZ') triggerBossShot();
   if (!event.repeat && event.code === 'KeyX') triggerDash();

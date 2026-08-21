@@ -173,7 +173,7 @@ canvas.connection-critical { filter: blur(4px) saturate(.4) brightness(.56); }
 .rules-panel { display: grid; grid-template-columns: 0.78fr 2fr; gap: 32px; align-items: end; margin-top: 22px; }
 .rules-intro h2 { font-size: 1.8rem; }
 .rules-intro > p:last-child { margin: 8px 0 0; color: var(--muted); line-height: 1.55; }
-.rule-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.rule-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 .rule-card {
   position: relative;
   min-height: 162px;
