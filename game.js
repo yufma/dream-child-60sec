@@ -683,7 +683,8 @@ function setupPuzzle(layout, echoGoal) {
     game.platforms = [
       { x: 0, y: 500, w: 190, h: 40, label: 'CHOIR START' },
       { x: 650, y: 500, w: 310, h: 40, label: 'RESONANCE HALL' },
-      { x: 180, y: 400, w: 96, h: 14, hidden: true, label: '숨은 음계 1' },
+      // 기본 점프로도 닿는 높이: 첫 공명 발판에서 중력 반전을 요구하지 않는다.
+      { x: 180, y: 420, w: 96, h: 14, hidden: true, label: '숨은 음계 1' },
       { x: 344, y: 336, w: 120, h: 14, hidden: true, label: '반향 다리' },
       { x: 522, y: 276, w: 120, h: 14, hidden: true, label: '기억의 음계' },
       { x: 712, y: 214, w: 110, h: 14, hidden: true, label: '별빛 파동' },
