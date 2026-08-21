@@ -7,6 +7,9 @@ const PLAYER_IDLE_SPRITE_PATH = 'assets/player/character-idle.png';
 const PLAYER_RUN_SPRITE_PATHS = Object.freeze(
   Array.from({ length: 12 }, (_, index) => `assets/player/run/frame-${String(index + 1).padStart(2, '0')}.png`),
 );
+const PLAYER_JUMP_SPRITE_PATHS = Object.freeze(
+  Array.from({ length: 12 }, (_, index) => `assets/player/jump/frame-${String(index + 1).padStart(2, '0')}.png`),
+);
 const PLAYER_RUN_FRAME_DURATIONS = Object.freeze([83, 83, 84, 83, 83, 84, 83, 83, 84, 83, 83, 84]);
 const PLAYER_RUN_CYCLE_MS = PLAYER_RUN_FRAME_DURATIONS.reduce((total, duration) => total + duration, 0);
 const PLAYER_SPRITE_SIZE = Object.freeze({ width: 48, height: 72, feetY: 70 });
@@ -20,6 +23,7 @@ function loadSprite(source) {
 const playerSprites = Object.freeze({
   idle: loadSprite(PLAYER_IDLE_SPRITE_PATH),
   run: PLAYER_RUN_SPRITE_PATHS.map(loadSprite),
+  jump: PLAYER_JUMP_SPRITE_PATHS.map(loadSprite),
 });
 
 const startScreen = document.querySelector('#start-screen');
@@ -2489,6 +2493,15 @@ function currentRunFrameIndex() {
   return PLAYER_RUN_FRAME_DURATIONS.length - 1;
 }
 
+function currentJumpFrameIndex(player) {
+  if ((player.vy || 0) < 0) {
+    const ascent = Math.max(0, Math.min(1, ((player.vy || 0) + 470) / 470));
+    return Math.min(6, Math.floor(ascent * 7));
+  }
+  const descent = Math.max(0, Math.min(1, (player.vy || 0) / 520));
+  return 7 + Math.min(4, Math.floor(descent * 5));
+}
+
 function playerMotionState(player, bossMode = false) {
   const dashRatio = Math.max(0, Math.min(1, (game.dashVisualTimer || 0) / DASH_VISUAL_DURATION));
   if (dashRatio > 0) {
@@ -2515,10 +2528,7 @@ function playerMotionState(player, bossMode = false) {
     };
   }
 
-  if (!bossMode && !player.grounded) {
-    const vertical = Math.max(-1, Math.min(1, (player.vy || 0) / 520));
-    return { rotation: vertical * .035, scaleX: 1 - Math.abs(vertical) * .018, scaleY: 1 + Math.abs(vertical) * .025 };
-  }
+  if (!bossMode && !player.grounded) return { jumping: true, frameIndex: currentJumpFrameIndex(player) };
   return {};
 }
 
@@ -2657,9 +2667,11 @@ function drawFallbackChild(player, bossMode = false) {
 
 function drawChild(player, bossMode = false) {
   const motion = playerMotionState(player, bossMode);
-  const image = motion.running || motion.dashing
-    ? playerSprites.run[motion.frameIndex] || playerSprites.idle
-    : playerSprites.idle;
+  const image = motion.jumping
+    ? playerSprites.jump[motion.frameIndex] || playerSprites.idle
+    : motion.running || motion.dashing
+      ? playerSprites.run[motion.frameIndex] || playerSprites.idle
+      : playerSprites.idle;
   if (!image.complete || image.naturalWidth === 0) {
     drawFallbackChild(player, bossMode);
     return;
