@@ -978,9 +978,9 @@ function setupPuzzle(layout, echoGoal) {
   } else if (layout === 'classroom-fracture') {
     game.platforms = [
       { x: 0, y: 500, w: 196, h: 40, label: 'LOWER CLASSROOM' },
-      { x: 234, y: 404, w: 102, h: 18, label: 'LOW DESK ROW' },
-      { x: 370, y: 326, w: 96, h: 16, hidden: true, label: 'CRACK BRIDGE' },
-      { x: 498, y: 254, w: 112, h: 18, label: 'UPPER DESK ROW' },
+      { x: 234, y: 420, w: 102, h: 18, label: 'LOW DESK ROW' },
+      { x: 370, y: 342, w: 96, h: 16, hidden: true, label: 'CRACK BRIDGE' },
+      { x: 498, y: 266, w: 112, h: 18, label: 'UPPER DESK ROW' },
       { x: 650, y: 338, w: 108, h: 16, hidden: true, label: 'WINDOW PATH' },
       { x: 790, y: 414, w: 170, h: 18, label: 'CLASSROOM EXIT' },
     ];
@@ -1054,8 +1054,8 @@ function setupPuzzle(layout, echoGoal) {
     'starlight-ferry': [],
     'garden-roots': [{ x: 574, y: 290, w: 30, h: 28, label: '뿌리의 기억' }],
     'classroom-fracture': [
-      { x: 266, y: 376, w: 30, h: 28, label: '낮은 친구 자리' },
-      { x: 532, y: 226, w: 30, h: 28, label: '높은 친구 자리' },
+      { x: 266, y: 392, w: 30, h: 28, label: '낮은 친구 자리' },
+      { x: 532, y: 238, w: 30, h: 28, label: '높은 친구 자리' },
     ],
     carousel: [{ x: 204, y: 462, w: 30, h: 28, label: '회전목마 손잡이' }],
     watcher: [
@@ -1138,10 +1138,6 @@ function activeMemoryPads(pads, includePresentSelf = false) {
 }
 
 function beginMemoryRecording() {
-  if (game.echoes.length >= 3) {
-    say('기억의 나는 세 명까지 남길 수 있습니다.');
-    return;
-  }
   if (!spend(8)) return;
   const p = game.player;
   game.recording = {
@@ -1185,10 +1181,16 @@ function finishMemoryRecording() {
     baitUses: 0,
     baitCooldown: 0,
   };
+  const replacedOldestEcho = game.echoes.length >= 3;
+  if (replacedOldestEcho) {
+    game.echoes.shift();
+  }
   game.echoes.push(echo);
   Object.assign(game.player, { ...recording.start, vx: 0, vy: 0, grounded: false });
   game.recording = null;
-  say('되감기 완료. 기억의 나가 방금 전 길을 재생해 마지막 발판을 지킵니다. 현재의 나는 다음 기억을 만들러 가세요.');
+  say(replacedOldestEcho
+    ? '되감기 완료. 가장 오래된 기억의 나가 사라지고, 새 기록이 세 번째 자리를 이어받았습니다.'
+    : '되감기 완료. 기억의 나가 방금 전 길을 재생해 마지막 발판을 지킵니다. 현재의 나는 다음 기억을 만들러 가세요.');
 }
 
 function toggleMemoryRecording() {
