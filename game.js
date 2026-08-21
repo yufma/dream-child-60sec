@@ -10,6 +10,25 @@ const PLAYER_RUN_SPRITE_PATHS = Object.freeze(
 const PLAYER_JUMP_SPRITE_PATHS = Object.freeze(
   Array.from({ length: 12 }, (_, index) => `assets/player/jump/frame-${String(index + 1).padStart(2, '0')}.png`),
 );
+const HARIN_BACKGROUND_PATHS = Object.freeze(
+  [
+    'assets/backgrounds/harin-stage-01-v2.png',
+    'assets/backgrounds/harin-stage-02-side-base-v3.png',
+    ...Array.from({ length: 4 }, (_, index) => `assets/backgrounds/harin-stage-${String(index + 3).padStart(2, '0')}.png`),
+  ],
+);
+const HARIN_STAGE_02_GATE_PATHS = Object.freeze({
+  blocked: 'assets/backgrounds/harin-stage-02-wall-ruined-structural-side10-clean-dark-outline-alpha-v15.png',
+  open: 'assets/backgrounds/harin-stage-02-wall-restored-side10-clean-dark-outline-alpha-v15.png',
+});
+const HARIN_STAGE_02_GATE_DRAW = Object.freeze({
+  scale: .38,
+  roadOverlap: 18,
+  blocked: Object.freeze({ entranceCenterSourceX: 590, splitSourceX: 590, groundSourceY: 1066 }),
+  open: Object.freeze({ entranceCenterSourceX: 555, splitSourceX: 555, groundSourceY: 1072 }),
+});
+const HARIN_BACKGROUND_Y_OFFSETS = Object.freeze([40, 0, 0, 0, 0, 0]);
+const HARIN_STAGE_02_ROAD_ALIGNMENT = Object.freeze({ sourceY: 718, targetY: 500 });
 const PLAYER_RUN_FRAME_DURATIONS = Object.freeze([83, 83, 84, 83, 83, 84, 83, 83, 84, 83, 83, 84]);
 const PLAYER_RUN_CYCLE_MS = PLAYER_RUN_FRAME_DURATIONS.reduce((total, duration) => total + duration, 0);
 const PLAYER_SPRITE_SIZE = Object.freeze({ width: 48, height: 72, feetY: 70 });
@@ -24,6 +43,11 @@ const playerSprites = Object.freeze({
   idle: loadSprite(PLAYER_IDLE_SPRITE_PATH),
   run: PLAYER_RUN_SPRITE_PATHS.map(loadSprite),
   jump: PLAYER_JUMP_SPRITE_PATHS.map(loadSprite),
+});
+const harinBackgrounds = Object.freeze(HARIN_BACKGROUND_PATHS.map(loadSprite));
+const harinStage02GateSprites = Object.freeze({
+  blocked: loadSprite(HARIN_STAGE_02_GATE_PATHS.blocked),
+  open: loadSprite(HARIN_STAGE_02_GATE_PATHS.open),
 });
 
 const startScreen = document.querySelector('#start-screen');
@@ -579,7 +603,7 @@ function dreamTheme(stage = currentStage()) {
   if (chapter.includes('딸')) {
     return { id: 'daughter', label: "DAUGHTER'S DREAM · THE PERFECT GARDEN", top: '#4a2854', mid: '#35305c', bottom: '#182c50', line: '#b67bb3', accent: '#ffb5df', soft: '#b8ffcf', platform: '#5a3b72', edge: '#ffb5df' };
   }
-  return { id: 'harin', label: "HARIN'S DREAM · THE MOONLIGHT FAIR", top: '#211047', mid: '#122454', bottom: '#0b1939', line: '#7165bd', accent: '#ffb5d7', soft: '#ffe27e', platform: '#332861', edge: '#ffcf88' };
+  return { id: 'harin', label: "HARIN'S DREAM · THE MOONLIGHT FAIR", top: '#10143d', mid: '#17275e', bottom: '#0b163a', line: '#665ba8', accent: '#78cfff', soft: '#9183d5', gold: '#ffd65a', platform: '#292c60', edge: '#ffd65a' };
 }
 
 function phaseGuide() {
@@ -2224,42 +2248,107 @@ function updateMemoryLoopUI() {
   }
 }
 
+function drawCoverImage(image, offsetY = 0) {
+  const sourceWidth = image.naturalWidth;
+  const sourceHeight = image.naturalHeight;
+  const sourceRatio = sourceWidth / sourceHeight;
+  const targetRatio = W / H;
+  let cropX = 0;
+  let cropY = 0;
+  let cropWidth = sourceWidth;
+  let cropHeight = sourceHeight;
+  if (sourceRatio > targetRatio) {
+    cropWidth = sourceHeight * targetRatio;
+    cropX = (sourceWidth - cropWidth) / 2;
+  } else {
+    cropHeight = sourceWidth / targetRatio;
+    cropY = (sourceHeight - cropHeight) / 2;
+  }
+  ctx.drawImage(image, cropX, cropY, cropWidth, cropHeight, 0, offsetY, W, H);
+}
+
+function drawHarinStage02Background(image) {
+  // 원본 도로의 상단 픽셀을 게임 바닥선에 맞추되 배경의 종횡비는 유지한다.
+  const scale = HARIN_STAGE_02_ROAD_ALIGNMENT.targetY / HARIN_STAGE_02_ROAD_ALIGNMENT.sourceY;
+  const drawWidth = image.naturalWidth * scale;
+  const drawHeight = image.naturalHeight * scale;
+  ctx.drawImage(image, (W - drawWidth) / 2, 0, drawWidth, drawHeight);
+}
+
+function drawHarinPixelBackground(stageIndex, boss) {
+  const image = harinBackgrounds[Math.max(0, Math.min(5, stageIndex))];
+  if (!image?.complete || image.naturalWidth === 0) return false;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#07132f';
+  ctx.fillRect(0, 0, W, H);
+  if (stageIndex === 1) drawHarinStage02Background(image);
+  else drawCoverImage(image, HARIN_BACKGROUND_Y_OFFSETS[stageIndex] || 0);
+  ctx.fillStyle = `rgba(5, 11, 31, ${boss ? .18 : stageIndex === 5 ? .07 : .11})`;
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = 'rgba(4, 9, 27, .1)';
+  ctx.fillRect(0, Math.round(H * .58), W, Math.round(H * .42));
+  ctx.restore();
+  return true;
+}
+
+function getHarinStage02GateSprite(gateOpen) {
+  const state = gateOpen ? 'open' : 'blocked';
+  const image = harinStage02GateSprites[state];
+  if (!image?.complete || image.naturalWidth === 0) return null;
+  return { image, state, anchor: HARIN_STAGE_02_GATE_DRAW[state] };
+}
+
+function drawHarinStage02GateLayer(gateSprite, structure, layer) {
+  if (!gateSprite || !structure) return;
+  const { image, anchor } = gateSprite;
+  const scale = HARIN_STAGE_02_GATE_DRAW.scale;
+  const entranceCenterX = structure.x + structure.w / 2;
+  // 이미지 전체 중심 대신 성문 입구 중심을 실제 차단 구조물 중심에 고정한다.
+  const drawX = entranceCenterX - anchor.entranceCenterSourceX * scale;
+  const drawY = structure.y + structure.h + HARIN_STAGE_02_GATE_DRAW.roadOverlap - anchor.groundSourceY * scale;
+  const splitSourceX = Math.max(0, Math.min(image.naturalWidth, anchor.splitSourceX));
+  const sourceX = layer === 'far' ? 0 : splitSourceX;
+  const sourceWidth = layer === 'far' ? splitSourceX : image.naturalWidth - splitSourceX;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(
+    image,
+    sourceX, 0, sourceWidth, image.naturalHeight,
+    drawX + sourceX * scale, drawY, sourceWidth * scale, image.naturalHeight * scale,
+  );
+  ctx.restore();
+}
+
 function drawBackground(boss = false, bossLabel = '') {
   const theme = dreamTheme();
-  const g = ctx.createLinearGradient(0, 0, W, H);
-  g.addColorStop(0, theme.top);
-  g.addColorStop(.53, theme.mid);
-  g.addColorStop(1, theme.bottom);
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  ctx.save(); ctx.globalAlpha = boss ? .18 : .28; ctx.strokeStyle = theme.line; ctx.lineWidth = 1;
-  for (let x = -80; x < W + 100; x += 48) { ctx.beginPath(); ctx.moveTo(x, H); ctx.lineTo(x + 260, 0); ctx.stroke(); }
-  for (let y = 40; y < H; y += 42) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
-  ctx.restore();
-  drawThemeAtmosphere(theme, boss);
-  ctx.save(); ctx.fillStyle = 'rgba(226, 239, 255, .72)';
-  for (let i = 0; i < 32; i += 1) { const x = (i * 137 + 37) % W; const y = 22 + ((i * 71) % 250); ctx.fillRect(x, y, i % 5 === 0 ? 2 : 1, i % 5 === 0 ? 2 : 1); }
+  const bitmapDrawn = theme.id === 'harin' && drawHarinPixelBackground(game.stageIndex, boss);
+  if (!bitmapDrawn) {
+    const g = ctx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, theme.top);
+    g.addColorStop(.53, theme.mid);
+    g.addColorStop(1, theme.bottom);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.save(); ctx.globalAlpha = boss ? .18 : .28; ctx.strokeStyle = theme.line; ctx.lineWidth = 1;
+    for (let x = -80; x < W + 100; x += 48) { ctx.beginPath(); ctx.moveTo(x, H); ctx.lineTo(x + 260, 0); ctx.stroke(); }
+    for (let y = 40; y < H; y += 42) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+    ctx.restore();
+    drawThemeAtmosphere(theme, boss);
+    ctx.save(); ctx.fillStyle = 'rgba(226, 239, 255, .72)';
+    for (let i = 0; i < 32; i += 1) { const x = (i * 137 + 37) % W; const y = 22 + ((i * 71) % 250); ctx.fillRect(x, y, i % 5 === 0 ? 2 : 1, i % 5 === 0 ? 2 : 1); }
+    ctx.restore();
+  }
+  ctx.save();
   ctx.fillStyle = boss ? theme.soft : theme.accent; ctx.font = '700 10px ui-monospace, monospace'; ctx.textAlign = 'left';
   ctx.fillText(boss ? (bossLabel || theme.label) : theme.label, 25, 31); ctx.restore();
 }
+
 
 function drawThemeAtmosphere(theme, boss) {
   const t = game.elapsed || 0;
   ctx.save();
   if (theme.id === 'harin') {
-    ctx.globalAlpha = .24; ctx.strokeStyle = theme.soft; ctx.lineWidth = 2;
-    [156, 776].forEach((x, index) => {
-      const y = 324 + Math.sin(t * 1.2 + index) * 7;
-      ctx.beginPath(); ctx.arc(x, y, 72, 0, Math.PI * 2); ctx.stroke();
-      for (let spoke = 0; spoke < 8; spoke += 1) {
-        const angle = spoke * Math.PI / 4 + t * .18;
-        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(angle) * 72, y + Math.sin(angle) * 72); ctx.stroke();
-      }
-    });
-    ctx.globalAlpha = .48; ctx.fillStyle = theme.accent;
-    for (let x = 80; x < W; x += 94) {
-      const flagY = 80 + (x % 3) * 8;
-      ctx.beginPath(); ctx.moveTo(x, flagY); ctx.lineTo(x + 15, flagY + 10 + Math.sin(t * 3 + x) * 3); ctx.lineTo(x + 30, flagY); ctx.closePath(); ctx.fill();
-    }
+    // 하린의 첫 여섯 스테이지는 생성된 픽셀 배경 이미지를 사용한다.
   } else if (theme.id === 'yuna') {
     ctx.globalAlpha = .22; ctx.strokeStyle = theme.soft; ctx.lineWidth = 1;
     for (let line = 0; line < 5; line += 1) {
@@ -2319,17 +2408,20 @@ function drawThemeAtmosphere(theme, boss) {
 function drawPlatform(item) {
   if (item.wall) {
     if (item.persistentWall) {
+      const carouselWall = game.layout === 'carousel';
       const wallGradient = ctx.createLinearGradient(item.x, item.y, item.x + item.w, item.y);
-      wallGradient.addColorStop(0, '#2b114d');
-      wallGradient.addColorStop(.5, '#67235d');
-      wallGradient.addColorStop(1, '#2b114d');
+      wallGradient.addColorStop(0, carouselWall ? '#171a48' : '#2b114d');
+      wallGradient.addColorStop(.5, carouselWall ? '#4b3f7c' : '#67235d');
+      wallGradient.addColorStop(1, carouselWall ? '#171a48' : '#2b114d');
       ctx.save();
-      ctx.shadowBlur = 30; ctx.shadowColor = '#ff5f9b';
+      ctx.shadowBlur = 30; ctx.shadowColor = carouselWall ? '#78cfff' : '#ff5f9b';
       ctx.fillStyle = wallGradient; ctx.fillRect(item.x, item.y, item.w, item.h);
-      ctx.shadowBlur = 0; ctx.strokeStyle = '#ffd36e'; ctx.lineWidth = 4; ctx.strokeRect(item.x + 2, item.y + 2, item.w - 4, item.h - 4);
-      ctx.strokeStyle = '#ff8eb8'; ctx.lineWidth = 2; ctx.strokeRect(item.x + 9, item.y + 9, item.w - 18, item.h - 18);
+      ctx.shadowBlur = 0; ctx.strokeStyle = carouselWall ? '#ffd65a' : '#ffd36e'; ctx.lineWidth = 4; ctx.strokeRect(item.x + 2, item.y + 2, item.w - 4, item.h - 4);
+      ctx.strokeStyle = carouselWall ? '#9183d5' : '#ff8eb8'; ctx.lineWidth = 2; ctx.strokeRect(item.x + 9, item.y + 9, item.w - 18, item.h - 18);
       for (let y = item.y + 24; y < item.y + item.h - 12; y += 30) {
-        ctx.fillStyle = y % 60 === item.y % 60 ? '#ff7eae' : '#7f3c83';
+        ctx.fillStyle = carouselWall
+          ? y % 60 === item.y % 60 ? '#78cfff' : '#514679'
+          : y % 60 === item.y % 60 ? '#ff7eae' : '#7f3c83';
         ctx.fillRect(item.x + 16, y, item.w - 32, 12);
       }
       ctx.fillStyle = '#fff0a2';
@@ -2934,10 +3026,17 @@ function drawPuzzle() {
   drawLayoutLandmarks();
   const techniques = activeTechniques();
   const gateOpen = (game.echoGoal === 0 || activeMemoryPads(game.memoryPads) >= game.echoGoal) && (game.layout !== 'watcher' || game.watcherResolved);
+  const stage02GateStructure = game.layout === 'bridge'
+    ? game.platforms.find((platform) => platform.wall && platform.label === 'MEMORY GATE')
+    : null;
+  const stage02GateSprite = stage02GateStructure ? getHarinStage02GateSprite(gateOpen) : null;
+  if (stage02GateSprite) drawHarinStage02GateLayer(stage02GateSprite, stage02GateStructure, 'far');
   (game.fallZones || []).forEach(drawFallZone);
   game.platforms.forEach((platform) => {
     const hidden = platform.hidden && !techniques.resonance;
-    if (platform.wall && gateOpen && game.layout === 'carousel' && !platform.persistentWall) {
+    if (platform === stage02GateStructure && stage02GateSprite) {
+      return;
+    } else if (platform.wall && gateOpen && game.layout === 'carousel' && !platform.persistentWall) {
       return;
     } else if (platform.wall && gateOpen) {
       ctx.save(); ctx.globalAlpha = .16; drawPlatform(platform); ctx.restore();
@@ -2962,6 +3061,7 @@ function drawPuzzle() {
   if (game.exit) drawExit();
   drawDreamTrails(false);
   if (game.player) drawChild(game.player);
+  if (stage02GateSprite) drawHarinStage02GateLayer(stage02GateSprite, stage02GateStructure, 'near');
   drawPhaseGuide();
 }
 
@@ -2970,10 +3070,7 @@ function drawLayoutLandmarks() {
   const t = game.elapsed || 0;
   ctx.save();
   if (layout === 'lantern-river') {
-    ctx.fillStyle = 'rgba(8, 18, 52, .5)'; ctx.fillRect(0, 438, W, 102);
-    ctx.strokeStyle = 'rgba(173, 223, 255, .24)'; ctx.lineWidth = 2;
-    for (let y = 458; y < H; y += 20) { ctx.beginPath(); ctx.moveTo(0, y); ctx.quadraticCurveTo(170, y - 10 + Math.sin(t * 2 + y) * 4, 340, y); ctx.quadraticCurveTo(610, y + 10, W, y); ctx.stroke(); }
-    [368, 534, 704, 850].forEach((x, index) => { ctx.fillStyle = index % 2 ? '#ffcf88' : '#ffb5d7'; ctx.globalAlpha = .35 + Math.sin(t * 4 + index) * .12; ctx.shadowBlur = 20; ctx.shadowColor = ctx.fillStyle; ctx.fillRect(x, 430 - index % 2 * 70, 4, 34); });
+    // 실제 픽셀 배경의 수로와 반사를 그대로 사용해 도형 장식이 겹치지 않게 한다.
   } else if (layout === 'choir-balcony') {
     ctx.strokeStyle = 'rgba(158, 255, 215, .25)'; ctx.lineWidth = 3;
     [210, 348, 490, 624, 778].forEach((x) => { ctx.beginPath(); ctx.moveTo(x, 132); ctx.lineTo(x, 486); ctx.stroke(); });
