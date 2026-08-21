@@ -94,8 +94,8 @@ const STAGES = [
   },
   {
     chapter: '유나 · 사라진 노래', name: '지워진 악보의 계단', type: 'puzzle', skills: ['resonance'], objective: '사라진 음계를 공명으로 되돌려라',
-    intro: '유나의 악보에는 음표 사이사이가 통째로 지워져 있어. V를 누르는 동안에만 빠진 음계가 돌아온다. 한 명의 과거의 나에게 첫 화음을 맡기고, 현재의 너는 그 위로 이어지는 다음 음을 찾아가자.',
-    layout: 'chorus', echoGoal: 1, hint: 'V로 사라진 음계를 드러내고, C로 첫 화음에 기억의 나를 남기세요.',
+    intro: '유나의 악보에는 음표 사이사이가 통째로 지워져 있어. V를 누르는 동안에만 빠진 음계와 그 위의 기억 문양이 돌아온다. 먼저 공명으로 세 번째 음계까지 올라가. 그 위에서 C로 짧은 기억을 남기면, 과거의 네가 그 음을 붙잡고 길을 완성할 거야.',
+    layout: 'chorus-memory', echoGoal: 1, hint: '① V를 유지해 세 번째 숨은 음계까지 올라가세요. ② 그 위의 기억 문양에서 C를 두 번 눌러 과거의 나를 남기세요.',
   },
   {
     chapter: '유나 · 사라진 노래', name: '두 사람의 화음', type: 'puzzle', skills: ['resonance'], objective: '두 빈자리를 채워 잃어버린 화음을 완성하라',
@@ -660,7 +660,7 @@ function setupPuzzle(layout, echoGoal) {
       { x: 175, y: 500, w: 290, h: 40 },
       { x: 555, y: 500, w: 240, h: 40 },
     ];
-  } else if (layout === 'chorus') {
+  } else if (layout === 'chorus' || layout === 'chorus-memory') {
     game.platforms = [
       { x: 0, y: 500, w: 190, h: 40, label: 'CHOIR FLOOR' },
       { x: 246, y: 500, w: 150, h: 40, label: 'ECHO FLOOR' },
@@ -736,6 +736,8 @@ function setupPuzzle(layout, echoGoal) {
     bridge: [{ x: 165, y: 462, w: 30, h: 28, label: '첫 약속' }],
     wall: [{ x: 165, y: 462, w: 30, h: 28, label: '별빛 약속' }],
     chorus: [{ x: 382, y: 462, w: 30, h: 28, label: '노래 기억' }],
+    // 9스테이지: 공명으로 계단을 드러낸 뒤에만 도달할 수 있는 세 번째 음계 위의 기억 발판.
+    'chorus-memory': [{ x: 564, y: 248, w: 30, h: 28, label: '세 번째 음의 기억', hidden: true }],
     duet: [
       { x: 150, y: 462, w: 30, h: 28, label: '첫 번째 빈 의자' },
       { x: 520, y: 462, w: 30, h: 28, label: '두 번째 빈 의자' },
@@ -1676,7 +1678,10 @@ function drawPuzzle() {
   });
   if (game.layout === 'wall') drawBridge(getBridge());
   if (game.layout === 'watcher') drawWatcher(getWatcher(), frozenTime(), game.watcherResolved);
-  game.memoryPads.forEach((pad, index) => drawMemoryPad(pad, activeMemoryPads([pad]) > 0, index));
+  game.memoryPads.forEach((pad, index) => {
+    // 공명이 꺼져 있을 때는 9스테이지의 기억 발판도 함께 감춘다.
+    if (!pad.hidden || techniques.resonance) drawMemoryPad(pad, activeMemoryPads([pad]) > 0, index);
+  });
   game.echoes.forEach(drawEcho);
   if (game.exit) drawExit();
   if (game.player) drawChild(game.player);
