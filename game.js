@@ -72,14 +72,20 @@ const STAGES = [
     layout: 'wall', echoGoal: 1, hint: '이 구역에서는 중력 반전이 막힙니다. 기억의 나를 발판에 남기고 1의 잔상 발판으로 깊은 틈을 건너세요.',
   },
   {
-    chapter: '하린 · 잃어버린 웃음', name: '무너지는 회전목마', type: 'puzzle', skills: ['gravity'], teaches: ['gravity'], blockedSkills: ['bridge'], objective: '중력 전환으로 회전목마 벽을 넘어라',
-    intro: '회전목마의 벽은 너무 높아서 뛰어넘을 수 없어. 하지만 꿈속에서는 “아래”가 꼭 발밑일 필요는 없지. 2를 누르고 있으면 달의 방향이 바뀌어 천장으로 올라갈 수 있어. 벽보다 높이 올라간 뒤 오른쪽으로 이동하고, 2를 놓아 반대편으로 내려가 보자.',
-    layout: 'carousel', echoGoal: 0, blockedHint: '회전목마 구역에서는 잔상 발판만 고정되어 있습니다. 2를 유지해 벽보다 높은 곳으로 올라가세요.', hint: '2를 누른 채 벽보다 높이 올라가세요 → 오른쪽으로 이동 → 2를 놓아 웃음 코어 쪽으로 내려오세요.',
+    chapter: '하린 · 잃어버린 웃음', name: '무너지는 회전목마', type: 'puzzle', skills: ['gravity'], teaches: ['gravity'], blockedSkills: ['bridge'], objective: '기억의 나가 돌린 회전목마를 타고 중력의 벽을 넘어라',
+    intro: '회전목마의 벽은 너무 높아서 뛰어넘을 수 없어. 먼저 C로 과거의 나를 회전목마 손잡이에 남겨 줘. 기억의 내가 회전목마를 돌리면, 현재의 네가 올라탈 달빛 발판이 움직여. 그 위에서 2를 눌러 중력을 뒤집고 벽보다 높은 천장 길로 올라가자.',
+    layout: 'carousel', echoGoal: 1, blockedHint: '먼저 기억의 나를 회전목마 손잡이에 남겨야 달의 방향을 바꿀 수 있습니다.', hint: '① C로 회전목마 손잡이에 기억을 남기기 ② 움직이는 달빛 발판에 오르기 ③ 2로 천장 길을 넘어가세요.',
   },
   {
     chapter: '하린 · 잃어버린 웃음', name: '하린이 가장 두려워한 것', type: 'boss', skills: ['time'], objective: '행복한 기억을 맞추고 멈춘 순간으로 하린을 안심시켜라',
     intro: '하린은 모두가 웃는 곳에서 혼자 웃지 못하게 될까 봐 두려워했어. 그 두려움이 “웃음을 훔치는 광대”가 되었다. 여기서는 공격도 탄막도 없어. C로 두 개의 기억 자리에 과거의 나를 남기고, 현재의 나는 마지막 빛 위에 서서 Shift를 잠시 눌러 줘. 시간이 멈춘 그 순간, 하린에게 “너는 혼자가 아니야”라고 전하는 거야.',
-    boss: '웃음을 훔치는 광대', bossConfig: { mode: 'calm', visual: 'carousel', calmDuration: 2.1 }, hint: '① 기억의 나 둘을 빛에 남기기 ② 현재의 나는 마지막 빛에 서기 ③ Shift를 2.1초 유지해 하린을 안심시키세요.',
+    boss: '웃음을 훔치는 광대', bossConfig: {
+      mode: 'calm', visual: 'carousel', calmDuration: 2.1,
+      distortedMemoryPads: [
+        { x: 128, y: 316, w: 42, h: 42, label: '혼자 웃기' },
+        { x: 470, y: 132, w: 42, h: 42, label: '텅 빈 관람석' },
+      ],
+    }, hint: '① “함께한” 진짜 기억 두 곳에만 기억의 나를 남기기 ② 현재의 나는 마지막 빛에 서기 ③ Shift를 2.1초 유지해 하린을 안심시키세요.',
     teaches: ['time'],
   },
   {
@@ -110,7 +116,7 @@ const STAGES = [
   },
   {
     chapter: '유나 · 사라진 노래', name: '침묵을 삼킨 합창단', type: 'boss', skills: ['resonance'], objective: '공명으로 세 개의 잃어버린 음을 되찾아라',
-    intro: '유나는 아무리 크게 노래해도 아무에게도 닿지 않을까 봐 두려웠다. 그 두려움은 “침묵을 삼킨 합창단”이 되어 모든 소리를 지운다. 먼저 과거의 나 둘에게 화음 앵커를 맡겨. 그 다음 V 공명을 유지한 채 차례로 나타나는 네 음을 통과하면, 유나의 목소리가 돌아올 거야. 침묵은 음표 탄막으로 길을 막지만, 옆으로 흐르면 피할 수 있어.',
+    intro: '유나는 아무리 크게 노래해도 아무에게도 닿지 않을까 봐 두려웠다. 그 두려움은 “침묵을 삼킨 합창단”이 되어 모든 소리를 지운다. 먼저 과거의 나 둘에게 서로 다른 화음 앵커를 맡겨. 그 다음 별빛 고리가 밝아지는 박자에 맞춰 V를 짧게 눌러, 네 음을 순서대로 되찾자. 침묵은 음표 탄막으로 길을 막지만, 옆으로 흐르면 피할 수 있어.',
     boss: '침묵을 삼킨 합창단', bossConfig: {
       mode: 'resonance', visual: 'choir',
       moveBounds: { xMin: 45, xMax: 720, yMin: 86, yMax: 437 },
@@ -125,7 +131,7 @@ const STAGES = [
         { x: 672, y: 202, w: 42, h: 42, label: '되찾은 후렴' },
       ],
     },
-    hint: '① 기억의 나 둘을 화음 앵커에 남기기 ② V를 유지한 채 나타나는 음 4개를 순서대로 통과하세요. 침묵 탄막은 옆으로 흘려 보내세요.',
+    hint: '① 기억의 나 둘을 화음 앵커에 남기기 ② 밝아지는 고리 앞에서 V를 짧게 눌러 음 4개를 순서대로 되찾기 ③ 침묵 탄막은 옆으로 흘려 보내세요.',
   },
   {
     chapter: '유나 · 사라진 노래', name: '유나의 노래가 남긴 별', type: 'puzzle', skills: ['resonance'], objective: '되찾은 노랫길을 따라 다음 꿈으로 향하라',
@@ -156,7 +162,7 @@ const STAGES = [
   },
   {
     chapter: '하늘 · 멈춰 버린 발걸음', name: '하늘이의 바람 끝', type: 'boss', skills: ['resonance', 'dash'], objective: '돌풍을 기억의 나에게 유인하고 질주로 바람길을 뚫어라',
-    intro: '하늘이는 넘어져도 다시 달리던 아이였어. 하지만 마지막에는 아무리 달려도 제자리라고 느끼는 것이 가장 무서웠다. 그 공포가 모든 길을 되돌려 보내는 검은 연이 되었다. 먼저 C로 두 명의 과거의 나를 출발 깃발에 남겨 돌풍을 유인해. 검은 연이 세 번 잘못된 길을 쫓으면, 열리는 네 개의 바람 고리를 X 질주로 순서대로 통과하자. 이번 보스는 기억을 “자리”가 아니라 “미끼”로 쓰는 추격전이야.',
+    intro: '하늘이는 넘어져도 다시 달리던 아이였어. 하지만 마지막에는 아무리 달려도 제자리라고 느끼는 것이 가장 무서웠다. 그 공포가 모든 길을 되돌려 보내는 검은 연이 되었다. 먼저 C로 두 명의 과거의 나를 출발 깃발에 남겨 돌풍을 유인해. 그 다음 열리는 바람 고리를 X 질주로 연속 통과해 용기를 쌓아야 해. 너무 오래 망설이면 바람이 다시 출발점으로 되돌려 보낸다.',
     boss: '바람을 삼킨 검은 연', bossConfig: {
       mode: 'chase', visual: 'wind', requiredEchoHits: 3, attackTarget: 'echo',
       moveBounds: { xMin: 45, xMax: 720, yMin: 86, yMax: 437 },
@@ -171,7 +177,7 @@ const STAGES = [
         { x: 678, y: 212, w: 30, h: 84, label: '끝의 질주' },
       ],
     },
-    hint: '① 기억의 나 둘을 출발 깃발에 남기기 ② 돌풍 유인 3회 ③ 열린 바람 고리 4개를 X 질주로 순서대로 통과하세요.',
+    hint: '① 기억의 나 둘을 출발 깃발에 남기기 ② 돌풍 유인 3회 ③ 열린 바람 고리 4개를 제한 시간 안에 X 질주로 연속 통과하세요.',
   },
   {
     chapter: '하늘 · 멈춰 버린 발걸음', name: '하늘이의 발걸음이 남긴 길', type: 'puzzle', skills: ['dash'], objective: '되찾은 바람길을 따라 완벽한 꿈의 문으로 향하라',
@@ -189,11 +195,16 @@ const STAGES = [
     layout: 'duet', echoGoal: 2, hint: 'V로 숨은 길을 보며 두 개의 기억 자리에 과거의 나를 남기세요.',
   },
   {
-    chapter: '딸 · 완벽한 꿈의 균열', name: '완벽한 꿈의 수호자', type: 'boss', skills: ['resonance', 'dash'], objective: '균열을 드러내고 수호자의 거울을 깨워라',
-    intro: '딸의 꿈은 스스로를 지키기 위해 “완벽한 꿈의 수호자”를 만들었다. 수호자는 딸을 해치려는 적이 아니라, 슬픔을 보지 않게 하려는 꿈의 방어 본능이야. V로 진짜 균열을 드러내고, X 질주로 네 개의 거울 균열을 통과해. 수호자가 멈추면 딸은 처음으로 친구들의 꿈을 보게 된다.',
+    chapter: '딸 · 완벽한 꿈의 균열', name: '완벽한 꿈의 수호자', type: 'boss', skills: ['resonance', 'dash'], objective: '진짜 기억으로 가짜 풍경을 지우고 수호자의 거울을 깨워라',
+    intro: '딸의 꿈은 스스로를 지키기 위해 “완벽한 꿈의 수호자”를 만들었다. 수호자는 딸을 해치려는 적이 아니라, 슬픔을 보지 않게 하려는 꿈의 방어 본능이야. 먼저 C로 딸이 간직한 진짜 사진의 자리에 기억의 나를 남겨 줘. 그러면 가짜 균열이 사라지고, V로 드러나는 진짜 균열만 X 질주로 통과할 수 있어.',
     boss: '완벽한 꿈의 수호자', bossConfig: {
       mode: 'mirror', visual: 'mirror',
       moveBounds: { xMin: 45, xMax: 720, yMin: 86, yMax: 437 },
+      memoryPads: [{ x: 160, y: 222, w: 42, h: 42, label: '딸의 진짜 사진' }],
+      fakeMirrorGates: [
+        { x: 334, y: 344, w: 44, h: 60, label: '가짜 웃음' },
+        { x: 548, y: 116, w: 44, h: 60, label: '가짜 친구' },
+      ],
       mirrorGates: [
         { x: 296, y: 128, w: 48, h: 72, label: '첫 균열' },
         { x: 462, y: 316, w: 48, h: 72, label: '두 번째 균열' },
@@ -201,7 +212,7 @@ const STAGES = [
         { x: 676, y: 320, w: 38, h: 64, label: '진실의 균열' },
       ],
     },
-    hint: 'V로 균열을 드러내고, X 질주 상태로 거울 균열 4개를 순서대로 통과하세요. 거울 파편은 질주로 가로지를 수 있습니다.',
+    hint: '① C로 딸의 진짜 사진에 기억의 나를 남기기 ② 가짜 풍경이 사라지면 V로 진짜 균열을 드러내기 ③ X 질주로 균열 4개를 통과하세요.',
   },
   {
     page: 2, chapter: 'PAGE 02 · 현실을 향한 마지막 꿈', name: '수면 과학자의 연구실', type: 'boss', skills: ['bridge', 'gravity', 'time', 'resonance', 'dash'], objective: '기억과 공명을 완성해 거대한 꿈의 수호자를 멈춰라',
@@ -215,8 +226,14 @@ const STAGES = [
         { x: 372, y: 228, w: 42, h: 42, label: '유나의 노래' },
         { x: 534, y: 356, w: 42, h: 42, label: '하늘의 발걸음' },
       ],
+      truthTargets: [
+        { x: 234, y: 386, w: 44, h: 44, label: '하린의 진짜 웃음', color: '#ffcf88' },
+        { x: 438, y: 112, w: 44, h: 44, label: '유나의 진짜 노래', color: '#9effd7' },
+        { x: 610, y: 278, w: 44, h: 44, label: '하늘의 진짜 길', color: '#a6efff' },
+      ],
+      voiceGate: { x: 662, y: 408, w: 58, h: 44, label: '딸의 목소리' },
     },
-    hint: '① 세 기억 봉인을 채우기 ② V로 꿈 에너지 분리하기 ③ Z로 빼앗긴 기억을 모두 돌려주기.',
+    hint: '① 세 기억 봉인을 채우기 ② V로 꿈 에너지 분리하기 ③ Z로 방어막을 깨기 ④ 진짜 기억만 맞히기 ⑤ 딸의 목소리를 전달하기.',
   },
 ];
 
@@ -487,7 +504,14 @@ function clearStageIntroTimer() {
 }
 
 function currentStage() { return STAGES[game.stageIndex]; }
-function isSkillBlocked(skill) { return Boolean(currentStage()?.blockedSkills?.includes(skill)); }
+function isSkillBlocked(skill) {
+  const stage = currentStage();
+  // 회전목마에서는 기억의 내가 먼저 손잡이를 돌려야 달의 방향을 바꿀 수 있다.
+  if (stage?.layout === 'carousel' && skill === 'gravity' && game.phase === 'playing') {
+    return activeMemoryPads(game.memoryPads || []) < (game.echoGoal || 1);
+  }
+  return Boolean(stage?.blockedSkills?.includes(skill));
+}
 function hasSkill(skill) {
   return !isSkillBlocked(skill) && Boolean(game.learnedSkills?.has(skill) || currentStage()?.skills.includes(skill));
 }
@@ -519,6 +543,12 @@ function phaseGuide() {
     if (stage.layout === 'chorus-memory' && active < goal && !activeTechniques().resonance) {
       return { step: 'STEP 1 / 3', text: 'V를 유지해 숨은 음계와 기억 문양을 드러내세요.', compact: 'V로 숨은 음계를 드러내라' };
     }
+    if (stage.layout === 'carousel' && active < goal) {
+      return { step: 'STEP 1 / 3', text: '회전목마 손잡이까지 C로 기록해, 기억의 나에게 달빛 발판을 돌려 달라고 맡기세요.', compact: '기억의 나로 회전목마를 돌려라' };
+    }
+    if (stage.layout === 'carousel') {
+      return { step: 'STEP 2 / 3', text: '움직이는 달빛 발판을 타고, 2로 중력을 뒤집어 천장 길을 넘으세요.', compact: '달빛 발판을 타고 2로 벽을 넘어라' };
+    }
     if (goal > active) return { step: `STEP 1 / 2 · ${active} / ${goal}`, text: 'C로 길을 기록해 과거의 나를 기억 발판에 남기세요.', compact: `기억 발판 ${active} / ${goal}을 채워라` };
     if (goal > 0) return { step: 'STEP 2 / 2', text: '기억의 나가 길을 지키는 동안 꿈의 문으로 가세요.', compact: '열린 꿈의 문으로 가라' };
     return { step: 'EXPLORE', text: stage.hint, compact: stage.objective };
@@ -526,27 +556,36 @@ function phaseGuide() {
   if (!boss) return { step: 'DREAM LINK', text: stage.hint, compact: stage.objective };
   if (boss.mode === 'calm') {
     return boss.activePads < boss.memoryPads.length
-      ? { step: 'STEP 1 / 2', text: '기억의 나 둘을 빛에 남기고, 현재의 나는 마지막 빛으로 가세요.', compact: `행복한 기억 ${boss.activePads} / ${boss.memoryPads.length}` }
+      ? { step: 'STEP 1 / 2', text: '광대가 만든 “혼자였던” 가짜 기억은 피하세요. 함께했던 진짜 기억 두 곳에만 기억의 나를 남기세요.', compact: `진짜 기억 ${boss.activePads} / ${boss.memoryPads.length}` }
       : { step: 'STEP 2 / 2', text: '마지막 빛 위에서 Shift를 유지해 하린을 안심시키세요.', compact: 'Shift로 안심의 순간을 만들어라' };
   }
   if (boss.mode === 'resonance') {
     return boss.activePads < boss.memoryPads.length
       ? { step: 'STEP 1 / 2', text: '두 기억의 나를 화음 앵커에 남기세요.', compact: `화음 앵커 ${boss.activePads} / ${boss.memoryPads.length}` }
-      : { step: 'STEP 2 / 2', text: '별빛 고리가 밝아지는 박자에 맞춰 V를 유지하고, 음을 순서대로 통과하세요.', compact: `박자 공명 · 음 ${boss.resonanceProgress} / ${boss.resonanceGates.length}` };
+      : { step: 'STEP 2 / 2', text: '별빛 고리가 밝아지는 박자에 맞춰 V를 짧게 한 번씩 눌러, 음을 순서대로 되찾으세요.', compact: `박자 탭 · 음 ${boss.resonanceProgress} / ${boss.resonanceGates.length}` };
   }
   if (boss.mode === 'chase') {
     return boss.echoHits < boss.requiredEchoHits
       ? { step: 'STEP 1 / 2', text: '두 기억 미끼를 출발 깃발에 남기세요. 돌풍을 번갈아 유인하면 길이 열립니다.', compact: `바람 유인 ${boss.echoHits} / ${boss.requiredEchoHits}` }
-      : { step: 'STEP 2 / 2', text: '열린 바람 고리를 X 질주로 순서대로 통과하세요.', compact: `질주 돌파 ${boss.chaseProgress} / ${boss.windGates.length}` };
+      : { step: 'STEP 2 / 2', text: '열린 바람 고리를 X 질주로 연속 통과해 용기를 쌓으세요. 망설이면 처음으로 돌아갑니다.', compact: `용기 연속 ${boss.chaseProgress} / ${boss.windGates.length}` };
   }
   if (boss.mode === 'mirror') {
-    return { step: 'STEP 1 / 1', text: 'V로 진실의 균열을 드러내고 X 질주로 통과하세요.', compact: `거울 균열 ${boss.mirrorProgress} / ${boss.mirrorGates.length}` };
+    return boss.activePads < boss.memoryPads.length
+      ? { step: 'STEP 1 / 2', text: 'C로 딸의 진짜 사진에 과거의 나를 남기세요. 사진이 재생되면 가짜 풍경이 사라집니다.', compact: '진짜 사진을 재생하라' }
+      : { step: 'STEP 2 / 2', text: 'V로 남은 진짜 균열을 드러내고 X 질주로 통과하세요. 분홍 가짜 균열은 피하세요.', compact: `진짜 균열 ${boss.mirrorProgress} / ${boss.mirrorGates.length}` };
   }
   if (boss.releaseReady) return { step: 'LAST MEMORY', text: '딸의 목소리가 닿았습니다. 빼앗은 기억이 모두 제자리로 돌아갑니다.', compact: '아버지가 꿈을 놓아주고 있어요' };
   if (!boss.attackUnlocked) {
     return boss.activePads < boss.memoryPads.length
       ? { step: 'STEP 1 / 3', text: '기억의 나 둘과 현재의 나로 세 개의 기억 봉인을 채우세요.', compact: `기억 봉인 ${boss.activePads} / ${boss.memoryPads.length}` }
       : { step: 'STEP 2 / 3', text: 'V를 유지해 훔친 꿈 에너지를 분리하세요.', compact: `공명 해제 ${boss.finalCharge.toFixed(1)} / ${boss.finalChargeNeeded.toFixed(1)}초` };
+  }
+  const finalPhase = finalBossPhase(boss);
+  if (finalPhase === 2) {
+    return { step: 'PHASE 2 / 3', text: '과학자가 친구들의 기억을 가짜로 복제했습니다. Z 기억 탄환을 다음 “진짜 기억”에만 맞히세요.', compact: `진짜 기억 ${boss.truthProgress} / ${boss.truthTargets.length}` };
+  }
+  if (finalPhase === 3) {
+    return { step: 'PHASE 3 / 3', text: '공격을 멈추세요. 딸의 목소리 곁에서 V를 유지해 아버지에게 진짜 선택을 들려주세요.', compact: `딸의 목소리 ${boss.voiceProgress.toFixed(1)} / ${boss.voiceDuration.toFixed(1)}초` };
   }
   return { step: 'STEP 3 / 3', text: 'Z 기억 탄환으로 행복을 돌려주세요. 진실의 기억 방패는 공포를 되돌립니다.', compact: `기억 반환 ${boss.maxHp - boss.hp} / ${boss.maxHp}` };
 }
@@ -755,6 +794,7 @@ function startStage() {
   game.bottomIsVoid = false;
   game.watcherHitCooldown = 0;
   game.carouselGateOpened = false;
+  game.carouselRideProgress = 0;
   game.stageRealElapsed = 0;
   game.challenge = stage.type === 'boss' ? {
     duration: BOSS_MEMORY_COLLAPSE_SECONDS,
@@ -911,7 +951,7 @@ function setupPuzzle(layout, echoGoal) {
     ],
     relay: [{ x: 135, y: 462, w: 30, h: 28, label: '출발 신호' }],
     dash: [{ x: 138, y: 462, w: 30, h: 28, label: '질주 기억' }],
-    carousel: [],
+    carousel: [{ x: 204, y: 462, w: 30, h: 28, label: '회전목마 손잡이' }],
     watcher: [
       { x: 500, y: 462, w: 16, h: 28, label: '회전목마' },
       { x: 550, y: 462, w: 16, h: 28, label: '함께 웃기' },
@@ -939,11 +979,14 @@ function setupBoss(name, config = {}) {
     attackUnlocked: false, visual: config.visual || 'clown', attackTarget: config.attackTarget || 'player',
     requiredEchoHits: Number(config.requiredEchoHits) || 0, echoHits: 0,
     calmDuration: Number(config.calmDuration) || 1.4, calmProgress: 0,
-    decoyPads: (config.decoyPads || []).map((pad) => ({ ...pad })), windGates: (config.windGates || []).map((gate) => ({ ...gate })), chaseProgress: 0,
+    distortedMemoryPads: (config.distortedMemoryPads || []).map((pad) => ({ ...pad })),
+    decoyPads: (config.decoyPads || []).map((pad) => ({ ...pad })), windGates: (config.windGates || []).map((gate) => ({ ...gate })), chaseProgress: 0, courageDeadline: 0,
     resonanceGates: (config.resonanceGates || []).map((gate) => ({ ...gate })), resonanceProgress: 0,
-    mirrorGates: (config.mirrorGates || []).map((gate) => ({ ...gate })), mirrorProgress: 0,
+    mirrorGates: (config.mirrorGates || []).map((gate) => ({ ...gate })), fakeMirrorGates: (config.fakeMirrorGates || []).map((gate) => ({ ...gate })), mirrorProgress: 0, falseMirrorCooldown: 0,
+    truthTargets: (config.truthTargets || []).map((target) => ({ ...target })), truthProgress: 0,
+    voiceGate: config.voiceGate ? { ...config.voiceGate } : null, voiceProgress: 0, voiceDuration: Number(config.voiceDuration) || 1.7,
     finalChargeNeeded: Number(config.finalChargeNeeded) || 1.4, finalCharge: 0,
-    releaseReady: false, releaseProgress: 0, releaseDuration: Number(config.releaseDuration) || 2.6,
+    releaseReady: false, releaseProgress: 0, releaseDuration: Number(config.releaseDuration) || 2.6, memoryReplay: 0,
     moveBounds: config.moveBounds || { xMin: 45, xMax: 565, yMin: 86, yMax: 437 },
     memoryPads: (config.memoryPads || defaultMemoryPads).map((pad) => ({ ...pad })),
   };
@@ -1009,6 +1052,7 @@ function memoryRoleForCurrentDream() {
   if (boss?.mode === 'calm') return { id: 'warmth', label: 'WARMTH' };
   if (boss?.mode === 'resonance') return { id: 'harmony', label: 'HARMONY' };
   if (boss?.mode === 'chase') return { id: 'decoy', label: 'DECOY' };
+  if (boss?.mode === 'mirror') return { id: 'reflection', label: 'PHOTO' };
   if (boss?.mode === 'final') return { id: 'truth', label: 'TRUTH' };
   if (game.layout === 'wall' || game.layout === 'dash') return { id: 'step', label: 'STEP' };
   if (game.layout === 'chorus' || game.layout === 'chorus-memory') return { id: 'note', label: 'NOTE' };
@@ -1123,6 +1167,18 @@ function getBridge() {
   return { x: 313 + Math.sin(game.elapsed * 2.2) * 56, y: 452, w: 92, h: 18 };
 }
 
+function getCarouselRide() {
+  const progress = game.carouselRideProgress || 0;
+  return {
+    x: 286 + progress * 252,
+    y: 414 - progress * 126,
+    w: 126,
+    h: 18,
+    carouselRide: true,
+    label: 'MOONLIGHT CAROUSEL',
+  };
+}
+
 function getWatcher() {
   // 감시선은 고정한다. 플레이어는 "기억을 기록 → 그 기억이 눈을 지날 때 시간 정지"의 한 가지 규칙에 집중한다.
   return { x: 354, y: 452, w: 36, h: 31 };
@@ -1185,6 +1241,10 @@ function updatePuzzle(dt) {
   updateDash(dt);
   imaginationRegen(dt, techniques);
   if (game.phase !== 'playing') return;
+  if (stage.layout === 'carousel') {
+    const turning = activeMemoryPads(game.memoryPads || []) >= game.echoGoal;
+    game.carouselRideProgress = Math.max(0, Math.min(1, (game.carouselRideProgress || 0) + (turning ? dt * .42 : -dt * .18)));
+  }
   game.bridge = techniques.bridge;
   if (game.inverted !== techniques.gravity) {
     game.inverted = techniques.gravity;
@@ -1216,6 +1276,7 @@ function updatePuzzle(dt) {
   p.grounded = false;
   const colliders = game.platforms.filter((item) => !item.wall && (!item.hidden || techniques.resonance));
   if (game.bridge) colliders.push(getBridge());
+  if (stage.layout === 'carousel' && game.carouselRideProgress > .02) colliders.push(getCarouselRide());
   // 기억의 나는 단순 스위치가 아니라, 필요할 때 한 칸 더 올라설 수 있는 움직이는 기억 발판이다.
   const echoColliders = game.echoes.map((echo) => ({ x: echo.x, y: echo.y, w: echo.w, h: echo.h, memoryEcho: true }));
   colliders.push(...echoColliders);
@@ -1301,7 +1362,7 @@ function finalBossPhase(b) {
 }
 
 function nextBossAttackDelay(b) {
-  if (b.mode === 'final') return b.phase === 3 ? .52 : b.phase === 2 ? .68 : .82;
+  if (b.mode === 'final') return b.phase === 3 ? 99 : b.phase === 2 ? .68 : .82;
   if (b.mode === 'mirror') return .94;
   if (b.mode === 'resonance') return 1.02;
   if (b.mode === 'chase') return .88;
@@ -1346,8 +1407,8 @@ function spawnNightmarePattern() {
     if (attackNumber % 2) launchNightmareFan(origin, p, 5, .76, { speed: 300, r: 10, kind: 'memory' });
     else launchNightmareRing(origin, 9, { speed: 235, r: 8, kind: 'memory', offset: game.elapsed * .85 });
   } else {
-    launchNightmareFan(origin, p, 5, .86, { speed: 325, r: 10, kind: 'memory' });
-    launchNightmareRing(origin, 8, { speed: 255, r: 8, kind: 'memory', offset: game.elapsed * 1.15 });
+    // 마지막에는 탄막을 늘리는 대신, 딸의 목소리를 듣는 선택으로 전환한다.
+    game.nightmareShots = [];
   }
 }
 
@@ -1416,7 +1477,15 @@ function updateWindGates(b) {
   if (!nextGate || game.dashTimer <= 0 || !overlaps(game.player, nextGate)) return;
   b.chaseProgress += 1;
   b.flash = .22;
-  say(b.chaseProgress >= b.windGates.length ? '마지막 바람 고리를 통과했습니다!' : `질주 성공! 바람길 ${b.chaseProgress} / ${b.windGates.length}`);
+  b.courageDeadline = b.chaseProgress >= b.windGates.length ? 0 : game.elapsed + 2.35;
+  say(b.chaseProgress >= b.windGates.length ? '마지막 바람 고리를 통과했습니다!' : `질주 성공! 용기 연속 ${b.chaseProgress} / ${b.windGates.length} · 다음 고리까지 2.3초`);
+}
+
+function updateCourageCombo(b) {
+  if (b.chaseProgress <= 0 || b.chaseProgress >= b.windGates.length || !b.courageDeadline || game.elapsed < b.courageDeadline) return;
+  b.chaseProgress = 0;
+  b.courageDeadline = 0;
+  say('망설이는 동안 역풍이 길을 되돌렸습니다. 첫 바람 고리부터 다시 용기를 이어가세요.');
 }
 
 function resonanceBeat(b) {
@@ -1430,12 +1499,12 @@ function resonanceBeat(b) {
 
 function updateResonanceGates(b, techniques) {
   const nextGate = b.resonanceGates[b.resonanceProgress];
-  if (!nextGate || !techniques.resonance || !overlaps(game.player, nextGate)) return;
+  if (!nextGate || !techniques.resonance || !pressed.has('KeyV') || !overlaps(game.player, nextGate)) return;
   const beat = resonanceBeat(b);
   if (!beat.open) {
     if ((b.nextBeatHint || 0) <= game.elapsed) {
       b.nextBeatHint = game.elapsed + .9;
-      say('별빛 고리가 밝아지는 박자에 맞춰 공명하세요. 화음 앵커가 박자를 넓혀 줍니다.');
+      say('별빛 고리가 밝아질 때 V를 짧게 한 번 눌러 보세요. 화음 앵커가 박자를 넓혀 줍니다.');
     }
     return;
   }
@@ -1445,11 +1514,39 @@ function updateResonanceGates(b, techniques) {
 }
 
 function updateMirrorGates(b, techniques) {
+  const photoReady = activeMemoryPads(b.memoryPads || []) >= b.memoryPads.length;
+  if (!photoReady) {
+    const falseGate = b.fakeMirrorGates.find((gate) => techniques.resonance && game.dashTimer > 0 && overlaps(game.player, gate));
+    if (falseGate && b.falseMirrorCooldown <= 0) {
+      b.falseMirrorCooldown = .8;
+      say('가짜 풍경이 되돌아왔습니다. 먼저 C로 딸의 진짜 사진에 기억의 나를 남기세요.');
+    }
+    return;
+  }
   const nextGate = b.mirrorGates[b.mirrorProgress];
   if (!nextGate || !techniques.resonance || game.dashTimer <= 0 || !overlaps(game.player, nextGate)) return;
   b.mirrorProgress += 1;
   b.flash = .3;
   say(b.mirrorProgress >= b.mirrorGates.length ? '마지막 거울이 갈라졌습니다!' : `거울 균열 통과 ${b.mirrorProgress} / ${b.mirrorGates.length}`);
+}
+
+function finalTruthTarget(b) {
+  return b.truthTargets[b.truthProgress] || null;
+}
+
+function finalTruthReady(b) {
+  return b.truthProgress >= b.truthTargets.length;
+}
+
+function updateDaughterVoice(b, techniques, dt) {
+  if (!b.voiceGate) return;
+  const touchingVoice = overlaps(game.player, b.voiceGate) && techniques.resonance;
+  if (touchingVoice) {
+    b.voiceProgress = Math.min(b.voiceDuration, b.voiceProgress + dt);
+  } else {
+    b.voiceProgress = Math.max(0, b.voiceProgress - dt * .28);
+  }
+  if (b.voiceProgress >= b.voiceDuration) beginFinalRelease(b);
 }
 
 function updateBoss(dt) {
@@ -1466,6 +1563,8 @@ function updateBoss(dt) {
   game.nightmareHitCooldown = Math.max(0, (game.nightmareHitCooldown || 0) - dt);
   b.flash = Math.max(0, (b.flash || 0) - dt);
   b.memoryShield = Math.max(0, (b.memoryShield || 0) - dt);
+  b.memoryReplay = Math.max(0, (b.memoryReplay || 0) - dt);
+  b.falseMirrorCooldown = Math.max(0, (b.falseMirrorCooldown || 0) - dt);
   const horizontal = (keys.has('ArrowRight') ? 1 : 0) - (keys.has('ArrowLeft') ? 1 : 0);
   const vertical = (keys.has('ArrowDown') ? 1 : 0) - (keys.has('ArrowUp') ? 1 : 0);
   const bounds = b.moveBounds || { xMin: 45, xMax: 565, yMin: 86, yMax: 437 };
@@ -1478,7 +1577,8 @@ function updateBoss(dt) {
   if (horizontal) p.facing = horizontal;
   if (!frozen) {
     b.y = b.mode === 'calm' ? 166 + Math.sin(game.elapsed * 1.1) * 18 : 160 + Math.sin(game.elapsed * 1.45) * 56;
-    if (b.mode !== 'calm' && !b.releaseReady) {
+    const listeningToDaughter = b.mode === 'final' && b.attackUnlocked && finalBossPhase(b) === 3;
+    if (b.mode !== 'calm' && !b.releaseReady && !listeningToDaughter && b.memoryReplay <= 0) {
       game.nextAttack -= dt;
       if (game.nextAttack <= 0) { spawnNightmarePattern(); game.nextAttack = nextBossAttackDelay(b); }
     }
@@ -1501,7 +1601,8 @@ function updateBoss(dt) {
       const truthEchoHit = b.mode === 'final' && b.attackUnlocked && b.memoryPads.some((pad) => echoOverlapsPad(echoHit, pad));
       if (truthEchoHit) {
         b.memoryShield = Math.min(1.25, b.memoryShield + .68);
-        say('진실의 기억이 공포를 받아냈습니다. 짧은 시간 동안 반사 방패가 생깁니다.');
+        b.memoryReplay = Math.max(1.15, b.memoryReplay);
+        say('과거의 내가 과학자의 연구실 기억을 재생했습니다. 공포 패턴이 잠시 멈추고 반사 방패가 생깁니다.');
       }
       return false;
     }
@@ -1533,13 +1634,43 @@ function updateBoss(dt) {
       shot.y += shot.vy * dt;
       shot.life = (shot.life || 0) + dt;
       const rect = { x: shot.x, y: shot.y, w: shot.w, h: shot.h };
+      const finalPhase = b.mode === 'final' ? finalBossPhase(b) : 1;
+      if (b.mode === 'final' && b.attackUnlocked && finalPhase === 2 && !finalTruthReady(b)) {
+        const hitMemory = b.truthTargets.find((target) => overlaps(rect, target));
+        if (hitMemory) {
+          const truth = finalTruthTarget(b);
+          if (hitMemory === truth) {
+            b.truthProgress += 1;
+            b.flash = .3;
+            if (finalTruthReady(b)) {
+              b.hp = Math.ceil(b.maxHp / 3);
+              b.phase = 3;
+              game.nightmareShots = [];
+              say('세 친구의 진짜 기억이 복제를 지웠습니다. 이제 공격을 멈추고 딸의 목소리를 전하세요.');
+            } else {
+              say(`진짜 기억을 찾았습니다. ${b.truthProgress} / ${b.truthTargets.length} · 다음 기억을 찾아보세요.`);
+            }
+          } else {
+            say('그건 과학자가 만든 가짜 복제입니다. 다음 빛나는 진짜 기억을 노리세요.');
+          }
+          return false;
+        }
+        if (overlaps(rect, b)) {
+          say('복제된 기억이 수호자를 감쌉니다. 먼저 화면의 진짜 기억을 찾아야 합니다.');
+          return false;
+        }
+      }
+      if (b.mode === 'final' && b.attackUnlocked && finalPhase === 3 && overlaps(rect, b)) {
+        say('이제는 공격할 때가 아닙니다. 딸의 목소리를 전해 주세요.');
+        return false;
+      }
       if (overlaps(rect, b)) {
         const previousPhase = finalBossPhase(b);
         b.flash = .18;
         b.hp = Math.max(0, b.hp - 1);
         if (b.mode === 'final') {
           b.phase = finalBossPhase(b);
-          if (b.phase > previousPhase && b.hp > 0) say(`수면 과학자의 꿈이 더 거세졌습니다. 공격 단계 ${b.phase}!`);
+          if (b.phase > previousPhase && b.hp > 0) say('연구실이 뒤틀리며 친구들의 기억을 복제했습니다. 진짜 기억만 찾아야 합니다.');
           if (b.hp <= 0) beginFinalRelease(b);
         }
         game.nextAttack = Math.min(game.nextAttack + .16, b.mode === 'final' ? 1.12 : 1.0);
@@ -1558,8 +1689,13 @@ function updateBoss(dt) {
     return;
   }
   if (b.mode === 'calm') {
-    b.activePads = activeMemoryPads(b.memoryPads, true);
+    const distortedEcho = game.echoes.find((echo) => b.distortedMemoryPads.some((pad) => echoOverlapsPad(echo, pad)));
+    b.activePads = distortedEcho ? 0 : activeMemoryPads(b.memoryPads, true);
     b.phase = b.activePads + 1;
+    if (distortedEcho && !b.distortionHintShown) {
+      b.distortionHintShown = true;
+      say('광대가 외로운 장면을 진짜 기억처럼 꾸몄습니다. Backspace/Delete로 그 기억을 지우고, 함께했던 장면을 다시 기록하세요.');
+    }
     if (b.activePads >= b.memoryPads.length && frozen) b.calmProgress = Math.min(b.calmDuration, b.calmProgress + dt);
     else if (b.activePads < b.memoryPads.length) b.calmProgress = Math.max(0, b.calmProgress - dt * .35);
     if (b.calmProgress >= b.calmDuration) resolveBoss(b, '멈춘 순간에 세 개의 기억이 겹쳤습니다. 광대의 가면이 사라지고 하린이 다시 웃습니다.');
@@ -1569,6 +1705,7 @@ function updateBoss(dt) {
     b.activePads = activeMemoryPads(b.decoyPads);
     b.phase = Math.min(3, b.chaseProgress + 1);
     if (b.echoHits >= b.requiredEchoHits) {
+      updateCourageCombo(b);
       updateWindGates(b);
       if (b.chaseProgress >= b.windGates.length) resolveBoss(b, '하늘이가 끝까지 달려 나갔습니다. 검은 연의 바람이 조용해집니다.');
     }
@@ -1584,10 +1721,16 @@ function updateBoss(dt) {
     return;
   }
   if (b.mode === 'mirror') {
-    b.activePads = 0;
+    b.activePads = activeMemoryPads(b.memoryPads);
     b.phase = Math.min(3, b.mirrorProgress + 1);
     updateMirrorGates(b, techniques);
     if (b.mirrorProgress >= b.mirrorGates.length) resolveBoss(b, '완벽한 꿈의 수호자가 멈췄습니다. 딸은 균열 너머의 친구들을 바라봅니다.');
+    return;
+  }
+  if (b.mode === 'final' && b.attackUnlocked && finalBossPhase(b) === 3) {
+    // 세 번째 단계는 체력을 더 깎는 전투가 아니라, 딸의 선택을 아버지에게 들려주는 순간이다.
+    game.nightmareShots = [];
+    updateDaughterVoice(b, techniques, dt);
     return;
   }
   b.activePads = activeMemoryPads(b.memoryPads, true);
@@ -1726,16 +1869,27 @@ function updateHud() {
       bossHealthEl.textContent = `바람 유인 ${game.boss.echoHits} / ${game.boss.requiredEchoHits}`;
     } else if (game.boss.mode === 'chase') {
       bossFill.style.width = `${game.boss.chaseProgress / Math.max(1, game.boss.windGates.length) * 100}%`;
-      bossHealthEl.textContent = `질주 돌파 ${game.boss.chaseProgress} / ${game.boss.windGates.length}`;
+      const left = Math.max(0, (game.boss.courageDeadline || 0) - game.elapsed);
+      bossHealthEl.textContent = `용기 연속 ${game.boss.chaseProgress} / ${game.boss.windGates.length}${game.boss.chaseProgress && left ? ` · ${left.toFixed(1)}초` : ''}`;
     } else if (game.boss.mode === 'mirror') {
-      bossFill.style.width = `${game.boss.mirrorProgress / Math.max(1, game.boss.mirrorGates.length) * 100}%`;
-      bossHealthEl.textContent = `거울 균열 ${game.boss.mirrorProgress} / ${game.boss.mirrorGates.length}`;
+      const photoReady = game.boss.activePads >= game.boss.memoryPads.length;
+      bossFill.style.width = `${photoReady ? game.boss.mirrorProgress / Math.max(1, game.boss.mirrorGates.length) * 100 : game.boss.activePads / Math.max(1, game.boss.memoryPads.length) * 100}%`;
+      bossHealthEl.textContent = photoReady ? `진짜 균열 ${game.boss.mirrorProgress} / ${game.boss.mirrorGates.length}` : '진짜 사진을 재생하세요';
     } else if (game.boss.releaseReady) {
       bossFill.style.width = `${Math.min(100, game.boss.releaseProgress / game.boss.releaseDuration * 100)}%`;
       bossHealthEl.textContent = '마지막 기억을 놓아주는 중…';
     } else if (game.boss.attackUnlocked) {
-      bossFill.style.width = `${(game.boss.maxHp - Math.max(0, game.boss.hp)) / Math.max(1, game.boss.maxHp) * 100}%`;
-      bossHealthEl.textContent = `기억 반환 ${game.boss.maxHp - Math.max(0, game.boss.hp)} / ${game.boss.maxHp}`;
+      const finalPhase = finalBossPhase(game.boss);
+      if (game.boss.mode === 'final' && finalPhase === 2) {
+        bossFill.style.width = `${game.boss.truthProgress / Math.max(1, game.boss.truthTargets.length) * 100}%`;
+        bossHealthEl.textContent = `진짜 기억 ${game.boss.truthProgress} / ${game.boss.truthTargets.length}`;
+      } else if (game.boss.mode === 'final' && finalPhase === 3) {
+        bossFill.style.width = `${game.boss.voiceProgress / game.boss.voiceDuration * 100}%`;
+        bossHealthEl.textContent = `딸의 목소리 ${game.boss.voiceProgress.toFixed(1)} / ${game.boss.voiceDuration.toFixed(1)}초`;
+      } else {
+        bossFill.style.width = `${(game.boss.maxHp - Math.max(0, game.boss.hp)) / Math.max(1, game.boss.maxHp) * 100}%`;
+        bossHealthEl.textContent = `기억 반환 ${game.boss.maxHp - Math.max(0, game.boss.hp)} / ${game.boss.maxHp}`;
+      }
     } else {
       bossFill.style.width = `${game.boss.finalCharge / game.boss.finalChargeNeeded * 100}%`;
       bossHealthEl.textContent = `공명 해제 ${game.boss.finalCharge.toFixed(1)} / ${game.boss.finalChargeNeeded.toFixed(1)}초`;
@@ -1769,22 +1923,28 @@ function updateMemoryLoopUI() {
     const active = boss.activePads || 0;
     if (boss.mode === 'calm') {
       memoryStatus.textContent = active < boss.memoryPads.length
-        ? `행복한 기억 ${active} / ${boss.memoryPads.length} · 기억의 나 둘과 현재의 나를 세 빛에 맞추세요.`
+        ? `진짜 기억 ${active} / ${boss.memoryPads.length} · “함께했던” 두 빛에만 기억의 나를 남기고, 가짜 기억은 Delete로 지우세요.`
         : `안심의 순간 ${boss.calmProgress.toFixed(1)} / ${boss.calmDuration.toFixed(1)}초 · 마지막 빛 위에서 Shift를 유지하세요.`;
     } else if (boss.mode === 'resonance') {
       memoryStatus.textContent = active < boss.memoryPads.length
         ? `화음 앵커 ${active} / ${boss.memoryPads.length} · 두 기억의 나를 앵커에 남기세요.`
-        : `되찾은 음 ${boss.resonanceProgress} / ${boss.resonanceGates.length} · ${resonanceBeat(boss).open ? '지금은 별빛 박자입니다. V를 유지하세요.' : '별빛 고리가 밝아질 때까지 다음 음 앞에서 기다리세요.'}`;
+        : `되찾은 음 ${boss.resonanceProgress} / ${boss.resonanceGates.length} · ${resonanceBeat(boss).open ? '지금은 별빛 박자입니다. V를 짧게 한 번 누르세요.' : '별빛 고리가 밝아질 때까지 다음 음 앞에서 기다리세요.'}`;
     } else if (boss.mode === 'chase' && boss.echoHits < boss.requiredEchoHits) {
       memoryStatus.textContent = `바람 유인 ${boss.echoHits} / ${boss.requiredEchoHits} · 두 기억 미끼를 출발 깃발에 남기고, 돌풍이 한 명을 따라간 뒤 다른 기억으로 교대하게 하세요.`;
     } else if (boss.mode === 'chase') {
-      memoryStatus.textContent = `바람 고리 ${boss.chaseProgress} / ${boss.windGates.length} · 다음 고리의 높이에 맞춰 X로 질주하세요.`;
+      const left = Math.max(0, (boss.courageDeadline || 0) - game.elapsed);
+      memoryStatus.textContent = `용기 연속 ${boss.chaseProgress} / ${boss.windGates.length}${boss.chaseProgress && left ? ` · 다음 고리까지 ${left.toFixed(1)}초` : ''} · X 질주를 끊지 말고 바람 고리를 이어가세요.`;
     } else if (boss.mode === 'mirror') {
-      memoryStatus.textContent = `거울 균열 ${boss.mirrorProgress} / ${boss.mirrorGates.length} · V로 균열을 드러낸 뒤 X 질주로 다음 균열을 통과하세요.`;
+      memoryStatus.textContent = active < boss.memoryPads.length
+        ? '진짜 사진을 재생해야 가짜 웃음과 가짜 친구가 사라집니다. C로 과거의 나를 사진에 남기세요.'
+        : `진짜 균열 ${boss.mirrorProgress} / ${boss.mirrorGates.length} · V로 진짜 균열을 드러낸 뒤 X 질주로 통과하세요.`;
     } else if (boss.releaseReady) {
       memoryStatus.textContent = '딸의 선택이 아버지에게 닿았습니다. 이제는 공격하지 않아도 기억이 돌아옵니다.';
     } else if (boss.attackUnlocked) {
-      memoryStatus.textContent = `기억 반환 ${boss.maxHp - boss.hp} / ${boss.maxHp} · Z로 빼앗긴 꿈 에너지를 돌려주세요. 진실의 기억이 탄막을 받으면 짧은 반사 방패가 생깁니다.`;
+      const finalPhase = finalBossPhase(boss);
+      if (finalPhase === 2) memoryStatus.textContent = `진짜 기억 ${boss.truthProgress} / ${boss.truthTargets.length} · 다음 “TRUE” 빛만 Z 기억 탄환으로 맞히세요. COPY 표시는 과학자가 만든 복제입니다.`;
+      else if (finalPhase === 3) memoryStatus.textContent = `딸의 목소리 ${boss.voiceProgress.toFixed(1)} / ${boss.voiceDuration.toFixed(1)}초 · 공격을 멈추고 “딸의 목소리” 원 안에서 V를 유지하세요.`;
+      else memoryStatus.textContent = `기억 반환 ${boss.maxHp - boss.hp} / ${boss.maxHp} · Z로 빼앗긴 꿈 에너지를 돌려주세요. 진실의 기억이 탄막을 받으면 연구실 과거가 재생되어 공포가 잠시 멈춥니다.`;
     } else {
       memoryStatus.textContent = active < boss.memoryPads.length
         ? `봉인 위치 ${active} / ${boss.memoryPads.length} · 기억의 나 둘과 현재의 나를 세 봉인에 맞추세요.`
@@ -1989,6 +2149,7 @@ function drawMemoryPad(pad, active, index, role = 'normal') {
     echo: { label: '기억', badge: '기억', badgeFill: 'rgba(30, 74, 88, .9)', badgeStroke: '#9effea', fill: 'rgba(18, 57, 72, .9)', icon: '✦' },
     present: { label: '현재', badge: '현재', badgeFill: 'rgba(102, 73, 38, .95)', badgeStroke: '#ffe37d', fill: 'rgba(76, 56, 18, .9)', icon: '◆' },
     truth: { label: '공명', badge: '진실', badgeFill: 'rgba(106, 67, 20, .96)', badgeStroke: '#ffd56d', fill: 'rgba(95, 55, 9, .92)', icon: '✦' },
+    distortion: { label: '왜곡', badge: '가짜', badgeFill: 'rgba(91, 22, 61, .96)', badgeStroke: '#ff88ba', fill: 'rgba(74, 20, 54, .92)', icon: '×' },
   };
   const style = roleStyles[role] || roleStyles.normal;
   const color = colors[index % colors.length];
@@ -2032,7 +2193,7 @@ function drawMemoryPad(pad, active, index, role = 'normal') {
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = role === 'present' ? '#fff4c4' : role === 'truth' ? '#ffe48b' : '#b9ffef';
+    ctx.fillStyle = role === 'present' ? '#fff4c4' : role === 'truth' ? '#ffe48b' : role === 'distortion' ? '#ffb2cf' : '#b9ffef';
     ctx.font = '700 8px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(style.badge, pad.x + pad.w / 2, badgeY + badgeHeight / 2 + 0.5);
     ctx.restore();
@@ -2303,6 +2464,12 @@ function drawPuzzle() {
     } else drawPlatform(platform);
   });
   if (game.layout === 'wall') drawBridge(getBridge());
+  if (game.layout === 'carousel' && game.carouselRideProgress > .02) {
+    const ride = getCarouselRide();
+    drawPlatform(ride);
+    ctx.save(); ctx.fillStyle = '#fff0a6'; ctx.font = '800 8px ui-monospace, monospace'; ctx.textAlign = 'center';
+    ctx.fillText('MEMORY IS TURNING THE CAROUSEL', ride.x + ride.w / 2, ride.y - 10); ctx.restore();
+  }
   if (game.layout === 'watcher') drawWatcher(getWatcher(), frozenTime(), game.watcherResolved);
   game.memoryPads.forEach((pad, index) => {
     // 공명이 꺼져 있을 때는 9스테이지의 기억 발판도 함께 감춘다.
@@ -2330,21 +2497,40 @@ function drawWindGate(gate, index, active, cleared) {
 }
 
 function drawDreamGate(gate, active, cleared, kind = 'resonance', revealed = true) {
-  const color = kind === 'mirror' ? '#ffb5df' : '#9effea';
+  const fakeMirror = kind === 'false-mirror';
+  const mirror = kind === 'mirror' || fakeMirror;
+  const color = fakeMirror ? '#ff789f' : mirror ? '#ffb5df' : '#9effea';
   ctx.save();
   ctx.translate(gate.x + gate.w / 2, gate.y + gate.h / 2);
   ctx.globalAlpha = cleared ? .2 : revealed ? active ? 1 : .5 : .08;
   ctx.shadowBlur = active ? 26 : 8; ctx.shadowColor = color;
   ctx.strokeStyle = color; ctx.lineWidth = active ? 4 : 2;
-  if (kind === 'mirror') {
+  if (mirror) {
     ctx.rotate(Math.PI / 4); ctx.strokeRect(-gate.w / 2, -gate.h / 2, gate.w, gate.h);
     ctx.beginPath(); ctx.moveTo(-14, -20); ctx.lineTo(4, -3); ctx.lineTo(-8, 7); ctx.lineTo(17, 22); ctx.stroke();
+    if (fakeMirror) { ctx.beginPath(); ctx.moveTo(-18, 18); ctx.lineTo(18, -18); ctx.stroke(); }
   } else {
     ctx.beginPath(); ctx.arc(0, 0, gate.w / 2, 0, Math.PI * 2); ctx.stroke();
     ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(0, 0, gate.w / 2 + 9, 0, Math.PI * 2); ctx.stroke();
   }
   ctx.restore();
   ctx.fillStyle = cleared ? '#8bc6c1' : active ? '#f4fff9' : '#a9c8c7'; ctx.font = '800 9px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(gate.label, gate.x + gate.w / 2, gate.y - 12);
+}
+
+function drawFinalMemoryTarget(target, active, resolved) {
+  const color = target.color || '#ffe37d';
+  ctx.save();
+  ctx.translate(target.x + target.w / 2, target.y + target.h / 2);
+  ctx.globalAlpha = resolved ? .18 : active ? 1 : .42;
+  ctx.shadowBlur = active ? 26 : 8; ctx.shadowColor = color;
+  ctx.strokeStyle = color; ctx.lineWidth = active ? 4 : 2;
+  ctx.beginPath(); ctx.arc(0, 0, target.w / 2, 0, Math.PI * 2); ctx.stroke();
+  ctx.setLineDash(active ? [] : [3, 4]);
+  ctx.beginPath(); ctx.arc(0, 0, target.w / 2 + 7, 0, Math.PI * 2); ctx.stroke();
+  ctx.fillStyle = active ? color : '#dba5ba'; ctx.font = '800 14px "Segoe UI Symbol", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(active ? '♥' : '×', 0, 5);
+  ctx.restore();
+  ctx.fillStyle = resolved ? '#7896a6' : active ? '#fff4c4' : '#e1a4b8'; ctx.font = '800 8px "Segoe UI", sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText(active ? `TRUE · ${target.label}` : resolved ? 'MEMORY RESTORED' : 'COPY · FALSE MEMORY', target.x + target.w / 2, target.y - 11);
 }
 
 function drawBoss() {
@@ -2372,20 +2558,41 @@ function drawBoss() {
   else { ctx.beginPath(); ctx.ellipse(0, 0, 72, 92, 0, 0, Math.PI * 2); ctx.fill(); }
   ctx.fillStyle = bossFace; ctx.beginPath(); ctx.arc(-27, -12, 24, 0, Math.PI * 2); ctx.arc(27, -12, 24, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = b.mode === 'final' ? '#0f2432' : windFear ? '#102030' : '#1f1027'; ctx.fillRect(-41, -18, 22, 8); ctx.fillRect(19, -18, 22, 8); ctx.strokeStyle = windFear ? '#d0f7ff' : choirFear ? '#bfffe8' : mirrorFear ? '#ffe3f4' : b.mode === 'final' ? '#8cf0ff' : '#ffc4d9'; ctx.lineWidth = 7; ctx.beginPath(); ctx.arc(0, 29, 23, 0, Math.PI); ctx.stroke(); ctx.fillStyle = '#f8df77'; ctx.beginPath(); ctx.arc(0, -80, 12, 0, Math.PI * 2); ctx.fill(); ctx.restore();
   ctx.fillStyle = b.mode === 'final' ? b.releaseReady ? '#fff1b1' : '#aeefff' : windFear || choirFear ? '#aeefff' : mirrorFear ? '#ffe0f2' : '#ffc4d5'; ctx.font = '800 12px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(b.releaseReady ? '수면 과학자 · 아버지' : b.name, b.x + b.w / 2, b.y - 17);
-  const bossPads = b.mode === 'chase' ? b.decoyPads : b.mode === 'resonance' || b.mode === 'calm' || b.mode === 'final' ? b.memoryPads : [];
+  const bossPads = b.mode === 'chase' ? b.decoyPads : b.mode === 'resonance' || b.mode === 'calm' || b.mode === 'mirror' || b.mode === 'final' ? b.memoryPads : [];
   const presentCanFillPad = b.mode === 'calm' || b.mode === 'final';
   bossPads.forEach((pad, index) => {
-    const role = b.mode === 'chase' || index < 2 ? 'echo' : 'present';
+    const role = b.mode === 'chase' || b.mode === 'mirror' || index < 2 ? 'echo' : 'present';
     drawMemoryPad(pad, activeMemoryPads([pad], presentCanFillPad) > 0, index, b.mode === 'final' && index < 2 ? 'truth' : role);
   });
+  if (b.mode === 'calm') b.distortedMemoryPads.forEach((pad, index) => drawMemoryPad(pad, activeMemoryPads([pad]) > 0, index, 'distortion'));
   if (b.mode === 'chase') b.windGates.forEach((gate, index) => drawWindGate(gate, index, index === b.chaseProgress, index < b.chaseProgress));
   if (b.mode === 'resonance') {
     const beatOpen = resonanceBeat(b).open;
     b.resonanceGates.forEach((gate, index) => drawDreamGate(gate, index === b.resonanceProgress, index < b.resonanceProgress, 'resonance', activeTechniques().resonance && beatOpen));
     ctx.save(); ctx.fillStyle = beatOpen ? '#effff8' : '#92aea9'; ctx.font = '800 10px ui-monospace, monospace'; ctx.textAlign = 'center';
-    ctx.fillText(beatOpen ? 'BEAT OPEN · V NOW' : 'LISTEN · WAIT FOR THE LIGHT', W / 2, 54); ctx.restore();
+    ctx.fillText(beatOpen ? 'BEAT OPEN · TAP V NOW' : 'LISTEN · WAIT FOR THE LIGHT', W / 2, 54); ctx.restore();
   }
-  if (b.mode === 'mirror') b.mirrorGates.forEach((gate, index) => drawDreamGate(gate, index === b.mirrorProgress, index < b.mirrorProgress, 'mirror', activeTechniques().resonance));
+  if (b.mode === 'mirror') {
+    const photoReady = activeMemoryPads(b.memoryPads) >= b.memoryPads.length;
+    b.fakeMirrorGates.forEach((gate) => drawDreamGate(gate, false, false, 'false-mirror', activeTechniques().resonance && !photoReady));
+    b.mirrorGates.forEach((gate, index) => drawDreamGate(gate, index === b.mirrorProgress, index < b.mirrorProgress, 'mirror', activeTechniques().resonance && photoReady));
+    ctx.save(); ctx.fillStyle = photoReady ? '#ffe9f5' : '#ff9fc5'; ctx.font = '800 10px ui-monospace, monospace'; ctx.textAlign = 'center';
+    ctx.fillText(photoReady ? 'TRUE PHOTO REPLAYED · REAL CRACKS REMAIN' : 'FIND THE TRUE PHOTO · FALSE SCENERY IS WATCHING', W / 2, 54); ctx.restore();
+  }
+  if (b.mode === 'final' && b.attackUnlocked) {
+    const finalPhase = finalBossPhase(b);
+    if (finalPhase === 2) {
+      b.truthTargets.forEach((target, index) => drawFinalMemoryTarget(target, index === b.truthProgress, index < b.truthProgress));
+      ctx.save(); ctx.fillStyle = '#ffe4ef'; ctx.font = '800 10px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText('PHASE 2 · SHOOT ONLY THE TRUE MEMORY', W / 2, 54); ctx.restore();
+    } else if (finalPhase === 3 && b.voiceGate) {
+      drawDreamGate(b.voiceGate, activeTechniques().resonance && overlaps(game.player, b.voiceGate), false, 'resonance', true);
+      ctx.save(); ctx.fillStyle = '#fff4c4'; ctx.font = '800 10px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText('PHASE 3 · NO ATTACK · LET HER VOICE REACH HIM', W / 2, 54); ctx.restore();
+    }
+  }
+  if (b.mode === 'final' && b.memoryReplay > 0) {
+    ctx.save(); ctx.globalAlpha = .55 + Math.sin(game.elapsed * 13) * .2; ctx.fillStyle = '#fff2b1'; ctx.font = '800 10px ui-monospace, monospace'; ctx.textAlign = 'center';
+    ctx.fillText('PAST REPLAY · THE LAB REMEMBERS HIS CHOICE', W / 2, 78); ctx.restore();
+  }
   if (b.mode === 'calm') {
     ctx.save(); ctx.translate(b.x + b.w / 2, b.y + b.h / 2); ctx.strokeStyle = '#ffe37e'; ctx.lineWidth = 3; ctx.globalAlpha = .4 + Math.sin(game.elapsed * 5) * .12;
     ctx.beginPath(); ctx.arc(0, 12, 108, 0, Math.PI * 2); ctx.stroke(); ctx.beginPath(); ctx.arc(0, 12, 128, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
