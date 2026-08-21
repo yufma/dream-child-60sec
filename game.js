@@ -210,7 +210,7 @@ const STAGES = [
         { x: 534, y: 356, w: 42, h: 42, label: '하늘의 발걸음' },
       ],
     },
-    hint: '① 기억의 나 둘과 현재의 나로 세 봉인에 서기 ② V 공명을 1.4초 유지해 봉인 해제 ③ 3단계 탄막을 피하며 Z 기억 탄환 12발로 맞서세요.',
+    hint: '① 세 기억 봉인을 채우기 ② V로 꿈 에너지 분리하기 ③ Z로 빼앗긴 기억을 모두 돌려주기.',
   },
 ];
 
@@ -436,6 +436,65 @@ function currentStage() { return STAGES[game.stageIndex]; }
 function isSkillBlocked(skill) { return Boolean(currentStage()?.blockedSkills?.includes(skill)); }
 function hasSkill(skill) {
   return !isSkillBlocked(skill) && Boolean(game.learnedSkills?.has(skill) || currentStage()?.skills.includes(skill));
+}
+
+function dreamTheme(stage = currentStage()) {
+  const chapter = stage?.chapter || '';
+  if (stage?.bossConfig?.mode === 'final' || stage?.page === 2) {
+    return { id: 'scientist', label: 'DREAM LAB · A FATHER WHO COULD NOT LET GO', top: '#211536', mid: '#132d49', bottom: '#0a172c', line: '#6f77bb', accent: '#7be9ff', soft: '#d4b5ff', platform: '#243e69', edge: '#8cf0ff' };
+  }
+  if (chapter.includes('유나')) {
+    return { id: 'yuna', label: "YUNA'S DREAM · THE LOST CHOIR", top: '#08373e', mid: '#092a45', bottom: '#10153d', line: '#4f93a2', accent: '#9effd7', soft: '#c7a3ff', platform: '#174d5a', edge: '#9effd7' };
+  }
+  if (chapter.includes('하늘')) {
+    return { id: 'haneul', label: "HANEUL'S DREAM · THE WIND RUN", top: '#153d67', mid: '#123456', bottom: '#102141', line: '#70abd1', accent: '#a6efff', soft: '#c5dcff', platform: '#245071', edge: '#a6efff' };
+  }
+  if (chapter.includes('딸')) {
+    return { id: 'daughter', label: "DAUGHTER'S DREAM · THE PERFECT GARDEN", top: '#4a2854', mid: '#35305c', bottom: '#182c50', line: '#b67bb3', accent: '#ffb5df', soft: '#b8ffcf', platform: '#5a3b72', edge: '#ffb5df' };
+  }
+  return { id: 'harin', label: "HARIN'S DREAM · THE MOONLIGHT FAIR", top: '#211047', mid: '#122454', bottom: '#0b1939', line: '#7165bd', accent: '#ffb5d7', soft: '#ffe27e', platform: '#332861', edge: '#ffcf88' };
+}
+
+function phaseGuide() {
+  const stage = currentStage() || STAGES[0];
+  const boss = game.boss;
+  if (stage.type !== 'boss') {
+    const active = activeMemoryPads(game.memoryPads || []);
+    const goal = game.echoGoal || 0;
+    if (game.recording) return { step: 'RECORDING', text: '목표 위치까지 움직인 뒤 C를 다시 눌러 기억을 되감으세요.', compact: 'C로 기록을 되감아 기억의 나를 남겨라' };
+    if (stage.layout === 'chorus-memory' && active < goal && !activeTechniques().resonance) {
+      return { step: 'STEP 1 / 3', text: 'V를 유지해 숨은 음계와 기억 문양을 드러내세요.', compact: 'V로 숨은 음계를 드러내라' };
+    }
+    if (goal > active) return { step: `STEP 1 / 2 · ${active} / ${goal}`, text: 'C로 길을 기록해 과거의 나를 기억 발판에 남기세요.', compact: `기억 발판 ${active} / ${goal}을 채워라` };
+    if (goal > 0) return { step: 'STEP 2 / 2', text: '기억의 나가 길을 지키는 동안 꿈의 문으로 가세요.', compact: '열린 꿈의 문으로 가라' };
+    return { step: 'EXPLORE', text: stage.hint, compact: stage.objective };
+  }
+  if (!boss) return { step: 'DREAM LINK', text: stage.hint, compact: stage.objective };
+  if (boss.mode === 'calm') {
+    return boss.activePads < boss.memoryPads.length
+      ? { step: 'STEP 1 / 2', text: '기억의 나 둘을 빛에 남기고, 현재의 나는 마지막 빛으로 가세요.', compact: `행복한 기억 ${boss.activePads} / ${boss.memoryPads.length}` }
+      : { step: 'STEP 2 / 2', text: '마지막 빛 위에서 Shift를 유지해 하린을 안심시키세요.', compact: 'Shift로 안심의 순간을 만들어라' };
+  }
+  if (boss.mode === 'resonance') {
+    return boss.activePads < boss.memoryPads.length
+      ? { step: 'STEP 1 / 2', text: '두 기억의 나를 화음 앵커에 남기세요.', compact: `화음 앵커 ${boss.activePads} / ${boss.memoryPads.length}` }
+      : { step: 'STEP 2 / 2', text: 'V를 유지한 채 다음 음을 순서대로 통과하세요.', compact: `되찾은 음 ${boss.resonanceProgress} / ${boss.resonanceGates.length}` };
+  }
+  if (boss.mode === 'chase') {
+    return boss.echoHits < boss.requiredEchoHits
+      ? { step: 'STEP 1 / 2', text: '기억의 나를 출발 깃발에 남겨 검은 연의 돌풍을 유인하세요.', compact: `바람 유인 ${boss.echoHits} / ${boss.requiredEchoHits}` }
+      : { step: 'STEP 2 / 2', text: '열린 바람 고리를 X 질주로 순서대로 통과하세요.', compact: `질주 돌파 ${boss.chaseProgress} / ${boss.windGates.length}` };
+  }
+  if (boss.mode === 'mirror') {
+    return { step: 'STEP 1 / 1', text: 'V로 진실의 균열을 드러내고 X 질주로 통과하세요.', compact: `거울 균열 ${boss.mirrorProgress} / ${boss.mirrorGates.length}` };
+  }
+  if (boss.releaseReady) return { step: 'LAST MEMORY', text: '딸의 목소리가 닿았습니다. 빼앗은 기억이 모두 제자리로 돌아갑니다.', compact: '아버지가 꿈을 놓아주고 있어요' };
+  if (!boss.attackUnlocked) {
+    return boss.activePads < boss.memoryPads.length
+      ? { step: 'STEP 1 / 3', text: '기억의 나 둘과 현재의 나로 세 개의 기억 봉인을 채우세요.', compact: `기억 봉인 ${boss.activePads} / ${boss.memoryPads.length}` }
+      : { step: 'STEP 2 / 3', text: 'V를 유지해 훔친 꿈 에너지를 분리하세요.', compact: `공명 해제 ${boss.finalCharge.toFixed(1)} / ${boss.finalChargeNeeded.toFixed(1)}초` };
+  }
+  return { step: 'STEP 3 / 3', text: 'Z 기억 탄환으로 빼앗긴 행복을 주인에게 돌려주세요.', compact: `기억 반환 ${boss.maxHp - boss.hp} / ${boss.maxHp}` };
 }
 
 function showStoryPortrait(line) {
@@ -787,7 +846,7 @@ function setupBoss(name, config = {}) {
   ] : [];
   game.boss = {
     name, x: config.x || 734, y: config.y || 168, w: config.w || 164, h: config.h || 205, maxHp: bossHp, hp: bossHp, flash: 0, attack: 0, attackIndex: 0,
-    phase: 1, reflections: 0, memoryShield: 0, calmed: false, mode: config.mode || 'standard', resolving: false,
+    phase: 1, reflections: 0, memoryShield: 0, calmed: false, mode: config.mode || 'standard', resolving: false, activePads: 0,
     attackUnlocked: false, visual: config.visual || 'clown', attackTarget: config.attackTarget || 'player',
     requiredEchoHits: Number(config.requiredEchoHits) || 0, echoHits: 0,
     calmDuration: Number(config.calmDuration) || 1.4, calmProgress: 0,
@@ -795,6 +854,7 @@ function setupBoss(name, config = {}) {
     resonanceGates: (config.resonanceGates || []).map((gate) => ({ ...gate })), resonanceProgress: 0,
     mirrorGates: (config.mirrorGates || []).map((gate) => ({ ...gate })), mirrorProgress: 0,
     finalChargeNeeded: Number(config.finalChargeNeeded) || 1.4, finalCharge: 0,
+    releaseReady: false, releaseProgress: 0, releaseDuration: Number(config.releaseDuration) || 2.6,
     moveBounds: config.moveBounds || { xMin: 45, xMax: 565, yMin: 86, yMax: 437 },
     memoryPads: (config.memoryPads || defaultMemoryPads).map((pad) => ({ ...pad })),
   };
@@ -811,14 +871,14 @@ function isStageFiveBossBattle() {
 }
 
 function triggerBossShot() {
-  if (game.phase !== 'playing' || currentStage()?.type !== 'boss' || game.boss?.mode !== 'final' || !game.boss?.attackUnlocked || game.fireCooldown > 0) return;
-  if (!spend(6)) return;
+  if (game.phase !== 'playing' || currentStage()?.type !== 'boss' || game.boss?.mode !== 'final' || !game.boss?.attackUnlocked || game.boss?.releaseReady || game.fireCooldown > 0) return;
+  if (!spend(4)) return;
   const p = game.player;
   const direction = p.facing >= 0 ? 1 : -1;
   const origin = { x: direction > 0 ? p.x + p.w : p.x - 19, y: p.y + p.h / 2 - 3 };
   game.dreamShots.push({ x: origin.x, y: origin.y, w: 19, h: 7, vx: direction * 720, vy: 0, life: 0 });
   game.fireCooldown = 0.22;
-  say('기억 탄막을 발사했다.');
+  say('기억 탄환을 되돌려 보냈습니다.');
 }
 
 function echoOverlapsPad(echo, pad) {
@@ -1198,6 +1258,15 @@ function resolveBoss(b, message) {
   setTimeout(completeStage, 1000);
 }
 
+function beginFinalRelease(b) {
+  if (b.releaseReady) return;
+  b.releaseReady = true;
+  b.releaseProgress = 0;
+  b.flash = .8;
+  game.nightmareShots = [];
+  say('딸: 아빠, 친구들의 행복을 돌려줘. 과학자의 수호가 천천히 풀립니다.');
+}
+
 function updateWindGates(b) {
   const nextGate = b.windGates[b.chaseProgress];
   if (!nextGate || game.dashTimer <= 0 || !overlaps(game.player, nextGate)) return;
@@ -1247,7 +1316,7 @@ function updateBoss(dt) {
   if (horizontal) p.facing = horizontal;
   if (!frozen) {
     b.y = b.mode === 'calm' ? 166 + Math.sin(game.elapsed * 1.1) * 18 : 160 + Math.sin(game.elapsed * 1.45) * 56;
-    if (b.mode !== 'calm') {
+    if (b.mode !== 'calm' && !b.releaseReady) {
       game.nextAttack -= dt;
       if (game.nextAttack <= 0) { spawnNightmarePattern(); game.nextAttack = nextBossAttackDelay(b); }
     }
@@ -1300,12 +1369,22 @@ function updateBoss(dt) {
         if (b.mode === 'final') {
           b.phase = finalBossPhase(b);
           if (b.phase > previousPhase && b.hp > 0) say(`수면 과학자의 꿈이 더 거세졌습니다. 공격 단계 ${b.phase}!`);
+          if (b.hp <= 0) beginFinalRelease(b);
         }
         game.nextAttack = Math.min(game.nextAttack + .16, b.mode === 'final' ? 1.12 : 1.0);
         return false;
       }
       return shot.life < 1.8 && shot.x > -40 && shot.x < W + 40 && shot.y > -40 && shot.y < H + 40;
     });
+  }
+  if (b.mode === 'final' && b.releaseReady) {
+    // 마지막에는 더 이상 싸우지 않는다. 딸의 목소리가 닿는 동안 공격과 탄막을 모두 멈춘다.
+    game.nightmareShots = [];
+    b.releaseProgress = Math.min(b.releaseDuration, b.releaseProgress + dt);
+    if (b.releaseProgress >= b.releaseDuration) {
+      resolveBoss(b, '수면 과학자는 마침내 수호자를 멈췄습니다. 딸의 선택과 친구들의 기억이 그를 현실로 데려옵니다.');
+    }
+    return;
   }
   if (b.mode === 'calm') {
     b.activePads = activeMemoryPads(b.memoryPads, true);
@@ -1352,10 +1431,10 @@ function updateBoss(dt) {
     b.attackUnlocked = true;
     b.hp = b.maxHp;
     b.phase = 1;
-    say('세 개의 봉인이 공명했습니다. 이제 Z로 수면 과학자를 공격하자.');
+    say('세 개의 봉인이 공명했습니다. 이제 Z로 빼앗긴 기억을 돌려주세요.');
   }
   if (b.attackUnlocked && b.hp <= 0 && !b.resolving) {
-    resolveBoss(b, '수면 과학자의 수호자가 멈췄습니다.');
+    beginFinalRelease(b);
   }
 }
 
@@ -1395,7 +1474,7 @@ function showChapterEnd() {
   bossHud.classList.add('hidden');
   endTag.textContent = 'DREAMS RETURNED · PAGE 02 COMPLETE';
   endTitle.textContent = '행복은 빼앗아 지킬 수 없어.';
-  endCopy.innerHTML = '수면 과학자의 거대한 꿈이 멈추자, 세 친구에게서 빼앗긴 기억과 감정이 모두 돌아갑니다. 딸은 자신을 위해 친구들의 행복이 희생됐다는 진실을 마주하고, 아버지의 손을 잡습니다. 완벽한 꿈은 사라지지만, 둘은 처음으로 현실의 슬픔과 내일을 함께 받아들이기로 합니다.';
+  endCopy.innerHTML = '마지막 기억이 돌아오자 수면 과학자는 더 이상 수호자가 아닌 한 명의 아버지로 남습니다. 세 친구에게서 빼앗긴 감정은 모두 돌아가고, 딸은 아버지의 손을 잡습니다. 완벽한 꿈은 사라지지만, 두 사람은 처음으로 현실의 슬픔과 내일을 함께 받아들이기로 합니다.';
   restartButton.innerHTML = '처음부터 다시 보기 <span>↻</span>';
   endScreen.classList.remove('hidden');
 }
@@ -1411,9 +1490,10 @@ function showFinalTruth() {
 
 function updateHud() {
   const stage = currentStage() || STAGES[0];
+  const guide = phaseGuide();
   stageIndexEl.textContent = `${stagePage() === 2 ? 'PAGE 02 · ' : ''}STAGE ${String(game.stageIndex + 1).padStart(2, '0')} / ${String(totalStages()).padStart(2, '0')}`;
   stageNameEl.textContent = stage.name;
-  objectiveEl.textContent = stage.objective;
+  objectiveEl.textContent = guide.compact;
   const value = Math.ceil(game.imagination ?? 100);
   imaginationValueEl.textContent = value;
   imaginationFill.style.width = `${value}%`;
@@ -1421,7 +1501,7 @@ function updateHud() {
   canvas.classList.toggle('connection-weak', value <= 35 && value > 10);
   canvas.classList.toggle('connection-critical', value <= 10);
   if (game.boss) {
-    bossNameEl.textContent = game.boss.name;
+    bossNameEl.textContent = game.boss.mode === 'final' ? '수면 과학자 · 집착의 균열' : game.boss.name;
     const active = game.boss.activePads || 0;
     if (game.boss.mode === 'calm') {
       bossFill.style.width = `${game.boss.calmProgress / game.boss.calmDuration * 100}%`;
@@ -1441,9 +1521,12 @@ function updateHud() {
     } else if (game.boss.mode === 'mirror') {
       bossFill.style.width = `${game.boss.mirrorProgress / Math.max(1, game.boss.mirrorGates.length) * 100}%`;
       bossHealthEl.textContent = `거울 균열 ${game.boss.mirrorProgress} / ${game.boss.mirrorGates.length}`;
+    } else if (game.boss.releaseReady) {
+      bossFill.style.width = `${Math.min(100, game.boss.releaseProgress / game.boss.releaseDuration * 100)}%`;
+      bossHealthEl.textContent = '마지막 기억을 놓아주는 중…';
     } else if (game.boss.attackUnlocked) {
-      bossFill.style.width = `${Math.max(0, game.boss.hp) / Math.max(1, game.boss.maxHp) * 100}%`;
-      bossHealthEl.textContent = `공격 단계 ${game.boss.phase} · HP ${Math.max(0, game.boss.hp)} / ${game.boss.maxHp}`;
+      bossFill.style.width = `${(game.boss.maxHp - Math.max(0, game.boss.hp)) / Math.max(1, game.boss.maxHp) * 100}%`;
+      bossHealthEl.textContent = `기억 반환 ${game.boss.maxHp - Math.max(0, game.boss.hp)} / ${game.boss.maxHp}`;
     } else {
       bossFill.style.width = `${game.boss.finalCharge / game.boss.finalChargeNeeded * 100}%`;
       bossHealthEl.textContent = `공명 해제 ${game.boss.finalCharge.toFixed(1)} / ${game.boss.finalChargeNeeded.toFixed(1)}초`;
@@ -1489,8 +1572,10 @@ function updateMemoryLoopUI() {
       memoryStatus.textContent = `바람 고리 ${boss.chaseProgress} / ${boss.windGates.length} · 다음 고리의 높이에 맞춰 X로 질주하세요.`;
     } else if (boss.mode === 'mirror') {
       memoryStatus.textContent = `거울 균열 ${boss.mirrorProgress} / ${boss.mirrorGates.length} · V로 균열을 드러낸 뒤 X 질주로 다음 균열을 통과하세요.`;
+    } else if (boss.releaseReady) {
+      memoryStatus.textContent = '딸의 선택이 아버지에게 닿았습니다. 이제는 공격하지 않아도 기억이 돌아옵니다.';
     } else if (boss.attackUnlocked) {
-      memoryStatus.textContent = `공격 단계 · Z로 수면 과학자의 체력을 모두 깎으세요.`;
+      memoryStatus.textContent = `기억 반환 ${boss.maxHp - boss.hp} / ${boss.maxHp} · Z로 빼앗긴 꿈 에너지를 주인에게 돌려주세요.`;
     } else {
       memoryStatus.textContent = active < boss.memoryPads.length
         ? `봉인 위치 ${active} / ${boss.memoryPads.length} · 기억의 나 둘과 현재의 나를 세 봉인에 맞추세요.`
@@ -1504,19 +1589,95 @@ function updateMemoryLoopUI() {
 }
 
 function drawBackground(boss = false, bossLabel = '') {
+  const theme = dreamTheme();
   const g = ctx.createLinearGradient(0, 0, W, H);
-  g.addColorStop(0, boss ? '#26112c' : '#0a1231');
-  g.addColorStop(.53, boss ? '#190d25' : '#0a0e20');
-  g.addColorStop(1, boss ? '#300c25' : '#160d29');
+  g.addColorStop(0, theme.top);
+  g.addColorStop(.53, theme.mid);
+  g.addColorStop(1, theme.bottom);
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  ctx.save(); ctx.globalAlpha = boss ? .2 : .32; ctx.strokeStyle = boss ? '#a03d70' : '#334878'; ctx.lineWidth = 1;
+  ctx.save(); ctx.globalAlpha = boss ? .18 : .28; ctx.strokeStyle = theme.line; ctx.lineWidth = 1;
   for (let x = -80; x < W + 100; x += 48) { ctx.beginPath(); ctx.moveTo(x, H); ctx.lineTo(x + 260, 0); ctx.stroke(); }
   for (let y = 40; y < H; y += 42) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
   ctx.restore();
+  drawThemeAtmosphere(theme, boss);
   ctx.save(); ctx.fillStyle = 'rgba(226, 239, 255, .72)';
-  for (let i = 0; i < 38; i += 1) { const x = (i * 137 + 37) % W; const y = 22 + ((i * 71) % 250); ctx.fillRect(x, y, i % 5 === 0 ? 2 : 1, i % 5 === 0 ? 2 : 1); }
-  ctx.fillStyle = boss ? '#ff9db1' : '#a7c6ff'; ctx.font = '700 10px ui-monospace, monospace'; ctx.textAlign = 'left';
-  ctx.fillText(boss ? (bossLabel || 'DREAM FEAR · THE EMPTY STAGE') : "HARIN'S DREAM · THE MOONLIGHT FAIR", 25, 31); ctx.restore();
+  for (let i = 0; i < 32; i += 1) { const x = (i * 137 + 37) % W; const y = 22 + ((i * 71) % 250); ctx.fillRect(x, y, i % 5 === 0 ? 2 : 1, i % 5 === 0 ? 2 : 1); }
+  ctx.fillStyle = boss ? theme.soft : theme.accent; ctx.font = '700 10px ui-monospace, monospace'; ctx.textAlign = 'left';
+  ctx.fillText(boss ? (bossLabel || theme.label) : theme.label, 25, 31); ctx.restore();
+}
+
+function drawThemeAtmosphere(theme, boss) {
+  const t = game.elapsed || 0;
+  ctx.save();
+  if (theme.id === 'harin') {
+    ctx.globalAlpha = .24; ctx.strokeStyle = theme.soft; ctx.lineWidth = 2;
+    [156, 776].forEach((x, index) => {
+      const y = 324 + Math.sin(t * 1.2 + index) * 7;
+      ctx.beginPath(); ctx.arc(x, y, 72, 0, Math.PI * 2); ctx.stroke();
+      for (let spoke = 0; spoke < 8; spoke += 1) {
+        const angle = spoke * Math.PI / 4 + t * .18;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(angle) * 72, y + Math.sin(angle) * 72); ctx.stroke();
+      }
+    });
+    ctx.globalAlpha = .48; ctx.fillStyle = theme.accent;
+    for (let x = 80; x < W; x += 94) {
+      const flagY = 80 + (x % 3) * 8;
+      ctx.beginPath(); ctx.moveTo(x, flagY); ctx.lineTo(x + 15, flagY + 10 + Math.sin(t * 3 + x) * 3); ctx.lineTo(x + 30, flagY); ctx.closePath(); ctx.fill();
+    }
+  } else if (theme.id === 'yuna') {
+    ctx.globalAlpha = .22; ctx.strokeStyle = theme.soft; ctx.lineWidth = 1;
+    for (let line = 0; line < 5; line += 1) {
+      const y = 118 + line * 12;
+      ctx.beginPath(); ctx.moveTo(38, y); ctx.bezierCurveTo(260, y - 12, 620, y + 12, 922, y); ctx.stroke();
+    }
+    ctx.globalAlpha = .55; ctx.fillStyle = theme.accent;
+    for (let i = 0; i < 9; i += 1) {
+      const x = 84 + i * 102;
+      const y = 166 + ((i * 53) % 180) + Math.sin(t * 2 + i) * 9;
+      ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillRect(x + 5, y - 27, 2, 27);
+      if (i % 2 === 0) ctx.fillRect(x + 7, y - 27, 14, 2);
+    }
+  } else if (theme.id === 'haneul') {
+    ctx.globalAlpha = .27; ctx.strokeStyle = theme.accent; ctx.lineWidth = 2;
+    for (let i = 0; i < 5; i += 1) {
+      const y = 104 + i * 72;
+      const shift = (t * 55 + i * 130) % 280;
+      ctx.beginPath(); ctx.moveTo(-60 + shift, y); ctx.bezierCurveTo(160 + shift, y - 34, 264 + shift, y + 34, 500 + shift, y - 4); ctx.stroke();
+    }
+    ctx.globalAlpha = .18; ctx.fillStyle = '#d7f5ff';
+    [[170, 158], [610, 104], [806, 254]].forEach(([x, y], index) => {
+      const bob = Math.sin(t + index) * 4;
+      ctx.beginPath(); ctx.ellipse(x, y + bob, 46, 15, 0, 0, Math.PI * 2); ctx.ellipse(x + 36, y - 7 + bob, 30, 16, 0, 0, Math.PI * 2); ctx.fill();
+    });
+  } else if (theme.id === 'daughter') {
+    ctx.globalAlpha = .2; ctx.fillStyle = '#8cffb1'; ctx.fillRect(0, 442, W, 58);
+    ctx.globalAlpha = .63;
+    for (let i = 0; i < 15; i += 1) {
+      const x = 38 + i * 65;
+      const y = 432 - (i % 3) * 18;
+      ctx.fillStyle = i % 2 ? theme.accent : theme.soft;
+      ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.arc(x + 7, y + 3, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#8effbb'; ctx.fillRect(x + 3, y + 7, 2, 17);
+    }
+    ctx.globalAlpha = .2; ctx.fillStyle = '#fff4ff';
+    for (let i = 0; i < 7; i += 1) ctx.fillRect(70 + i * 126, 84 + ((i * 59) % 250), 72, 3);
+  } else if (theme.id === 'scientist') {
+    ctx.globalAlpha = .26; ctx.strokeStyle = theme.accent; ctx.lineWidth = 2;
+    for (let i = 0; i < 4; i += 1) {
+      const x = 48 + i * 134;
+      const y = 110 + (i % 2) * 178;
+      ctx.strokeRect(x, y, 74, 52);
+      ctx.beginPath(); ctx.arc(x + 37, y + 26, 11 + Math.sin(t * 2 + i) * 2, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x + 74, y + 26); ctx.lineTo(x + 112, y + 26); ctx.lineTo(x + 112, y + 82); ctx.stroke();
+    }
+    ctx.globalAlpha = .18; ctx.fillStyle = theme.soft;
+    for (let i = 0; i < 8; i += 1) ctx.fillRect(54 + i * 107, 72 + ((i * 37) % 310), 3, 42);
+  }
+  if (boss) {
+    ctx.globalAlpha = .12; ctx.fillStyle = theme.accent; ctx.beginPath(); ctx.arc(W * .72, H * .5, 230 + Math.sin(t * 2) * 10, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
 }
 
 function drawPlatform(item) {
@@ -1549,8 +1710,16 @@ function drawPlatform(item) {
     ctx.strokeStyle = 'rgba(161,177,255,.4)'; ctx.strokeRect(item.x + .5, item.y + .5, item.w - 1, item.h - 1);
     ctx.save(); ctx.translate(item.x + 47, item.y + 190); ctx.rotate(-Math.PI / 2); ctx.fillStyle = '#a2afe1'; ctx.font = '700 10px ui-monospace, monospace'; ctx.fillText('DREAM EXTRACTOR', -52, 0); ctx.restore();
   } else {
-    ctx.fillStyle = '#202a4d'; ctx.fillRect(item.x, item.y, item.w, item.h); ctx.fillStyle = '#687dd8'; ctx.fillRect(item.x, item.y, item.w, 4);
-    ctx.fillStyle = 'rgba(147,174,255,.13)'; for (let x = item.x + 12; x < item.x + item.w; x += 20) ctx.fillRect(x, item.y + 13, 8, 3);
+    const theme = dreamTheme();
+    const platformGradient = ctx.createLinearGradient(item.x, item.y, item.x, item.y + item.h);
+    platformGradient.addColorStop(0, theme.platform);
+    platformGradient.addColorStop(1, '#101a38');
+    ctx.save();
+    if (item.hidden) { ctx.shadowBlur = 15; ctx.shadowColor = theme.accent; }
+    ctx.fillStyle = platformGradient; ctx.fillRect(item.x, item.y, item.w, item.h);
+    ctx.fillStyle = theme.edge; ctx.fillRect(item.x, item.y, item.w, 4);
+    ctx.fillStyle = 'rgba(234,248,255,.16)'; for (let x = item.x + 12; x < item.x + item.w; x += 20) ctx.fillRect(x, item.y + 13, 8, 3);
+    ctx.restore();
   }
 }
 
@@ -1680,6 +1849,75 @@ function drawChild(player, bossMode = false) {
   ctx.save(); ctx.shadowBlur = 20; ctx.shadowColor = '#ffe57d'; ctx.fillStyle = '#f5b94e'; ctx.fillRect(x, y, w, h); ctx.fillStyle = '#59405e'; ctx.fillRect(x + 3, y + 4, w - 6, 11); ctx.fillStyle = '#ffd4b4'; ctx.fillRect(x + 5, y + 8, w - 10, 8); ctx.fillStyle = '#2c3c66'; ctx.fillRect(x + (player.facing > 0 ? w - 12 : 6), y + 9, 3, 3); ctx.fillStyle = '#e66c75'; ctx.fillRect(x + 4, y + h - 13, w - 8, 8); ctx.fillStyle = '#fff0a6'; ctx.beginPath(); ctx.arc(x + w / 2, y - 4, bossMode ? 5 : 3, 0, Math.PI * 2); ctx.fill(); ctx.restore();
 }
 
+function drawPhaseGuide() {
+  if (game.phase !== 'playing') return;
+  const guide = phaseGuide();
+  const label = `${guide.step} · ${guide.compact}`;
+  ctx.save();
+  ctx.font = '800 11px "Segoe UI", sans-serif';
+  const width = Math.min(430, Math.max(250, ctx.measureText(label).width + 38));
+  const x = W / 2 - width / 2;
+  const y = 96;
+  ctx.fillStyle = 'rgba(8, 17, 42, .83)'; ctx.fillRect(x, y, width, 28);
+  ctx.strokeStyle = `${dreamTheme().accent}88`; ctx.lineWidth = 1; ctx.strokeRect(x + .5, y + .5, width - 1, 27);
+  ctx.fillStyle = dreamTheme().accent; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, W / 2, y + 14);
+  ctx.restore();
+}
+
+function drawMemoryPath(frames, color, alpha, markerLabel = '') {
+  if (!frames?.length) return;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
+  ctx.beginPath();
+  frames.forEach((frame, index) => {
+    const x = frame.x + frame.w / 2;
+    const y = frame.y + frame.h / 2;
+    if (index === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.stroke(); ctx.setLineDash([]);
+  const first = frames[0];
+  const last = frames[frames.length - 1];
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(first.x + first.w / 2, first.y + first.h / 2, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(last.x + last.w / 2, last.y + last.h / 2, 8, 0, Math.PI * 2); ctx.stroke();
+  if (markerLabel) {
+    ctx.font = '800 9px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText(markerLabel, last.x + last.w / 2, last.y - 12);
+  }
+  ctx.restore();
+}
+
+function drawMemoryLoopFeedback() {
+  game.echoes.forEach((echo, index) => drawMemoryPath(echo.frames, ['#9effea', '#9eb9ff', '#ffb5d7'][index % 3], echo.holding ? .22 : .42));
+  if (!game.recording) return;
+  const recording = game.recording;
+  drawMemoryPath(recording.frames, '#ffe37d', .85, 'C · REWIND');
+  const p = game.player;
+  const pulse = 15 + Math.sin(game.elapsed * 8) * 3;
+  ctx.save(); ctx.strokeStyle = '#ffe37d'; ctx.lineWidth = 2; ctx.shadowBlur = 18; ctx.shadowColor = '#ffe37d';
+  ctx.beginPath(); ctx.arc(p.x + p.w / 2, p.y + p.h / 2, pulse, 0, Math.PI * 2); ctx.stroke();
+  ctx.fillStyle = '#fff3ad'; ctx.font = '800 9px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText('RECORDING', p.x + p.w / 2, p.y - 12);
+  ctx.restore();
+}
+
+function drawFinalReleaseScene(b) {
+  if (b.mode !== 'final' || !b.releaseReady) return;
+  const progress = b.releaseProgress / b.releaseDuration;
+  const colors = ['#ffb5d7', '#9effd7', '#a6efff'];
+  ctx.save();
+  b.memoryPads.forEach((pad, index) => {
+    ctx.strokeStyle = colors[index]; ctx.globalAlpha = .35 + progress * .45; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(pad.x + pad.w / 2, pad.y + pad.h / 2); ctx.quadraticCurveTo(W / 2, H / 2, b.x + b.w / 2, b.y + b.h / 2); ctx.stroke();
+  });
+  ctx.globalAlpha = .12 + progress * .12; ctx.fillStyle = '#efffff'; ctx.fillRect(0, 0, W, H);
+  ctx.globalAlpha = 1; ctx.fillStyle = 'rgba(12, 23, 47, .88)'; ctx.fillRect(168, 438, 624, 48);
+  ctx.strokeStyle = '#ffe27e'; ctx.lineWidth = 1; ctx.strokeRect(168.5, 438.5, 623, 47);
+  ctx.fillStyle = '#fff4c4'; ctx.font = '800 12px "Segoe UI", sans-serif'; ctx.textAlign = 'center';
+  const line = progress < .52 ? '딸  “아빠, 친구들의 행복을 돌려줘.”' : '수면 과학자  “그래… 이제는 놓아줄게.”';
+  ctx.fillText(line, W / 2, 468);
+  ctx.restore();
+}
+
 function drawPuzzle() {
   drawBackground(false);
   const techniques = activeTechniques();
@@ -1701,12 +1939,11 @@ function drawPuzzle() {
     // 공명이 꺼져 있을 때는 9스테이지의 기억 발판도 함께 감춘다.
     if (!pad.hidden || techniques.resonance) drawMemoryPad(pad, activeMemoryPads([pad]) > 0, index);
   });
+  drawMemoryLoopFeedback();
   game.echoes.forEach(drawEcho);
   if (game.exit) drawExit();
   if (game.player) drawChild(game.player);
-  if (game.phase === 'playing') {
-    ctx.font = '700 11px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#b6c5e6'; ctx.fillText(currentStage().hint, W / 2, H - 22);
-  }
+  drawPhaseGuide();
 }
 
 function drawWindGate(gate, index, active, cleared) {
@@ -1750,21 +1987,22 @@ function drawBoss() {
         : b.mode === 'final' ? 'THE SCIENTIST · DREAM LAB' : "HARIN'S FEAR · THE EMPTY STAGE";
   drawBackground(true, bossBackdrop);
   ctx.save(); ctx.fillStyle = 'rgba(255, 137, 176, .12)'; ctx.beginPath(); ctx.arc(b.x + 80, b.y + 102, 150, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  const releaseRatio = b.releaseReady ? b.releaseProgress / b.releaseDuration : 0;
   const scale = b.mode === 'final'
-    ? (b.attackUnlocked ? 1.14 + (b.phase - 1) * .13 : 1.14)
+    ? (b.releaseReady ? 1.14 - releaseRatio * .38 : b.attackUnlocked ? 1.14 + (b.phase - 1) * .13 : 1.14)
     : b.phase === 1 ? 1.18 : b.phase === 2 ? .9 : .62;
   const windFear = b.visual === 'wind';
   const choirFear = b.visual === 'choir';
   const mirrorFear = b.visual === 'mirror';
-  const bossShadow = b.mode === 'final' ? '#7be9ff' : windFear ? '#9cdbff' : choirFear ? '#9effd7' : mirrorFear ? '#ffb5df' : '#ff4d7c';
-  const bossBody = b.mode === 'final' ? '#19475e' : windFear ? '#173857' : choirFear ? '#174c4c' : mirrorFear ? '#5f346b' : '#6e1745';
-  const bossFace = b.mode === 'final' ? '#8adcf2' : windFear ? '#b4ecff' : choirFear ? '#bfffe8' : mirrorFear ? '#ffd5eb' : '#f6b2ca';
+  const bossShadow = b.mode === 'final' ? b.releaseReady ? '#ffe27e' : '#7be9ff' : windFear ? '#9cdbff' : choirFear ? '#9effd7' : mirrorFear ? '#ffb5df' : '#ff4d7c';
+  const bossBody = b.mode === 'final' ? b.releaseReady ? '#4e637c' : '#19475e' : windFear ? '#173857' : choirFear ? '#174c4c' : mirrorFear ? '#5f346b' : '#6e1745';
+  const bossFace = b.mode === 'final' ? b.releaseReady ? '#fff0b5' : '#8adcf2' : windFear ? '#b4ecff' : choirFear ? '#bfffe8' : mirrorFear ? '#ffd5eb' : '#f6b2ca';
   ctx.save(); ctx.translate(b.x + b.w / 2, b.y + b.h / 2); ctx.scale(scale, scale); ctx.shadowBlur = 34; ctx.shadowColor = bossShadow; ctx.fillStyle = b.flash > 0 ? '#ffe4ef' : bossBody;
   if (windFear) { ctx.rotate(.78); ctx.fillRect(-62, -62, 124, 124); ctx.strokeStyle = '#d0f7ff'; ctx.lineWidth = 4; ctx.strokeRect(-62, -62, 124, 124); ctx.rotate(-.78); }
   else if (mirrorFear) { ctx.rotate(Math.PI / 4); ctx.fillRect(-66, -66, 132, 132); ctx.strokeStyle = '#ffe3f4'; ctx.lineWidth = 4; ctx.strokeRect(-66, -66, 132, 132); ctx.rotate(-Math.PI / 4); }
   else { ctx.beginPath(); ctx.ellipse(0, 0, 72, 92, 0, 0, Math.PI * 2); ctx.fill(); }
   ctx.fillStyle = bossFace; ctx.beginPath(); ctx.arc(-27, -12, 24, 0, Math.PI * 2); ctx.arc(27, -12, 24, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = b.mode === 'final' ? '#0f2432' : windFear ? '#102030' : '#1f1027'; ctx.fillRect(-41, -18, 22, 8); ctx.fillRect(19, -18, 22, 8); ctx.strokeStyle = windFear ? '#d0f7ff' : choirFear ? '#bfffe8' : mirrorFear ? '#ffe3f4' : b.mode === 'final' ? '#8cf0ff' : '#ffc4d9'; ctx.lineWidth = 7; ctx.beginPath(); ctx.arc(0, 29, 23, 0, Math.PI); ctx.stroke(); ctx.fillStyle = '#f8df77'; ctx.beginPath(); ctx.arc(0, -80, 12, 0, Math.PI * 2); ctx.fill(); ctx.restore();
-  ctx.fillStyle = b.mode === 'final' || windFear || choirFear ? '#aeefff' : mirrorFear ? '#ffe0f2' : '#ffc4d5'; ctx.font = '800 12px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(b.name, b.x + b.w / 2, b.y - 17);
+  ctx.fillStyle = b.mode === 'final' ? b.releaseReady ? '#fff1b1' : '#aeefff' : windFear || choirFear ? '#aeefff' : mirrorFear ? '#ffe0f2' : '#ffc4d5'; ctx.font = '800 12px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(b.releaseReady ? '수면 과학자 · 아버지' : b.name, b.x + b.w / 2, b.y - 17);
   const bossPads = b.mode === 'chase' ? b.decoyPads : b.mode === 'resonance' || b.mode === 'calm' || b.mode === 'final' ? b.memoryPads : [];
   const presentCanFillPad = b.mode === 'calm' || b.mode === 'final';
   bossPads.forEach((pad, index) => {
@@ -1779,6 +2017,8 @@ function drawBoss() {
     ctx.beginPath(); ctx.arc(0, 12, 108, 0, Math.PI * 2); ctx.stroke(); ctx.beginPath(); ctx.arc(0, 12, 128, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
     ctx.fillStyle = '#ffe9a1'; ctx.font = '800 11px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText('NO ATTACK · STAY WITH HARIN', W / 2, 54);
   }
+  drawMemoryLoopFeedback();
+  drawFinalReleaseScene(b);
   game.echoes.forEach(drawEcho);
   for (const shot of game.dreamShots) { ctx.save(); ctx.shadowBlur = 14; ctx.shadowColor = '#ffe57d'; ctx.fillStyle = '#fff1a4'; ctx.fillRect(shot.x, shot.y, shot.w, shot.h); ctx.restore(); }
   for (const shot of game.nightmareShots) {
@@ -1794,7 +2034,7 @@ function drawBoss() {
     ctx.save(); ctx.translate(p.x + p.w / 2, p.y + p.h / 2); ctx.strokeStyle = '#9effea'; ctx.lineWidth = 3; ctx.shadowBlur = 18; ctx.shadowColor = '#9effea'; ctx.beginPath(); ctx.arc(0, 0, 38 + Math.sin(game.elapsed * 8) * 3, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
   }
   drawChild(game.player, true);
-  ctx.fillStyle = '#f7dfe7'; ctx.font = '700 11px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(currentStage().hint, W / 2, H - 22);
+  drawPhaseGuide();
 }
 
 function update(dt) {
