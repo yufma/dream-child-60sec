@@ -68,7 +68,7 @@
               </div>
             </div>
             <button class="primary-button" id="start-button">꿈 접속 시작 <span>↵</span></button>
-            <p class="controls-preview">이동 <b>←/→</b> · 점프/보스 회피 <b>↑/↓</b> · 기억 기록/되감기 <b>C</b> · 공명 <b>V</b> · 질주 <b>X</b> · 잔상 삭제 <b>Backspace</b> · 메뉴 <b>ESC</b></p>
+            <p class="controls-preview">이동 <b>←/→ 또는 A/D</b> · 점프/보스 회피 <b>↑/↓ 또는 W/S</b> · 확인 <b>Enter/F</b> · 보스 공격 <b>J</b> · 기억 기록/되감기 <b>K</b> · 공명 <b>L</b> · 질주 <b>좌우 이동키 ×2</b> · 잔상 삭제 <b>I</b> · 메뉴 <b>ESC</b></p>
           </div>
         </div>
 
@@ -117,18 +117,18 @@
             <span class="rule-state" id="time-state">HOLD SHIFT · DRAIN 28 / SEC</span>
           </button>
           <button class="rule-card" data-rule="resonance">
-            <span class="keycap">V</span>
+            <span class="keycap">L</span>
             <span class="rule-number">RULE 03</span>
             <strong>공명 파장</strong>
             <small>숨은 발판과 봉인을 드러내고, 공명의 핵을 깨울 수 있습니다.</small>
-            <span class="rule-state" id="resonance-state">HOLD V · DRAIN 14 / SEC</span>
+            <span class="rule-state" id="resonance-state">HOLD L · DRAIN 14 / SEC</span>
           </button>
           <button class="rule-card" data-rule="dash">
-            <span class="keycap">X</span>
+            <span class="keycap">×2</span>
             <span class="rule-number">RULE 04</span>
             <strong>질주</strong>
             <small>짧게 앞으로 돌진해 넓은 간격과 탄막 사이를 가릅니다.</small>
-            <span class="rule-state" id="dash-state">HOLD X · DASH FORWARD</span>
+            <span class="rule-state" id="dash-state">DOUBLE-TAP ←/→ OR A/D</span>
           </button>
         </div>
       </section>
@@ -137,7 +137,7 @@
         <div class="memory-heading">
           <p class="eyebrow">MEMORY LOOP</p>
           <h2>과거의 나와 협력하기</h2>
-          <p id="memory-status">C로 길을 기록해 과거의 나에게 맡기고, 되감긴 현재의 나는 다음 자리를 준비하세요.</p>
+          <p id="memory-status">K로 길을 기록해 과거의 나에게 맡기고, 되감긴 현재의 나는 다음 자리를 준비하세요.</p>
         </div>
         <div class="memory-fragments" aria-label="기억의 나">
           <div class="memory-fragment" data-echo-slot="0"><span>①</span><strong>첫 번째 기억</strong><small>EMPTY</small></div>
@@ -145,8 +145,8 @@
           <div class="memory-fragment" data-echo-slot="2"><span>③</span><strong>세 번째 기억</strong><small>EMPTY</small></div>
         </div>
         <div class="sentence-grid" aria-label="기억 루프 사용법">
-          <div class="sentence-card echo-guide"><span>01 · C START</span><strong>발판까지의 길을 기록</strong><small>C를 누른 뒤 목표 발판까지 이동하세요. 이동·점프·회피가 그대로 저장됩니다.</small></div>
-          <div class="sentence-card echo-guide"><span>02 · C REWIND</span><strong>과거의 나에게 자리를 맡김</strong><small>다시 C를 누르면 현재의 나는 시작점으로 되감기고, 기억의 나는 방금 걸은 길을 재생한 뒤 마지막 발판에 멈춥니다.</small></div>
+          <div class="sentence-card echo-guide"><span>01 · K START</span><strong>발판까지의 길을 기록</strong><small>K를 누른 뒤 목표 발판까지 이동하세요. 이동·점프·회피가 그대로 저장됩니다.</small></div>
+          <div class="sentence-card echo-guide"><span>02 · K REWIND</span><strong>과거의 나에게 자리를 맡김</strong><small>다시 K를 누르면 현재의 나는 시작점으로 되감기고, 기억의 나는 방금 걸은 길을 재생한 뒤 마지막 발판에 멈춥니다.</small></div>
           <div class="sentence-card echo-guide"><span>03 · COOPERATE</span><strong>기억의 나를 발판으로 쓴다</strong><small>기억의 나 위로 점프해 한 칸 더 높이 오를 수 있습니다. 보스전에서는 기억의 나 둘이 발판을 지키는 동안, 현재의 내가 마지막 자리를 맡습니다.</small></div>
         </div>
       </section>
@@ -174,12 +174,12 @@
         </div>
         <ol class="campaign-route" id="campaign-route">
            <li class="current"><b>01</b><span>접속과 상상력</span><small>꿈의 법칙을 익히는 시작</small></li>
-           <li><b>02</b><span>하린의 기억 문</span><small>C로 과거의 나를 남기는 법</small></li>
+           <li><b>02</b><span>하린의 기억 문</span><small>K로 과거의 나를 남기는 법</small></li>
            <li><b>03</b><span>달빛 유원지의 벽</span><small>공포를 넘어 길을 바꾸는 순간</small></li>
            <li><b>04</b><span>무너지는 회전목마</span><small>기억의 나 둘과 시간 정지</small></li>
            <li><b>05</b><span>웃음을 훔치는 광대</span><small>공포 보스를 진정시키는 첫 결전</small></li>
            <li><b>06</b><span>별빛 합창의 친구</span><small>공명으로 숨은 길과 봉인을 드러냄</small></li>
-           <li><b>07</b><span>바람을 가르는 달리기</span><small>X 질주로 끊긴 길을 이어감</small></li>
+           <li><b>07</b><span>바람을 가르는 달리기</span><small>좌우 이동키 두 번으로 끊긴 길을 이어감</small></li>
            <li><b>08</b><span>수면 과학자</span><small>공명 핵과 탄막을 넘는 최종전</small></li>
         </ol>
       </section>
