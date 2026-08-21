@@ -437,6 +437,7 @@ const MOVEMENT_TUNING = {
   boss: { maxSpeed: 310, accelerationTime: .16, stopTime: .11, turnTime: .18 },
 };
 const CAROUSEL_RIDE_SPEED = .18;
+const WIND_GATE_OUTER_PADDING = 9;
 
 function moveToward(value, target, maxDelta) {
   if (value < target) return Math.min(value + maxDelta, target);
@@ -771,9 +772,8 @@ function fallOffStage(message = '낙사! 기억이 시작점으로 되돌아갔�
   game.player.vx = 0;
   game.player.vy = 0;
   game.player.grounded = false;
-  game.imagination = Math.max(0, game.imagination - 12);
-  say(message);
-  if (game.imagination <= 0) disconnect();
+  game.imagination = 100;
+  say(`${message} 상상력이 모두 회복됐습니다.`);
   updateHud();
 }
 
@@ -1334,6 +1334,18 @@ function overlaps(a, b) {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 }
 
+function overlapsWindGate(player, gate) {
+  const centerX = gate.x + gate.w / 2;
+  const centerY = gate.y + gate.h / 2;
+  const radiusX = gate.w / 2 + WIND_GATE_OUTER_PADDING;
+  const radiusY = gate.h / 2 + WIND_GATE_OUTER_PADDING;
+  const closestX = Math.max(player.x, Math.min(centerX, player.x + player.w));
+  const closestY = Math.max(player.y, Math.min(centerY, player.y + player.h));
+  const normalizedX = (closestX - centerX) / radiusX;
+  const normalizedY = (closestY - centerY) / radiusY;
+  return normalizedX * normalizedX + normalizedY * normalizedY <= 1;
+}
+
 function resolveWallHorizontal(player, wall, oldX) {
   const verticallyOverlaps = player.y < wall.y + wall.h && player.y + player.h > wall.y;
   if (!verticallyOverlaps) return;
@@ -1468,8 +1480,13 @@ function updatePuzzle(dt) {
 }
 
 function hitByNightmare(message, cost, reset) {
+  if (reset) {
+    game.player = freshPlayer();
+    game.imagination = 100;
+    say(`${message} 상상력이 모두 회복됐습니다.`);
+    return;
+  }
   game.imagination = Math.max(0, game.imagination - cost);
-  if (reset) game.player = freshPlayer();
   say(message);
   if (game.imagination <= 0) disconnect();
 }
@@ -1622,7 +1639,7 @@ function beginFinalRelease(b) {
 
 function updateWindGates(b) {
   const nextGate = b.windGates[b.chaseProgress];
-  if (!nextGate || game.dashTimer <= 0 || !overlaps(game.player, nextGate)) return;
+  if (!nextGate || game.dashTimer <= 0 || !overlapsWindGate(game.player, nextGate)) return;
   b.chaseProgress += 1;
   b.flash = .22;
   b.courageDeadline = b.chaseProgress >= b.windGates.length ? 0 : game.elapsed + 2.35;
@@ -2702,18 +2719,19 @@ function drawLayoutLandmarks() {
   ctx.restore();
 }
 
-function drawWindGate(gate, index, active, cleared) {
+function drawWindGate(gate, index, active, cleared, unlocked) {
+  const locked = !unlocked && !cleared;
   ctx.save();
   ctx.translate(gate.x + gate.w / 2, gate.y + gate.h / 2);
-  ctx.globalAlpha = cleared ? .22 : active ? 1 : .32;
-  ctx.strokeStyle = cleared ? '#9effea' : active ? '#f4fdff' : '#6a95b4';
+  ctx.globalAlpha = locked ? .12 : cleared ? .22 : active ? 1 : .32;
+  ctx.strokeStyle = locked ? '#566478' : cleared ? '#9effea' : active ? '#f4fdff' : '#6a95b4';
   ctx.shadowBlur = active ? 24 : 0;
   ctx.shadowColor = '#a9f6ff';
   ctx.lineWidth = active ? 4 : 2;
   ctx.beginPath(); ctx.ellipse(0, 0, gate.w / 2, gate.h / 2, 0, 0, Math.PI * 2); ctx.stroke();
-  ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.ellipse(0, 0, gate.w / 2 + 9, gate.h / 2 + 9, 0, 0, Math.PI * 2); ctx.stroke();
+  ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.ellipse(0, 0, gate.w / 2 + WIND_GATE_OUTER_PADDING, gate.h / 2 + WIND_GATE_OUTER_PADDING, 0, 0, Math.PI * 2); ctx.stroke();
   ctx.restore();
-  ctx.fillStyle = cleared ? '#8bc6c1' : active ? '#d7fbff' : '#7391ad'; ctx.font = '800 9px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(gate.label, gate.x + gate.w / 2, gate.y - 12);
+  ctx.fillStyle = locked ? '#687487' : cleared ? '#8bc6c1' : active ? '#d7fbff' : '#7391ad'; ctx.font = '800 9px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(locked ? `LOCKED · ${gate.label}` : gate.label, gate.x + gate.w / 2, gate.y - 12);
 }
 
 function drawDreamGate(gate, active, cleared, kind = 'resonance', revealed = true, heartbeat = 0) {
@@ -2793,7 +2811,10 @@ function drawBoss() {
     drawMemoryPad(pad, activeMemoryPads([pad], presentCanFillPad) > 0, index, b.mode === 'final' && index < 2 ? 'truth' : role);
   });
   if (b.mode === 'calm') b.distortedMemoryPads.forEach((pad, index) => drawMemoryPad(pad, activeMemoryPads([pad]) > 0, index, 'distortion'));
-  if (b.mode === 'chase') b.windGates.forEach((gate, index) => drawWindGate(gate, index, index === b.chaseProgress, index < b.chaseProgress));
+  if (b.mode === 'chase') {
+    const windGatesUnlocked = b.echoHits >= b.requiredEchoHits;
+    b.windGates.forEach((gate, index) => drawWindGate(gate, index, windGatesUnlocked && index === b.chaseProgress, index < b.chaseProgress, windGatesUnlocked));
+  }
   if (b.mode === 'resonance') {
     const beat = resonanceBeat(b);
     const beatOpen = beat.open;
