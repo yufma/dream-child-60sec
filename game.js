@@ -501,6 +501,7 @@ let toastTimer = 0;
 let lastFrame = 0;
 let game = {};
 const stageBgm = { enabled: true, key: null, audio: null };
+let gameSfxContext = null;
 
 const MOVEMENT_TUNING = {
   puzzle: { maxSpeed: 290, accelerationTime: .16, stopTime: .11, turnTime: .18, airControl: .55 },
@@ -660,6 +661,33 @@ function stopStageBgm() {
   stageBgm.key = null;
   stageBgm.audio = null;
   updateBgmToggle(null);
+}
+
+function primeGameSfx() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return null;
+  if (!gameSfxContext) gameSfxContext = new AudioContextClass();
+  if (gameSfxContext.state === 'suspended') gameSfxContext.resume().catch(() => {});
+  return gameSfxContext;
+}
+
+// BGM과 별개로 재생되는 짧은 저음 킥이다. 소리를 끈 플레이어도 박자 판정은 귀로 읽을 수 있다.
+function playResonanceBassHit(strong = false) {
+  const audio = primeGameSfx();
+  if (!audio || audio.state !== 'running') return;
+  const now = audio.currentTime;
+  const duration = strong ? .31 : .2;
+  const oscillator = audio.createOscillator();
+  const gain = audio.createGain();
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(strong ? 94 : 76, now);
+  oscillator.frequency.exponentialRampToValueAtTime(strong ? 42 : 50, now + duration);
+  gain.gain.setValueAtTime(.0001, now);
+  gain.gain.exponentialRampToValueAtTime(strong ? .16 : .075, now + .008);
+  gain.gain.exponentialRampToValueAtTime(.0001, now + duration);
+  oscillator.connect(gain).connect(audio.destination);
+  oscillator.start(now);
+  oscillator.stop(now + duration + .02);
 }
 
 function isSkillBlocked(skill) {
@@ -926,6 +954,7 @@ function removeLatestEcho() {
 
 function startStage() {
   const stage = currentStage();
+  if (stage.type === 'boss' && stage.bossConfig?.mode === 'resonance') primeGameSfx();
   clearStageIntroTimer();
   gameHud.classList.remove('hidden');
   startScreen.classList.remove('story-mode');
@@ -1254,7 +1283,7 @@ function setupBoss(name, config = {}) {
     calmDuration: Number(config.calmDuration) || 1.4, calmProgress: 0,
     distortedMemoryPads: (config.distortedMemoryPads || []).map((pad) => ({ ...pad })),
     decoyPads: (config.decoyPads || []).map((pad) => ({ ...pad })), windGates: (config.windGates || []).map((gate) => ({ ...gate })), chaseProgress: 0, courageDeadline: 0,
-    resonanceGates: (config.resonanceGates || []).map((gate) => ({ ...gate })), resonanceProgress: 0,
+    resonanceGates: (config.resonanceGates || []).map((gate) => ({ ...gate })), resonanceProgress: 0, lastRhythmPulse: null,
     mirrorGates: (config.mirrorGates || []).map((gate) => ({ ...gate })), fakeMirrorGates: (config.fakeMirrorGates || []).map((gate) => ({ ...gate })), mirrorProgress: 0, falseMirrorCooldown: 0,
     truthTargets: (config.truthTargets || []).map((target) => ({
       ...target,
@@ -1841,10 +1870,11 @@ function updateCourageCombo(b) {
 function resonanceBeat(b) {
   const anchors = activeMemoryPads(b.memoryPads || []);
   const cycle = 1.12;
-  const phase = ((game.elapsed || 0) % cycle) / cycle;
+  const elapsed = game.elapsed || 0;
+  const phase = (elapsed % cycle) / cycle;
   // 두 화음 앵커가 있을수록 별빛 박자가 조금 넓어진다. L을 무작정 오래 누르는 대신, 밝아지는 순간을 읽게 한다.
   const window = Math.min(.38, .16 + anchors * .09);
-  return { open: phase <= window || phase >= 1 - window, phase, window };
+  return { open: phase <= window || phase >= 1 - window, phase, window, index: Math.floor(elapsed / cycle) };
 }
 
 function resonanceHeartbeat(beat) {
@@ -1857,6 +1887,13 @@ function resonanceHeartbeat(beat) {
     return distance >= 1 ? 0 : Math.pow(1 - distance, 2) * strength;
   };
   return Math.max(pulse(.12, .1), pulse(.29, .085, .72));
+}
+
+function updateResonanceBassCue(b) {
+  const beat = resonanceBeat(b);
+  if (b.lastRhythmPulse === beat.index) return;
+  b.lastRhythmPulse = beat.index;
+  playResonanceBassHit();
 }
 
 function updateResonanceGates(b, techniques) {
@@ -1872,6 +1909,7 @@ function updateResonanceGates(b, techniques) {
   }
   b.resonanceProgress += 1;
   b.flash = .24;
+  playResonanceBassHit(true);
   say(b.resonanceProgress >= b.resonanceGates.length ? '마지막 음이 돌아왔습니다!' : `공명 성공! 되찾은 음 ${b.resonanceProgress} / ${b.resonanceGates.length}`);
 }
 
@@ -2093,6 +2131,7 @@ function updateBoss(dt) {
     b.activePads = activeMemoryPads(b.memoryPads);
     b.phase = Math.min(3, b.resonanceProgress + 1);
     if (b.activePads >= b.memoryPads.length) {
+      updateResonanceBassCue(b);
       updateResonanceGates(b, techniques);
       if (b.resonanceProgress >= b.resonanceGates.length) resolveBoss(b, '침묵이 갈라지고 유나의 노래가 꿈 전체에 울려 퍼집니다.');
     }
@@ -3534,6 +3573,7 @@ startButton.addEventListener('click', () => {
 canvas.addEventListener('click', () => {
   if (game.phase === 'ending-cinematic') advanceEndingCinematic();
 });
+window.addEventListener('pointerdown', primeGameSfx, { passive: true });
 resumeButton.addEventListener('click', closeStageMenu);
 routeModeButton.addEventListener('click', toggleRouteMode);
 disconnectSkipButton.addEventListener('click', skipDreamDisconnect);
@@ -3574,6 +3614,7 @@ function handleConfirmInput() {
 }
 
 window.addEventListener('keydown', (event) => {
+  primeGameSfx();
   if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'Enter', 'KeyF', 'KeyI'].includes(event.code)) event.preventDefault();
   if (!event.repeat && (event.code === 'Enter' || event.code === 'KeyF') && handleConfirmInput()) {
     event.preventDefault();
