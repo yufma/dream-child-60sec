@@ -184,8 +184,8 @@ const STAGES = [
   },
   {
     chapter: '유나 · 사라진 노래', name: '별빛 합창의 문', type: 'puzzle', skills: ['resonance'], teaches: ['resonance'], objective: '공명으로 숨은 합창길을 드러내라',
-    intro: '두 번째 친구 유나는 숨은 소리를 듣는 아이야. 꿈 추출기는 그 아이의 노래를 접어 숨겨 버렸어. L을 누르면 공명이 퍼져, 보이지 않던 발판과 봉인이 드러난다. 한 번 드러난 길은 마음이 흔들려도 다시 이어질 거야.',
-    layout: 'chorus', echoGoal: 1, hint: 'L로 숨은 발판을 드러내고, 기억 발판에 과거의 나를 남겨 합창길을 완성하세요.',
+    intro: '두 번째 친구 유나는 숨은 소리를 듣는 아이야. 꿈 추출기는 그 아이의 노래를 접어 숨겨 버렸어. L을 누르면 공명이 퍼져, 보이지 않던 발판과 봉인이 드러난다. 하지만 공명을 멈추면 길도 다시 희미해져. 발판 위에서 L을 유지하며, 안전한 악보 단에 도착했을 때만 잠시 숨을 고르자.',
+    layout: 'chorus', echoGoal: 1, hint: 'L로 숨은 악보 발판을 이어 건너고, 가운데 기억 단에 과거의 나를 남겨 합창길을 완성하세요.',
   },
   {
     chapter: '유나 · 사라진 노래', name: '유나의 빈 의자', type: 'puzzle', skills: ['bridge', 'time', 'resonance'], objective: '서로 다른 높이의 빈자리를 기억의 메아리로 채워라',
@@ -873,8 +873,9 @@ function phaseGuide() {
     const active = activeMemoryPads(game.memoryPads || []);
     const goal = game.echoGoal || 0;
     if (game.recording) return { step: 'RECORDING', text: '목표 위치까지 움직인 뒤 K를 다시 눌러 기억을 되감으세요.', compact: 'K로 기록을 되감아 기억의 나를 남겨라' };
-    if (stage.layout === 'chorus-memory' && active < goal && !activeTechniques().resonance) {
-      return { step: 'STEP 1 / 3', text: 'L을 유지해 숨은 음계와 기억 문양을 드러내세요.', compact: 'L로 숨은 음계를 드러내라' };
+    const yunaRoute = (stage.chapter || '').includes('유나') && ['chorus', 'choir-balcony', 'chorus-memory', 'harmony-spiral'].includes(stage.layout);
+    if (yunaRoute && goal > active && !activeTechniques().resonance) {
+      return { step: 'STEP 1 / 3', text: 'L을 유지해 좁은 악보 발판을 드러내세요. 공명을 멈추면 발판도 사라집니다.', compact: 'L로 공명 길을 유지하라' };
     }
     if (stage.layout === 'carousel' && active < goal) {
       return { step: 'STEP 1 / 3', text: '회전목마 손잡이까지 K로 기록해, 기억의 나에게 달빛 발판을 돌려 달라고 맡기세요.', compact: '기억의 나로 회전목마를 돌려라' };
@@ -1191,36 +1192,28 @@ function setupPuzzle(layout, echoGoal) {
     ];
   } else if (layout === 'chorus') {
     game.platforms = [
-      { x: 0, y: 500, w: 190, h: 40, label: 'CHOIR FLOOR' },
-      { x: 246, y: 500, w: 150, h: 40, label: 'ECHO FLOOR' },
-      { x: 446, y: 500, w: 136, h: 40, label: 'MELODY FLOOR' },
-      { x: 650, y: 500, w: 310, h: 40, label: 'RESONANCE HALL' },
-      { x: 180, y: 400, w: 96, h: 14, hidden: true, label: '숨은 음계' },
-      { x: 344, y: 336, w: 120, h: 14, hidden: true, label: '반향 다리' },
-      { x: 522, y: 276, w: 120, h: 14, hidden: true, label: '합창 난간' },
-      { x: 712, y: 214, w: 110, h: 14, hidden: true, label: '별빛 파동' },
+      { x: 0, y: 500, w: 176, h: 40, label: 'CHOIR FLOOR' },
+      { x: 204, y: 424, w: 74, h: 16, hidden: true, label: '숨은 첫 음' },
+      { x: 328, y: 360, w: 104, h: 18, label: '기억의 악보 단' },
+      { x: 472, y: 296, w: 80, h: 16, hidden: true, label: '반향 다리' },
+      { x: 598, y: 350, w: 94, h: 18, label: '합창 난간' },
+      { x: 748, y: 420, w: 212, h: 18, label: 'RESONANCE HALL' },
     ];
-    game.exit = { x: 862, y: 418, w: 36, h: 82, label: 'SONG GATE' };
-    game.fallZones = [
-      { x: 190, y: 500, w: 56, h: 40 },
-      { x: 396, y: 500, w: 50, h: 40 },
-      { x: 582, y: 500, w: 68, h: 40 },
-    ];
+    game.exit = { x: 862, y: 338, w: 36, h: 82, label: 'SONG GATE' };
+    game.fallZones = [];
   } else if (layout === 'chorus-memory') {
-    // 9스테이지는 중간 바닥을 없애 공명을 유지한 숨은 음계만으로 건너야 한다.
+    // 9스테이지는 공명을 오래 유지해야 하는 좁은 음계 지그재그다. 가운데의 짧은 안전 단에서만 기억을 남길 수 있다.
     game.platforms = [
-      { x: 0, y: 500, w: 190, h: 40, label: 'CHOIR START' },
-      { x: 650, y: 500, w: 310, h: 40, label: 'RESONANCE HALL' },
-      // 기본 점프로도 닿는 높이: 첫 공명 발판에 무리 없이 접근할 수 있다.
-      { x: 180, y: 420, w: 96, h: 14, hidden: true, label: '숨은 음계 1' },
-      { x: 344, y: 336, w: 120, h: 14, hidden: true, label: '반향 다리' },
-      { x: 522, y: 276, w: 120, h: 14, hidden: true, label: '기억의 음계' },
-      { x: 712, y: 214, w: 110, h: 14, hidden: true, label: '별빛 파동' },
+      { x: 0, y: 500, w: 180, h: 40, label: 'CHOIR START' },
+      { x: 208, y: 420, w: 68, h: 16, hidden: true, label: '숨은 음계 1' },
+      { x: 322, y: 350, w: 72, h: 16, hidden: true, label: '숨은 음계 2' },
+      { x: 440, y: 280, w: 82, h: 18, label: '기억의 음계' },
+      { x: 566, y: 350, w: 72, h: 16, hidden: true, label: '되돌아가는 음' },
+      { x: 682, y: 280, w: 72, h: 16, hidden: true, label: '별빛 파동' },
+      { x: 800, y: 420, w: 160, h: 18, label: 'RESONANCE HALL' },
     ];
-    game.exit = { x: 862, y: 418, w: 36, h: 82, label: 'SONG GATE' };
-    game.fallZones = [
-      { x: 190, y: 500, w: 460, h: 40 },
-    ];
+    game.exit = { x: 862, y: 338, w: 36, h: 82, label: 'SONG GATE' };
+    game.fallZones = [];
   } else if (layout === 'dash') {
     game.platforms = [
       { x: 0, y: 500, w: 175, h: 40, label: 'RUN START' },
@@ -1250,24 +1243,25 @@ function setupPuzzle(layout, echoGoal) {
     game.fallZones = [];
   } else if (layout === 'choir-balcony') {
     game.platforms = [
-      { x: 0, y: 500, w: 198, h: 40, label: 'CLASSROOM FLOOR' },
-      { x: 232, y: 430, w: 108, h: 16, hidden: true, label: 'LOW NOTE STAIR' },
-      { x: 362, y: 362, w: 112, h: 18, label: 'LOW BALCONY' },
-      { x: 510, y: 294, w: 102, h: 16, hidden: true, label: 'HIGH NOTE STAIR' },
-      { x: 642, y: 226, w: 132, h: 18, label: 'CHOIR BALCONY' },
-      { x: 788, y: 356, w: 172, h: 18, label: 'EXIT DESCENT' },
+      { x: 0, y: 500, w: 180, h: 40, label: 'CLASSROOM FLOOR' },
+      { x: 208, y: 432, w: 70, h: 16, hidden: true, label: 'LOW NOTE STAIR' },
+      { x: 330, y: 360, w: 82, h: 18, label: 'LOW BALCONY' },
+      { x: 448, y: 288, w: 70, h: 16, hidden: true, label: 'HIGH NOTE STAIR' },
+      { x: 562, y: 224, w: 94, h: 18, label: 'CHOIR BALCONY' },
+      { x: 700, y: 310, w: 68, h: 16, hidden: true, label: 'DESCENT NOTE' },
+      { x: 810, y: 378, w: 150, h: 18, label: 'EXIT DESCENT' },
     ];
-    game.exit = { x: 882, y: 274, w: 36, h: 82, label: 'BALCONY GATE' };
+    game.exit = { x: 882, y: 296, w: 36, h: 82, label: 'BALCONY GATE' };
     game.fallZones = [];
   } else if (layout === 'harmony-spiral') {
     game.platforms = [
-      { x: 0, y: 500, w: 188, h: 40, label: 'SCORE START' },
-      { x: 222, y: 426, w: 104, h: 16, hidden: true, label: 'SPIRAL NOTE 01' },
-      { x: 342, y: 354, w: 104, h: 18, label: 'SPIRAL NOTE 02' },
-      { x: 470, y: 282, w: 98, h: 16, hidden: true, label: 'SPIRAL NOTE 03' },
-      { x: 588, y: 354, w: 102, h: 18, label: 'SPIRAL NOTE 04' },
-      { x: 716, y: 264, w: 112, h: 16, hidden: true, label: 'FINAL REFRAIN' },
-      { x: 832, y: 414, w: 128, h: 18, label: 'CHORUS EXIT' },
+      { x: 0, y: 500, w: 184, h: 40, label: 'SCORE START' },
+      { x: 214, y: 426, w: 74, h: 16, hidden: true, label: 'SPIRAL NOTE 01' },
+      { x: 332, y: 354, w: 82, h: 18, label: 'LOW HARMONY' },
+      { x: 452, y: 282, w: 74, h: 16, hidden: true, label: 'SPIRAL NOTE 02' },
+      { x: 572, y: 354, w: 82, h: 18, label: 'HIGH HARMONY' },
+      { x: 692, y: 276, w: 78, h: 16, hidden: true, label: 'FINAL REFRAIN' },
+      { x: 812, y: 414, w: 148, h: 18, label: 'CHORUS EXIT' },
     ];
     game.exit = { x: 882, y: 332, w: 36, h: 82, label: 'HARMONY GATE' };
     game.fallZones = [];
@@ -1379,20 +1373,20 @@ function setupPuzzle(layout, echoGoal) {
     'lantern-river': [],
     bridge: [{ x: 165, y: 462, w: 30, h: 28, label: '첫 약속' }],
     wall: [{ x: 165, y: 462, w: 30, h: 28, label: '별빛 약속' }],
-    chorus: [{ x: 382, y: 462, w: 30, h: 28, label: '노래 기억' }],
-    // 9스테이지: 공명으로 계단을 드러낸 뒤에만 도달할 수 있는 세 번째 음계 위의 기억 발판.
-    'chorus-memory': [{ x: 564, y: 248, w: 30, h: 28, label: '세 번째 음의 기억', hidden: true }],
+    chorus: [{ x: 364, y: 332, w: 30, h: 28, label: '노래 기억' }],
+    // 9스테이지: 흔들리는 공명 길 가운데의 짧은 안전 단 위에서만 기억을 남길 수 있다.
+    'chorus-memory': [{ x: 466, y: 252, w: 30, h: 28, label: '세 번째 음의 기억' }],
     duet: [
       { x: 150, y: 462, w: 30, h: 28, label: '첫 번째 빈 의자' },
       { x: 520, y: 462, w: 30, h: 28, label: '두 번째 빈 의자' },
     ],
     'choir-balcony': [
-      { x: 274, y: 402, w: 30, h: 28, label: '낮은 빈 의자', hidden: true },
-      { x: 678, y: 198, w: 30, h: 28, label: '높은 빈 의자' },
+      { x: 356, y: 332, w: 30, h: 28, label: '낮은 빈 의자' },
+      { x: 594, y: 196, w: 30, h: 28, label: '높은 빈 의자' },
     ],
     'harmony-spiral': [
-      { x: 246, y: 398, w: 30, h: 28, label: '낮은 음의 자리', hidden: true },
-      { x: 750, y: 236, w: 30, h: 28, label: '높은 음의 자리', hidden: true },
+      { x: 358, y: 326, w: 30, h: 28, label: '낮은 음의 자리' },
+      { x: 598, y: 326, w: 30, h: 28, label: '높은 음의 자리' },
     ],
     relay: [{ x: 135, y: 462, w: 30, h: 28, label: '출발 신호' }],
     dash: [{ x: 138, y: 462, w: 30, h: 28, label: '질주 기억' }],
@@ -1660,8 +1654,14 @@ function updateDreamTrails(dt) {
 
 function frozenTime() { return activeTechniques().time; }
 
+function resonanceDrainPerSecond() {
+  const stage = currentStage();
+  if ((stage?.chapter || '').includes('유나')) return stage.type === 'boss' ? 18 : 17;
+  return 14;
+}
+
 function imaginationRegen(dt, techniques) {
-  const drain = (techniques.bridge ? 16 : 0) + (techniques.time ? 28 : 0) + (techniques.resonance ? 14 : 0);
+  const drain = (techniques.bridge ? 16 : 0) + (techniques.time ? 28 : 0) + (techniques.resonance ? resonanceDrainPerSecond() : 0);
   if (drain > 0) {
     game.imagination = Math.max(0, game.imagination - drain * dt);
     if (game.imagination <= 0) disconnect();
@@ -2613,7 +2613,10 @@ function updateHud() {
   const techniques = activeTechniques();
   ruleStates.bridge.textContent = techniques.bridge ? 'HOLDING · DRAIN 16 / SEC' : 'HOLD 1 · DRAIN 16 / SEC';
   ruleStates.time.textContent = techniques.time ? 'HOLDING · DRAIN 28 / SEC' : 'HOLD SHIFT · DRAIN 28 / SEC';
-  if (ruleStates.resonance) ruleStates.resonance.textContent = techniques.resonance ? 'HOLDING · DRAIN 14 / SEC' : 'HOLD L · DRAIN 14 / SEC';
+  if (ruleStates.resonance) {
+    const drain = resonanceDrainPerSecond();
+    ruleStates.resonance.textContent = techniques.resonance ? `HOLDING · DRAIN ${drain} / SEC` : `HOLD L · DRAIN ${drain} / SEC`;
+  }
   if (ruleStates.dash) ruleStates.dash.textContent = game.dashCooldown > 0 ? `COOLDOWN ${game.dashCooldown.toFixed(1)}s` : 'PRESS SPACE · DASH FORWARD';
   ruleCards.forEach((card) => {
     const rule = card.dataset.rule;
@@ -2844,6 +2847,46 @@ function drawThemeAtmosphere(theme, boss) {
   ctx.restore();
 }
 
+function drawYunaScorePlatform(item) {
+  const ground = item.h >= 28;
+  const hidden = Boolean(item.hidden);
+  const x = Math.round(item.x), y = Math.round(item.y), w = Math.round(item.w), h = Math.round(item.h);
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  if (hidden) { ctx.shadowBlur = 18; ctx.shadowColor = '#8effdc'; }
+  const surface = ctx.createLinearGradient(x, y, x, y + h);
+  surface.addColorStop(0, ground ? '#244c5a' : '#285e68');
+  surface.addColorStop(.23, ground ? '#173947' : '#183f4e');
+  surface.addColorStop(1, '#081c32');
+  ctx.fillStyle = surface; ctx.fillRect(x, y, w, h);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = hidden ? '#d2fff0' : '#e2c884'; ctx.fillRect(x, y, w, 3);
+  ctx.fillStyle = '#57c8bd'; ctx.fillRect(x + 2, y + 4, Math.max(0, w - 4), 2);
+  ctx.fillStyle = 'rgba(4, 20, 39, .65)'; ctx.fillRect(x + 3, y + h - 5, Math.max(0, w - 6), 3);
+  if (ground) {
+    for (let line = 0; line < 3; line += 1) {
+      ctx.fillStyle = line === 0 ? 'rgba(239, 216, 157, .34)' : 'rgba(93, 203, 192, .22)';
+      ctx.fillRect(x + 6, y + 10 + line * 7, Math.max(0, w - 12), 1);
+    }
+    for (let tileX = x + 10; tileX < x + w - 8; tileX += 26) {
+      ctx.fillStyle = 'rgba(6, 27, 47, .58)'; ctx.fillRect(tileX, y + 8, 2, h - 15);
+      ctx.fillStyle = tileX % 52 === 10 ? '#e0c07e' : '#62bfb5'; ctx.fillRect(tileX + 7, y + 18, 5, 5);
+      ctx.fillStyle = 'rgba(236, 225, 180, .5)'; ctx.fillRect(tileX + 12, y + 13, 1, 9);
+    }
+  } else {
+    ctx.fillStyle = 'rgba(228, 242, 214, .26)';
+    for (let line = 0; line < Math.min(3, Math.floor((h - 5) / 4)); line += 1) ctx.fillRect(x + 5, y + 7 + line * 4, Math.max(0, w - 10), 1);
+    for (let noteX = x + 13; noteX < x + w - 8; noteX += 28) {
+      const noteY = y + Math.min(h - 6, 8 + ((noteX - x) / 28 % 2) * 3);
+      ctx.fillStyle = hidden ? '#b9fff0' : '#f0d48d'; ctx.fillRect(Math.round(noteX), Math.round(noteY), 5, 3);
+      ctx.fillRect(Math.round(noteX + 4), Math.round(noteY - 6), 1, 7);
+    }
+  }
+  ctx.strokeStyle = hidden ? 'rgba(158, 255, 229, .88)' : 'rgba(232, 201, 130, .65)';
+  ctx.lineWidth = 1; ctx.strokeRect(x + .5, y + .5, w - 1, h - 1);
+  ctx.restore();
+}
+
 function drawPlatform(item) {
   if (item.wall) {
     if (item.persistentWall) {
@@ -2878,6 +2921,10 @@ function drawPlatform(item) {
     ctx.save(); ctx.translate(item.x + 47, item.y + 190); ctx.rotate(-Math.PI / 2); ctx.fillStyle = '#a2afe1'; ctx.font = '700 10px ui-monospace, monospace'; ctx.fillText('DREAM EXTRACTOR', -52, 0); ctx.restore();
   } else {
     const theme = dreamTheme();
+    if (theme.id === 'yuna') {
+      drawYunaScorePlatform(item);
+      return;
+    }
     const platformGradient = ctx.createLinearGradient(item.x, item.y, item.x, item.y + item.h);
     platformGradient.addColorStop(0, theme.platform);
     platformGradient.addColorStop(1, '#101a38');
