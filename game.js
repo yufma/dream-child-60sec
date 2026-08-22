@@ -107,7 +107,7 @@ const YUNA_BGM_PATHS = Object.freeze({
   tide: 'assets/audio/yuna-tide-lullaby-v1.wav',
   glass: 'assets/audio/yuna-glass-choir-v1.wav',
   silent: 'assets/audio/yuna-silent-choir-v1.wav',
-  resonance: 'assets/audio/yuna-resonance-run-long-v2.wav',
+  resonance: 'assets/audio/yuna-resonance-run-v1.wav',
 });
 const PLAYER_RUN_FRAME_DURATIONS = Object.freeze([83, 83, 84, 83, 83, 84, 83, 83, 84, 83, 83, 84]);
 const PLAYER_RUN_CYCLE_MS = PLAYER_RUN_FRAME_DURATIONS.reduce((total, duration) => total + duration, 0);
@@ -597,6 +597,8 @@ const stageBgm = {
   key: null,
   family: null,
   audio: null,
+  nextAudio: null,
+  crossfadeFrame: 0,
   mix: null,
   masterVolume: loadBgmMasterVolume(),
   targetVolume: .65,
@@ -833,6 +835,80 @@ function playStageBgm() {
   else fadeIn();
 }
 
+function bgmVolume(key = stageBgm.key) {
+  const config = stageBgmConfig(key);
+  return config ? Math.min(1, config.volume * stageBgm.masterVolume) : stageBgm.targetVolume;
+}
+
+function cancelBgmCrossfade({ discardNext = true } = {}) {
+  if (stageBgm.crossfadeFrame) cancelAnimationFrame(stageBgm.crossfadeFrame);
+  stageBgm.crossfadeFrame = 0;
+  if (discardNext && stageBgm.nextAudio) {
+    stageBgm.nextAudio.pause();
+    stageBgm.nextAudio.currentTime = 0;
+    stageBgm.nextAudio = null;
+  }
+  if (stageBgm.audio) stageBgm.audio.volume = bgmVolume();
+}
+
+function startResonanceCrossfade(outgoing) {
+  if (!stageBgm.enabled || stageBgm.key !== 'resonance' || stageBgm.audio !== outgoing || stageBgm.nextAudio) return;
+  const config = stageBgmConfig('resonance');
+  if (!config) return;
+  const incoming = new Audio(config.source);
+  incoming.loop = false;
+  incoming.preload = 'auto';
+  incoming.volume = 0;
+  stageBgm.nextAudio = incoming;
+  const fadeDuration = 1250;
+  const beginFade = () => {
+    const startedAt = performance.now();
+    const fade = (now) => {
+      if (!stageBgm.enabled || stageBgm.audio !== outgoing || stageBgm.nextAudio !== incoming) return;
+      const progress = Math.min(1, (now - startedAt) / fadeDuration);
+      outgoing.volume = bgmVolume() * (1 - progress);
+      incoming.volume = bgmVolume() * progress;
+      if (progress < 1) {
+        stageBgm.crossfadeFrame = requestAnimationFrame(fade);
+        return;
+      }
+      outgoing.pause();
+      outgoing.currentTime = 0;
+      stageBgm.audio = incoming;
+      stageBgm.nextAudio = null;
+      stageBgm.crossfadeFrame = 0;
+      watchResonanceLoop(incoming);
+    };
+    stageBgm.crossfadeFrame = requestAnimationFrame(fade);
+  };
+  const started = incoming.play();
+  if (started?.then) started.then(beginFade).catch(() => cancelBgmCrossfade());
+  else beginFade();
+}
+
+function watchResonanceLoop(audio) {
+  audio.addEventListener('timeupdate', () => {
+    if (stageBgm.key !== 'resonance' || stageBgm.audio !== audio || stageBgm.nextAudio || !Number.isFinite(audio.duration)) return;
+    if (audio.currentTime >= audio.duration - 1.6) startResonanceCrossfade(audio);
+  });
+  audio.addEventListener('ended', () => {
+    if (stageBgm.key === 'resonance' && stageBgm.audio === audio && !stageBgm.nextAudio && stageBgm.enabled) {
+      audio.currentTime = 0;
+      playStageBgm();
+    }
+  });
+}
+
+function createStageBgmAudio(key, config = stageBgmConfig(key)) {
+  if (!config) return null;
+  const audio = new Audio(config.source);
+  audio.loop = key === 'resonance' ? false : config.loop;
+  audio.preload = 'auto';
+  audio.volume = bgmVolume(key);
+  if (key === 'resonance') watchResonanceLoop(audio);
+  return audio;
+}
+
 function startStageBgm(stage = currentStage()) {
   const key = stageBgmKey(stage);
   const config = stageBgmConfig(key);
@@ -842,16 +918,16 @@ function startStageBgm(stage = currentStage()) {
   }
   if (stageBgm.key !== key || !stageBgm.audio) {
     cancelStageBgmFade();
+    cancelBgmCrossfade();
     stopYunaLoopStation();
     if (stageBgm.audio) stageBgm.audio.pause();
     stageBgm.key = key;
     stageBgm.family = config.family;
-    stageBgm.audio = new Audio(config.source);
+    stageBgm.audio = createStageBgmAudio(key, config);
     stageBgm.mix = null;
-    stageBgm.audio.loop = config.loop;
-    stageBgm.audio.preload = 'auto';
   } else {
     cancelStageBgmFade();
+    cancelBgmCrossfade();
     stageBgm.audio.currentTime = 0;
   }
   stageBgm.targetVolume = Math.min(1, config.volume * stageBgm.masterVolume);
@@ -860,13 +936,15 @@ function startStageBgm(stage = currentStage()) {
   stageBgm.playBlocked = false;
   updateBgmToggle(key);
   if (config.family === 'yuna') {
-    setupYunaLoopMix();
+    if (key !== 'resonance') setupYunaLoopMix();
     startYunaLoopStation(stage);
   } else stopYunaLoopStation();
   playStageBgm();
 }
 
 function pauseStageBgm() {
+  cancelStageBgmFade();
+  cancelBgmCrossfade();
   const audio = stageBgm.audio;
   if (!audio || audio.paused) return;
   fadeStageBgm(0, 180, (finishedAudio) => {
@@ -881,6 +959,7 @@ function resumeStageBgm() {
 function stopStageBgm() {
   cancelStageBgmFade();
   stopYunaLoopStation();
+  cancelBgmCrossfade();
   if (stageBgm.audio) {
     stageBgm.audio.pause();
     stageBgm.audio.currentTime = 0;
