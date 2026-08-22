@@ -207,7 +207,7 @@ const STAGES = [
     chapter: '유나 · 사라진 노래', name: '침묵을 삼킨 합창단', type: 'boss', skills: ['resonance'], objective: '공명으로 여섯 개의 잃어버린 음을 되찾아라',
     intro: '유나는 아무리 크게 노래해도 아무에게도 닿지 않을까 봐 두려웠다. 그 두려움은 “침묵을 삼킨 합창단”이 되어 모든 소리를 지운다. 먼저 과거의 나 둘에게 서로 다른 화음 앵커를 맡겨. 그 다음 별빛 고리가 밝아지는 박자에 맞춰 L을 짧게 눌러, 여섯 음을 순서대로 되찾자. 음을 되찾을수록 유나의 노래에 새로운 레이어가 쌓이지만, 합창단의 음표 탄막도 더 촘촘해진다.',
     boss: '침묵을 삼킨 합창단', bossConfig: {
-      mode: 'resonance', visual: 'choir',
+      mode: 'resonance', visual: 'choir', x: 420, y: 76, w: 120, h: 170,
       moveBounds: { xMin: 45, xMax: 720, yMin: 86, yMax: 437 },
       memoryPads: [
         { x: 174, y: 142, w: 42, h: 42, label: '낮은 화음' },
@@ -2091,7 +2091,9 @@ function nextBossAttackDelay(b) {
 function spawnNightmarePattern() {
   const b = game.boss;
   const p = game.player;
-  const origin = { x: b.x + 8, y: b.y + 92 };
+  const origin = b.mode === 'resonance'
+    ? { x: b.x + b.w / 2, y: b.y + 78 }
+    : { x: b.x + 8, y: b.y + 92 };
   const attackNumber = ++b.attackIndex;
 
   if (b.mode === 'chase') {
@@ -2335,7 +2337,11 @@ function updateBoss(dt) {
   if (p.y !== nextY) p.vy = 0;
   if (horizontal) p.facing = horizontal;
   if (!frozen) {
-    b.y = b.mode === 'calm' ? 166 + Math.sin(game.elapsed * 1.1) * 18 : 160 + Math.sin(game.elapsed * 1.45) * 56;
+    b.y = b.mode === 'calm'
+      ? 166 + Math.sin(game.elapsed * 1.1) * 18
+      : b.mode === 'resonance'
+        ? 76 + Math.sin(game.elapsed * 1.45) * 16
+        : 160 + Math.sin(game.elapsed * 1.45) * 56;
     if (b.mode === 'final' && b.attackUnlocked && finalBossPhase(b) === 2) updateFinalTruthTargets(b);
     const listeningToDaughter = b.mode === 'final' && b.attackUnlocked && finalBossPhase(b) === 3;
     if (b.mode !== 'calm' && !b.releaseReady && !listeningToDaughter && b.memoryReplay <= 0) {
@@ -3895,6 +3901,42 @@ function drawFinalMemoryTarget(target, active, resolved) {
   ctx.fillText(active ? `TRUE · ${target.label}` : resolved ? 'MEMORY RESTORED' : 'COPY · FALSE MEMORY', target.x + target.w / 2, target.y - 11);
 }
 
+function drawYunaSilentChoirIllustration(b) {
+  const image = failureArt.yuna;
+  if (!image?.complete || !image.naturalWidth) return false;
+  const restoredRatio = b.resonanceProgress / Math.max(1, b.resonanceGates.length);
+  const pulse = .5 + Math.sin(game.elapsed * 5.8) * .5;
+  const coreX = b.x + b.w / 2;
+  const coreY = b.y + 78;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.globalAlpha = .96;
+  ctx.drawImage(image, 0, 0, W, H);
+  // 보스 본체 일러스트는 무대에 고정하고, 현재 공명 중인 중앙의 목소리만 살아 움직이게 한다.
+  ctx.fillStyle = `rgba(3, 11, 27, ${.14 - restoredRatio * .08})`;
+  ctx.fillRect(0, 0, W, H);
+  ctx.globalCompositeOperation = 'screen';
+  ctx.globalAlpha = .22 + pulse * .22 + restoredRatio * .16;
+  ctx.strokeStyle = '#9effd7'; ctx.lineWidth = 2;
+  for (let ring = 0; ring < 3; ring += 1) {
+    ctx.beginPath();
+    ctx.arc(coreX, coreY, 34 + ring * 19 + pulse * 4, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.fillStyle = '#d8fff0'; ctx.shadowBlur = 22; ctx.shadowColor = '#8effdc';
+  ctx.beginPath(); ctx.ellipse(coreX, coreY, 11 + pulse * 2, 19 + pulse * 3, 0, 0, Math.PI * 2); ctx.fill();
+  for (let index = 0; index < b.resonanceProgress; index += 1) {
+    const angle = index * 1.16 + game.elapsed * .7;
+    const radius = 56 + (index % 2) * 19;
+    const noteX = coreX + Math.cos(angle) * radius;
+    const noteY = coreY + Math.sin(angle) * radius * .5;
+    ctx.fillStyle = '#e8fff6'; ctx.fillRect(Math.round(noteX), Math.round(noteY), 4, 4);
+    ctx.fillRect(Math.round(noteX + 3), Math.round(noteY - 7), 2, 8);
+  }
+  ctx.restore();
+  return true;
+}
+
 function drawBoss() {
   ensureBossStage();
   const b = game.boss;
@@ -3903,22 +3945,27 @@ function drawBoss() {
       : b.visual === 'mirror' ? "DAUGHTER'S DREAM · PERFECT MIRROR"
         : b.mode === 'final' ? 'THE SCIENTIST · DREAM LAB' : "HARIN'S FEAR · THE EMPTY STAGE";
   drawBackground(true, bossBackdrop);
-  ctx.save(); ctx.fillStyle = 'rgba(255, 137, 176, .12)'; ctx.beginPath(); ctx.arc(b.x + 80, b.y + 102, 150, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  const windFear = b.visual === 'wind';
+  const choirFear = b.visual === 'choir';
+  const mirrorFear = b.visual === 'mirror';
+  const choirIllustration = choirFear && drawYunaSilentChoirIllustration(b);
+  if (!choirIllustration) {
+    ctx.save(); ctx.fillStyle = 'rgba(255, 137, 176, .12)'; ctx.beginPath(); ctx.arc(b.x + 80, b.y + 102, 150, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  }
   const releaseRatio = b.releaseReady ? b.releaseProgress / b.releaseDuration : 0;
   const scale = b.mode === 'final'
     ? (b.releaseReady ? 1.14 - releaseRatio * .38 : b.attackUnlocked ? 1.14 + (b.phase - 1) * .13 : 1.14)
     : b.phase === 1 ? 1.18 : b.phase === 2 ? .9 : .62;
-  const windFear = b.visual === 'wind';
-  const choirFear = b.visual === 'choir';
-  const mirrorFear = b.visual === 'mirror';
   const bossShadow = b.mode === 'final' ? b.releaseReady ? '#ffe27e' : '#7be9ff' : windFear ? '#9cdbff' : choirFear ? '#9effd7' : mirrorFear ? '#ffb5df' : '#ff4d7c';
   const bossBody = b.mode === 'final' ? b.releaseReady ? '#4e637c' : '#19475e' : windFear ? '#173857' : choirFear ? '#174c4c' : mirrorFear ? '#5f346b' : '#6e1745';
   const bossFace = b.mode === 'final' ? b.releaseReady ? '#fff0b5' : '#8adcf2' : windFear ? '#b4ecff' : choirFear ? '#bfffe8' : mirrorFear ? '#ffd5eb' : '#f6b2ca';
-  ctx.save(); ctx.translate(b.x + b.w / 2, b.y + b.h / 2); ctx.scale(scale, scale); ctx.shadowBlur = 34; ctx.shadowColor = bossShadow; ctx.fillStyle = b.flash > 0 ? '#ffe4ef' : bossBody;
-  if (windFear) { ctx.rotate(.78); ctx.fillRect(-62, -62, 124, 124); ctx.strokeStyle = '#d0f7ff'; ctx.lineWidth = 4; ctx.strokeRect(-62, -62, 124, 124); ctx.rotate(-.78); }
-  else if (mirrorFear) { ctx.rotate(Math.PI / 4); ctx.fillRect(-66, -66, 132, 132); ctx.strokeStyle = '#ffe3f4'; ctx.lineWidth = 4; ctx.strokeRect(-66, -66, 132, 132); ctx.rotate(-Math.PI / 4); }
-  else { ctx.beginPath(); ctx.ellipse(0, 0, 72, 92, 0, 0, Math.PI * 2); ctx.fill(); }
-  ctx.fillStyle = bossFace; ctx.beginPath(); ctx.arc(-27, -12, 24, 0, Math.PI * 2); ctx.arc(27, -12, 24, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = b.mode === 'final' ? '#0f2432' : windFear ? '#102030' : '#1f1027'; ctx.fillRect(-41, -18, 22, 8); ctx.fillRect(19, -18, 22, 8); ctx.strokeStyle = windFear ? '#d0f7ff' : choirFear ? '#bfffe8' : mirrorFear ? '#ffe3f4' : b.mode === 'final' ? '#8cf0ff' : '#ffc4d9'; ctx.lineWidth = 7; ctx.beginPath(); ctx.arc(0, 29, 23, 0, Math.PI); ctx.stroke(); ctx.fillStyle = '#f8df77'; ctx.beginPath(); ctx.arc(0, -80, 12, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  if (!choirIllustration) {
+    ctx.save(); ctx.translate(b.x + b.w / 2, b.y + b.h / 2); ctx.scale(scale, scale); ctx.shadowBlur = 34; ctx.shadowColor = bossShadow; ctx.fillStyle = b.flash > 0 ? '#ffe4ef' : bossBody;
+    if (windFear) { ctx.rotate(.78); ctx.fillRect(-62, -62, 124, 124); ctx.strokeStyle = '#d0f7ff'; ctx.lineWidth = 4; ctx.strokeRect(-62, -62, 124, 124); ctx.rotate(-.78); }
+    else if (mirrorFear) { ctx.rotate(Math.PI / 4); ctx.fillRect(-66, -66, 132, 132); ctx.strokeStyle = '#ffe3f4'; ctx.lineWidth = 4; ctx.strokeRect(-66, -66, 132, 132); ctx.rotate(-Math.PI / 4); }
+    else { ctx.beginPath(); ctx.ellipse(0, 0, 72, 92, 0, 0, Math.PI * 2); ctx.fill(); }
+    ctx.fillStyle = bossFace; ctx.beginPath(); ctx.arc(-27, -12, 24, 0, Math.PI * 2); ctx.arc(27, -12, 24, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = b.mode === 'final' ? '#0f2432' : windFear ? '#102030' : '#1f1027'; ctx.fillRect(-41, -18, 22, 8); ctx.fillRect(19, -18, 22, 8); ctx.strokeStyle = windFear ? '#d0f7ff' : choirFear ? '#bfffe8' : mirrorFear ? '#ffe3f4' : b.mode === 'final' ? '#8cf0ff' : '#ffc4d9'; ctx.lineWidth = 7; ctx.beginPath(); ctx.arc(0, 29, 23, 0, Math.PI); ctx.stroke(); ctx.fillStyle = '#f8df77'; ctx.beginPath(); ctx.arc(0, -80, 12, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  }
   ctx.fillStyle = b.mode === 'final' ? b.releaseReady ? '#fff1b1' : '#aeefff' : windFear || choirFear ? '#aeefff' : mirrorFear ? '#ffe0f2' : '#ffc4d5'; ctx.font = '800 12px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(b.releaseReady ? '수면 과학자 · 아버지' : b.name, b.x + b.w / 2, b.y - 17);
   const bossPads = b.mode === 'chase' ? b.decoyPads : b.mode === 'resonance' || b.mode === 'calm' || b.mode === 'mirror' || b.mode === 'final' ? b.memoryPads : [];
   const presentCanFillPad = b.mode === 'calm' || b.mode === 'final';
