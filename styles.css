@@ -92,6 +92,9 @@ canvas.connection-critical { filter: blur(4px) saturate(.4) brightness(.56); }
 .boss-hud > div { height: 7px; overflow: hidden; border-radius: 99px; background: #3a1630; }
 .boss-hud i { background: linear-gradient(90deg, #ff6789, #f33860); }
 .boss-hud strong { display: block; margin-top: 5px; color: #ffc6d1; font-family: ui-monospace, monospace; font-size: .64rem; text-align: right; }
+.bgm-toggle { position: absolute; z-index: 1; bottom: 18px; left: 18px; padding: 7px 10px; cursor: pointer; border: 1px solid rgba(158, 255, 215, .48); border-radius: 7px; color: #d8fff0; background: rgba(7, 27, 37, .74); box-shadow: 0 8px 20px rgba(0, 0, 0, .22); font-family: ui-monospace, monospace; font-size: .63rem; font-weight: 800; letter-spacing: .08em; }
+.bgm-toggle:hover { border-color: #9effd7; background: rgba(17, 71, 75, .88); }
+.bgm-toggle span { color: #9effd7; }.bgm-toggle.off { border-color: rgba(184, 197, 222, .32); color: #9da8c1; }.bgm-toggle.off span { color: #ff9ab5; }.bgm-toggle.hidden { display: none; }
 
 .overlay { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; padding: 22px; background: rgba(4, 7, 18, 0.44); backdrop-filter: blur(5px); transition: opacity 160ms ease; }
 .overlay.hidden { opacity: 0; pointer-events: none; }

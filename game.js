@@ -37,6 +37,12 @@ const FAILURE_ART_PATHS = Object.freeze({
   scientist: 'assets/failure/scientist-dream-extractor-v1.png',
   wakeup: 'assets/failure/dream-link-wakeup-v1.png',
 });
+const YUNA_BGM_PATHS = Object.freeze({
+  tide: 'assets/audio/yuna-tide-lullaby-v1.wav',
+  glass: 'assets/audio/yuna-glass-choir-v1.wav',
+  silent: 'assets/audio/yuna-silent-choir-v1.wav',
+  resonance: 'assets/audio/yuna-resonance-run-v1.wav',
+});
 const PLAYER_RUN_FRAME_DURATIONS = Object.freeze([83, 83, 84, 83, 83, 84, 83, 83, 84, 83, 83, 84]);
 const PLAYER_RUN_CYCLE_MS = PLAYER_RUN_FRAME_DURATIONS.reduce((total, duration) => total + duration, 0);
 const PLAYER_SPRITE_SIZE = Object.freeze({ width: 48, height: 72, feetY: 70 });
@@ -98,6 +104,7 @@ const imaginationFill = document.querySelector('#imagination-fill');
 const imaginationStatus = document.querySelector('#imagination-status');
 const gameHud = document.querySelector('.hud');
 const bossHud = document.querySelector('#boss-hud');
+const bgmToggleButton = document.querySelector('#bgm-toggle');
 const bossNameEl = document.querySelector('#boss-name');
 const bossFill = document.querySelector('#boss-fill');
 const bossHealthEl = document.querySelector('#boss-health');
@@ -493,6 +500,7 @@ const pressed = new Set();
 let toastTimer = 0;
 let lastFrame = 0;
 let game = {};
+const stageBgm = { enabled: true, key: null, audio: null };
 
 const MOVEMENT_TUNING = {
   puzzle: { maxSpeed: 290, accelerationTime: .16, stopTime: .11, turnTime: .18, airControl: .55 },
@@ -579,6 +587,7 @@ function renderCampaignRoute() {
 }
 
 function newGame() {
+  stopStageBgm();
   gameHud.classList.remove('hidden');
   game = {
     phase: 'intro', stageIndex: 0, imagination: 100, elapsed: 0, bridge: false,
@@ -597,6 +606,62 @@ function clearStageIntroTimer() {
 }
 
 function currentStage() { return STAGES[game.stageIndex]; }
+function stageBgmKey(stage = currentStage()) {
+  if (!(stage?.chapter || '').includes('유나')) return null;
+  if (stage.type === 'boss') return 'resonance';
+  return ({ 7: 'tide', 8: 'glass', 9: 'silent', 10: 'glass', 12: 'tide' })[game.stageIndex + 1] || 'tide';
+}
+
+function updateBgmToggle(key = stageBgm.key) {
+  const visible = Boolean(key);
+  bgmToggleButton.classList.toggle('hidden', !visible);
+  bgmToggleButton.classList.toggle('off', !stageBgm.enabled);
+  bgmToggleButton.innerHTML = `BGM <span>${stageBgm.enabled ? 'ON' : 'OFF'}</span>`;
+  bgmToggleButton.setAttribute('aria-label', stageBgm.enabled ? '배경음악 끄기' : '배경음악 켜기');
+}
+
+function playStageBgm() {
+  if (!stageBgm.enabled || !stageBgm.audio) return;
+  const playback = stageBgm.audio.play();
+  if (playback?.catch) playback.catch(() => {});
+}
+
+function startStageBgm(stage = currentStage()) {
+  const key = stageBgmKey(stage);
+  if (!key) {
+    stopStageBgm();
+    return;
+  }
+  if (stageBgm.key !== key || !stageBgm.audio) {
+    if (stageBgm.audio) stageBgm.audio.pause();
+    stageBgm.key = key;
+    stageBgm.audio = new Audio(YUNA_BGM_PATHS[key]);
+    stageBgm.audio.loop = true;
+    stageBgm.audio.preload = 'auto';
+    stageBgm.audio.volume = key === 'resonance' ? .27 : .2;
+  } else stageBgm.audio.currentTime = 0;
+  updateBgmToggle(key);
+  playStageBgm();
+}
+
+function pauseStageBgm() {
+  if (stageBgm.audio) stageBgm.audio.pause();
+}
+
+function resumeStageBgm() {
+  if (stageBgmKey()) playStageBgm();
+}
+
+function stopStageBgm() {
+  if (stageBgm.audio) {
+    stageBgm.audio.pause();
+    stageBgm.audio.currentTime = 0;
+  }
+  stageBgm.key = null;
+  stageBgm.audio = null;
+  updateBgmToggle(null);
+}
+
 function isSkillBlocked(skill) {
   return Boolean(currentStage()?.blockedSkills?.includes(skill));
 }
@@ -797,6 +862,7 @@ function openStageMenu() {
   if (game.phase !== 'playing') return;
   game.resumePhase = 'playing';
   game.phase = 'menu';
+  pauseStageBgm();
   renderStageMenu();
   stageMenu.classList.remove('hidden');
   updateHud();
@@ -806,6 +872,7 @@ function closeStageMenu() {
   if (game.phase !== 'menu') return;
   game.phase = game.resumePhase || 'playing';
   stageMenu.classList.add('hidden');
+  if (game.phase === 'playing') resumeStageBgm();
   updateHud();
 }
 
@@ -901,6 +968,7 @@ function startStage() {
   startScreen.classList.add('hidden');
   stageMenu.classList.add('hidden');
   endScreen.classList.add('hidden');
+  startStageBgm(stage);
   say(stage.type === 'boss' ? '60초 기억 붕괴가 시작됩니다. 공포를 없애는 것이 아니라, 기억의 역할을 완성하세요.' : stage.hint);
   updateHud();
 }
@@ -1719,6 +1787,7 @@ function updateMemoryCollapse(dt, frozen = false) {
 function failMemoryCollapse() {
   if (game.phase !== 'playing') return;
   game.phase = 'failed';
+  pauseStageBgm();
   endScreen.classList.remove('disconnect-screen');
   delete endScreen.dataset.disconnectTheme;
   endTag.textContent = 'MEMORY COLLAPSED';
@@ -2063,6 +2132,7 @@ function updateBoss(dt) {
 
 function completeStage() {
   if (game.phase !== 'playing') return;
+  stopStageBgm();
   game.completed.push(game.stageIndex);
   const stage = currentStage();
   const memoryRecord = saveBossMemoryRecord();
@@ -2200,6 +2270,7 @@ function drawDreamDisconnect() {
 function disconnect() {
   if (game.phase !== 'playing') return;
   game.phase = 'disconnecting';
+  pauseStageBgm();
   game.disconnect = { elapsed: 0, duration: 4.5, theme: disconnectPresentation() };
   keys.clear();
   pressed.clear();
@@ -2239,6 +2310,7 @@ function showChapterEnd() {
 }
 
 function startEndingCinematic() {
+  stopStageBgm();
   game.phase = 'ending-cinematic';
   game.endingScene = 0;
   game.endingSceneElapsed = 0;
@@ -2270,6 +2342,7 @@ function updateEndingCinematic(dt) {
 }
 
 function showFinalTruth() {
+  stopStageBgm();
   game.phase = 'truth';
   endScreen.classList.remove('disconnect-screen');
   delete endScreen.dataset.disconnectTheme;
@@ -3464,6 +3537,12 @@ canvas.addEventListener('click', () => {
 resumeButton.addEventListener('click', closeStageMenu);
 routeModeButton.addEventListener('click', toggleRouteMode);
 disconnectSkipButton.addEventListener('click', skipDreamDisconnect);
+bgmToggleButton.addEventListener('click', () => {
+  stageBgm.enabled = !stageBgm.enabled;
+  if (stageBgm.enabled) resumeStageBgm();
+  else pauseStageBgm();
+  updateBgmToggle(stageBgmKey() || stageBgm.key);
+});
 restartButton.addEventListener('click', () => {
   if (game.phase === 'failed') startStage();
   else if (game.phase === 'chapter-complete') showFinalTruth();
