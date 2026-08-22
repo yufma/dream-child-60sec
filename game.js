@@ -502,9 +502,9 @@ const pressed = new Set();
 let toastTimer = 0;
 let lastFrame = 0;
 let game = {};
-const stageBgm = { enabled: true, key: null, audio: null };
+const stageBgm = { enabled: true, key: null, audio: null, mix: null };
 let gameSfxContext = null;
-const yunaLoopStation = { active: false, stageIndex: -1, key: null, level: 0, maxLevel: 0, milestones: new Set(), lastStep: -1 };
+const yunaLoopStation = { active: false, stageIndex: -1, key: null, level: 0, maxLevel: 0, milestones: new Set() };
 const YUNA_LOOP_LAYER_NAMES = Object.freeze(['잔상 베이스', '공명 리듬', '별빛 멜로디', '합창 패드']);
 
 const MOVEMENT_TUNING = {
@@ -641,13 +641,15 @@ function startStageBgm(stage = currentStage()) {
     if (stageBgm.audio) stageBgm.audio.pause();
     stageBgm.key = key;
     stageBgm.audio = new Audio(YUNA_BGM_PATHS[key]);
+    stageBgm.mix = null;
     stageBgm.audio.loop = true;
     stageBgm.audio.preload = 'auto';
     stageBgm.audio.volume = key === 'resonance' ? .27 : .2;
   } else stageBgm.audio.currentTime = 0;
   updateBgmToggle(key);
-  playStageBgm();
+  setupYunaLoopMix();
   startYunaLoopStation(stage);
+  playStageBgm();
 }
 
 function pauseStageBgm() {
@@ -666,6 +668,7 @@ function stopStageBgm() {
   }
   stageBgm.key = null;
   stageBgm.audio = null;
+  stageBgm.mix = null;
   updateBgmToggle(null);
 }
 
@@ -708,12 +711,12 @@ function startYunaLoopStation(stage = currentStage()) {
   yunaLoopStation.level = 0;
   yunaLoopStation.maxLevel = stage.type === 'boss' ? 4 : 3;
   yunaLoopStation.milestones = new Set();
-  yunaLoopStation.lastStep = -1;
   // 보스 이후의 짧은 길은 유나가 되찾은 완성된 노래를 들려주는 보상 구간이다.
   if (stage.layout === 'walk') {
     yunaLoopStation.level = yunaLoopStation.maxLevel;
     yunaLoopStation.milestones.add('recovered-song');
   }
+  applyYunaLoopMix();
 }
 
 function stopYunaLoopStation() {
@@ -723,34 +726,63 @@ function stopYunaLoopStation() {
   yunaLoopStation.level = 0;
   yunaLoopStation.maxLevel = 0;
   yunaLoopStation.milestones = new Set();
-  yunaLoopStation.lastStep = -1;
 }
 
-function yunaLoopRoot() {
-  return ({ tide: 220, glass: 246.94, silent: 196, resonance: 220 })[yunaLoopStation.key] || 220;
-}
-
-function playYunaLoopTone(frequency, duration, volume, type = 'triangle', slideTo = null) {
+// 별도 음을 얹지 않고, 현재 재생 중인 원곡에서 저음·리듬·멜로디 대역을 분리해 단계별로 더한다.
+// 그래서 어떤 유나 트랙에서도 조성과 박자가 어긋나지 않는다.
+function setupYunaLoopMix() {
+  if (!stageBgm.audio || !stageBgm.key || stageBgm.mix) return;
   const audio = primeGameSfx();
-  if (!audio || audio.state !== 'running' || !stageBgm.enabled) return;
-  const now = audio.currentTime;
-  const oscillator = audio.createOscillator();
-  const gain = audio.createGain();
-  oscillator.type = type;
-  oscillator.frequency.setValueAtTime(frequency, now);
-  if (slideTo) oscillator.frequency.exponentialRampToValueAtTime(slideTo, now + duration);
-  gain.gain.setValueAtTime(.0001, now);
-  gain.gain.exponentialRampToValueAtTime(volume, now + .012);
-  gain.gain.exponentialRampToValueAtTime(.0001, now + duration);
-  oscillator.connect(gain).connect(audio.destination);
-  oscillator.start(now);
-  oscillator.stop(now + duration + .025);
+  if (!audio) return;
+  try {
+    const source = audio.createMediaElementSource(stageBgm.audio);
+    const dry = audio.createGain();
+    const bassFilter = audio.createBiquadFilter();
+    const bassGain = audio.createGain();
+    const rhythmFilter = audio.createBiquadFilter();
+    const rhythmGain = audio.createGain();
+    const melodyFilter = audio.createBiquadFilter();
+    const melodyGain = audio.createGain();
+    const roomFilter = audio.createBiquadFilter();
+    const roomDelay = audio.createDelay(.6);
+    const roomFeedback = audio.createGain();
+    const roomGain = audio.createGain();
+    bassFilter.type = 'lowpass'; bassFilter.frequency.value = 210; bassFilter.Q.value = .7;
+    rhythmFilter.type = 'bandpass'; rhythmFilter.frequency.value = 980; rhythmFilter.Q.value = .52;
+    melodyFilter.type = 'highpass'; melodyFilter.frequency.value = 2200; melodyFilter.Q.value = .45;
+    roomFilter.type = 'bandpass'; roomFilter.frequency.value = 1450; roomFilter.Q.value = .34;
+    roomDelay.delayTime.value = .18; roomFeedback.gain.value = .13;
+    dry.gain.value = 1;
+    bassGain.gain.value = 0; rhythmGain.gain.value = 0; melodyGain.gain.value = 0; roomGain.gain.value = 0;
+    source.connect(dry).connect(audio.destination);
+    source.connect(bassFilter).connect(bassGain).connect(audio.destination);
+    source.connect(rhythmFilter).connect(rhythmGain).connect(audio.destination);
+    source.connect(melodyFilter).connect(melodyGain).connect(audio.destination);
+    source.connect(roomFilter).connect(roomDelay); roomDelay.connect(roomGain).connect(audio.destination);
+    roomDelay.connect(roomFeedback).connect(roomDelay);
+    stageBgm.mix = { audio, dry, bassGain, rhythmGain, melodyGain, roomGain };
+  } catch {
+    // 지원하지 않는 브라우저에서는 원곡만 자연스럽게 재생한다.
+    stageBgm.mix = { unavailable: true };
+  }
 }
 
-function playYunaLoopBloom(level) {
-  const root = yunaLoopRoot();
-  const intervals = [[.5], [.5, .75], [.5, .75, 1.25], [.5, .75, 1.25, 1.5]][level - 1] || [];
-  intervals.forEach((ratio, index) => playYunaLoopTone(root * ratio, .34 + index * .04, .032, index % 2 ? 'sine' : 'triangle'));
+function rampYunaMixGain(gain, value) {
+  if (!gain || !stageBgm.mix?.audio) return;
+  const now = stageBgm.mix.audio.currentTime;
+  gain.gain.cancelScheduledValues(now);
+  gain.gain.setValueAtTime(gain.gain.value, now);
+  gain.gain.linearRampToValueAtTime(value, now + .38);
+}
+
+function applyYunaLoopMix() {
+  const mix = stageBgm.mix;
+  if (!mix || mix.unavailable) return;
+  const level = yunaLoopStation.active ? yunaLoopStation.level : 0;
+  rampYunaMixGain(mix.bassGain, level >= 1 ? .42 : 0);
+  rampYunaMixGain(mix.rhythmGain, level >= 2 ? .17 : 0);
+  rampYunaMixGain(mix.melodyGain, level >= 3 ? .13 : 0);
+  rampYunaMixGain(mix.roomGain, level >= 4 ? .09 : 0);
 }
 
 function unlockYunaMusicLayer(milestone) {
@@ -758,29 +790,9 @@ function unlockYunaMusicLayer(milestone) {
   yunaLoopStation.milestones.add(milestone);
   if (yunaLoopStation.level >= yunaLoopStation.maxLevel) return;
   yunaLoopStation.level += 1;
-  playYunaLoopBloom(yunaLoopStation.level);
+  applyYunaLoopMix();
   const name = YUNA_LOOP_LAYER_NAMES[yunaLoopStation.level - 1];
   say(`LOOP ${String(yunaLoopStation.level).padStart(2, '0')} · ${name}가 유나의 노래에 쌓였습니다.`);
-}
-
-function updateYunaLoopStation() {
-  if (!yunaLoopStation.active || yunaLoopStation.stageIndex !== game.stageIndex || game.phase !== 'playing') return;
-  const stepLength = yunaLoopStation.key === 'resonance' ? .28 : .3;
-  const step = Math.floor((game.elapsed || 0) / stepLength);
-  if (step === yunaLoopStation.lastStep) return;
-  yunaLoopStation.lastStep = step;
-  if (!stageBgm.enabled || yunaLoopStation.level <= 0) return;
-  const root = yunaLoopRoot();
-  const beat = step % 8;
-  if (yunaLoopStation.level >= 1 && beat % 4 === 0) playYunaLoopTone(root * .25, .18, .04, 'sine', root * .19);
-  if (yunaLoopStation.level >= 2 && (beat === 2 || beat === 6)) playYunaLoopTone(root * .5, .12, .026, 'triangle');
-  if (yunaLoopStation.level >= 3 && beat % 2 === 1) {
-    const melody = [1.25, 1.5, 1.25, 1.875][Math.floor(step / 2) % 4];
-    playYunaLoopTone(root * melody, .15, .026, 'sine');
-  }
-  if (yunaLoopStation.level >= 4 && beat === 4) {
-    [1, 1.25, 1.5].forEach((ratio) => playYunaLoopTone(root * ratio, .42, .018, 'sine'));
-  }
 }
 
 function playerIsHoldingYunaPlatform(platform) {
@@ -3690,7 +3702,6 @@ function update(dt) {
     updateMemoryCollapse(dt, frozenTime());
   } else updatePuzzle(dt);
   updateDreamTrails(dt);
-  updateYunaLoopStation();
   updateHud();
 }
 
