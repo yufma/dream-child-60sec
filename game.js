@@ -54,6 +54,7 @@ const startScreen = document.querySelector('#start-screen');
 const stageMenu = document.querySelector('#stage-menu');
 const endScreen = document.querySelector('#end-screen');
 const disconnectIllustrationLabel = document.querySelector('#disconnect-illustration-label');
+const disconnectSkipButton = document.querySelector('#disconnect-skip');
 const startButton = document.querySelector('#start-button');
 const resumeButton = document.querySelector('#resume-button');
 const stageSelectGrid = document.querySelector('#stage-select-grid');
@@ -2167,18 +2168,27 @@ function drawDreamDisconnect() {
 function disconnect() {
   if (game.phase !== 'playing') return;
   game.phase = 'disconnecting';
-  game.disconnect = { elapsed: 0, duration: 1.75, theme: disconnectPresentation() };
+  game.disconnect = { elapsed: 0, duration: 4.5, theme: disconnectPresentation() };
   keys.clear();
   pressed.clear();
   gameHud.classList.add('hidden');
   bossHud.classList.add('hidden');
   endScreen.classList.add('hidden');
+  disconnectSkipButton.classList.remove('hidden');
+  canvas.classList.remove('connection-weak', 'connection-critical');
+}
+
+function skipDreamDisconnect() {
+  if (game.phase !== 'disconnecting') return;
+  game.disconnect.elapsed = game.disconnect.duration;
+  showDisconnectResult();
 }
 
 function showDisconnectResult() {
   if (game.phase !== 'disconnecting') return;
   const presentation = game.disconnect?.theme || disconnectPresentation();
   game.phase = 'failed';
+  disconnectSkipButton.classList.add('hidden');
   endScreen.classList.add('disconnect-screen');
   endScreen.dataset.disconnectTheme = presentation.key;
   disconnectIllustrationLabel.textContent = presentation.scene;
@@ -2245,8 +2255,9 @@ function updateHud() {
   imaginationValueEl.textContent = value;
   imaginationFill.style.width = `${value}%`;
   imaginationStatus.textContent = value <= 20 ? '연결이 흐려지고 있어요. 기술을 멈추세요.' : '상상력은 사용하지 않으면 회복됩니다.';
-  canvas.classList.toggle('connection-weak', value <= 35 && value > 10);
-  canvas.classList.toggle('connection-critical', value <= 10);
+  const showConnectionBlur = game.phase === 'playing';
+  canvas.classList.toggle('connection-weak', showConnectionBlur && value <= 35 && value > 10);
+  canvas.classList.toggle('connection-critical', showConnectionBlur && value <= 10);
   const challenge = game.challenge;
   challengeCard.classList.toggle('hidden', !challenge || game.phase === 'ending-cinematic');
   if (challenge) {
@@ -3417,6 +3428,7 @@ canvas.addEventListener('click', () => {
 });
 resumeButton.addEventListener('click', closeStageMenu);
 routeModeButton.addEventListener('click', toggleRouteMode);
+disconnectSkipButton.addEventListener('click', skipDreamDisconnect);
 restartButton.addEventListener('click', () => {
   if (game.phase === 'failed') startStage();
   else if (game.phase === 'chapter-complete') showFinalTruth();
@@ -3436,7 +3448,8 @@ ruleCards.forEach((card) => {
 });
 
 function handleConfirmInput() {
-  if (game.phase === 'ending-cinematic') advanceEndingCinematic();
+  if (game.phase === 'disconnecting') skipDreamDisconnect();
+  else if (game.phase === 'ending-cinematic') advanceEndingCinematic();
   else if (game.phase === 'story') continueStoryBeat();
   else if (game.phase === 'intro' || game.phase === 'failed') startStage();
   else if (game.phase === 'chapter-complete') showFinalTruth();
