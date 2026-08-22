@@ -183,25 +183,25 @@ const STAGES = [
     layout: 'lantern-river', echoGoal: 0, hint: '낮은 등불섬에서 높은 등불섬으로 점프하며 오른쪽 꿈의 문까지 건너가세요.',
   },
   {
-    chapter: '유나 · 사라진 노래', name: '별빛 합창의 문', type: 'puzzle', skills: ['resonance'], teaches: ['resonance'], objective: '공명으로 숨은 합창길을 드러내라',
-    intro: '두 번째 친구 유나는 숨은 소리를 듣는 아이야. 꿈 추출기는 그 아이의 노래를 접어 숨겨 버렸어. L을 누르면 공명이 퍼져, 보이지 않던 발판과 봉인이 드러난다. 하지만 공명을 멈추면 길도 다시 희미해져. 발판 위에서 L을 유지하며, 안전한 악보 단에 도착했을 때만 잠시 숨을 고르자.',
-    layout: 'chorus', echoGoal: 1, hint: 'L로 숨은 악보 발판을 이어 건너고, 가운데 기억 단에 과거의 나를 남겨 합창길을 완성하세요.',
+    chapter: '유나 · 사라진 노래', name: '별빛 합창의 문', type: 'puzzle', skills: ['resonance'], teaches: ['resonance'], objective: '공명으로 두 개의 합창 기억을 되찾아라',
+    intro: '두 번째 친구 유나는 숨은 소리를 듣는 아이야. 꿈 추출기는 그 아이의 노래를 접어 숨겨 버렸어. L을 누르면 공명이 퍼져, 보이지 않던 건반과 봉인이 드러난다. 하지만 공명을 멈추면 길도 다시 희미해져. 가운데 악보 단과 마지막 후렴 단에 기억의 나를 하나씩 남겨, 두 음이 함께 울리게 하자.',
+    layout: 'chorus', echoGoal: 2, hint: 'L로 숨은 건반 길을 유지해 두 기억 문양까지 가세요. K로 두 곳에 과거의 나를 남기면 합창길이 완성됩니다.',
   },
   {
-    chapter: '유나 · 사라진 노래', name: '유나의 빈 의자', type: 'puzzle', skills: ['bridge', 'time', 'resonance'], objective: '서로 다른 높이의 빈자리를 기억의 메아리로 채워라',
+    chapter: '유나 · 사라진 노래', name: '유나의 빈 의자', type: 'puzzle', skills: ['bridge', 'time', 'resonance'], objective: '세 개의 빈자리를 기억의 메아리로 채워라',
     blockedSkills: ['bridge'],
-    intro: '유나는 늘 누군가의 자리를 기억하던 아이였어. 꿈 추출기는 교실의 낮은 자리 하나와 합창 발코니의 높은 자리 하나를 지워 버렸어. 이 교실에서는 잔상 발판도 닿지 않아. L로 보이지 않는 계단을 드러내고, K로 서로 다른 높이의 두 빈자리를 채우자.',
-    layout: 'choir-balcony', echoGoal: 2, hint: 'L로 발코니 계단을 드러내며 낮은 빈 의자와 높은 빈 의자에 기억의 나를 하나씩 남기세요.',
+    intro: '유나는 늘 누군가의 자리를 기억하던 아이였어. 꿈 추출기는 교실의 낮은 자리와 합창 발코니의 높은 자리, 그리고 마지막 후렴 자리를 지워 버렸어. 이 교실에서는 잔상 발판도 닿지 않아. L로 보이지 않는 건반 계단을 드러내고, K로 서로 다른 높이의 세 빈자리를 채우자.',
+    layout: 'choir-balcony', echoGoal: 3, hint: 'L로 발코니 건반 계단을 드러내며 낮은 자리·높은 자리·마지막 후렴 자리에 기억의 나를 하나씩 남기세요.',
   },
   {
-    chapter: '유나 · 사라진 노래', name: '지워진 악보의 계단', type: 'puzzle', skills: ['resonance'], objective: '사라진 음계를 공명으로 되돌려라',
-    intro: '유나의 악보에는 음표 사이사이가 통째로 지워져 있어. L을 누르는 동안에만 빠진 음계와 그 위의 기억 문양이 돌아온다. 먼저 공명으로 세 번째 음계까지 올라가. 그 위에서 K로 짧은 기억을 남기면, 과거의 네가 그 음을 붙잡고 길을 완성할 거야.',
-    layout: 'chorus-memory', echoGoal: 1, hint: '① L을 유지해 세 번째 숨은 음계까지 올라가세요. ② 그 위의 기억 문양에서 K를 두 번 눌러 과거의 나를 남기세요.',
+    chapter: '유나 · 사라진 노래', name: '지워진 악보의 계단', type: 'puzzle', skills: ['resonance'], objective: '두 개의 사라진 음계를 공명으로 되돌려라',
+    intro: '유나의 악보에는 음표 사이사이가 통째로 지워져 있어. L을 누르는 동안에만 빠진 음계와 그 위의 기억 문양이 돌아온다. 먼저 공명으로 세 번째 음계까지 올라가고, 다시 반대편 마지막 파동까지 건너가. 두 곳에 K로 짧은 기억을 남기면, 과거의 네가 각각의 음을 붙잡고 길을 완성할 거야.',
+    layout: 'chorus-memory', echoGoal: 2, hint: '① L을 유지해 세 번째 숨은 음계에 기억을 남기세요. ② 다시 공명 길을 따라 마지막 파동까지 건너 두 번째 기억을 남기세요.',
   },
   {
-    chapter: '유나 · 사라진 노래', name: '두 사람의 화음', type: 'puzzle', skills: ['resonance'], objective: '나선형 악보 위 두 빈자리를 채워 화음을 완성하라',
-    intro: '마지막 한 소절은 직선이 아니라, 위아래로 감긴 악보에 숨어 있어. 유나는 자신이 혼자 노래하고 있었다고 믿지만, 서로 반대편 높이에 있는 두 빈자리에 기억의 나를 남기면 잊었던 화음이 돌아올 거야.',
-    layout: 'harmony-spiral', echoGoal: 2, hint: 'L로 나선형 음계를 드러내며 낮은 음과 높은 음의 빈자리에 기억의 나를 남기세요.',
+    chapter: '유나 · 사라진 노래', name: '두 사람의 화음', type: 'puzzle', skills: ['resonance'], objective: '나선형 악보 위 세 빈자리를 채워 화음을 완성하라',
+    intro: '마지막 한 소절은 직선이 아니라, 위아래로 감긴 악보에 숨어 있어. 유나는 자신이 혼자 노래하고 있었다고 믿지만, 서로 다른 높이의 세 빈자리에 기억의 나를 남기면 잊었던 화음이 돌아올 거야. 마지막 후렴 자리는 가장 멀리 있으니, 공명 게이지를 아껴 두자.',
+    layout: 'harmony-spiral', echoGoal: 3, hint: 'L로 나선형 건반 길을 드러내며 낮은 음·높은 음·마지막 후렴 자리에 기억의 나를 남기세요.',
   },
   {
     chapter: '유나 · 사라진 노래', name: '침묵을 삼킨 합창단', type: 'boss', skills: ['resonance'], objective: '공명으로 여섯 개의 잃어버린 음을 되찾아라',
@@ -1373,9 +1373,15 @@ function setupPuzzle(layout, echoGoal) {
     'lantern-river': [],
     bridge: [{ x: 165, y: 462, w: 30, h: 28, label: '첫 약속' }],
     wall: [{ x: 165, y: 462, w: 30, h: 28, label: '별빛 약속' }],
-    chorus: [{ x: 364, y: 332, w: 30, h: 28, label: '노래 기억' }],
-    // 9스테이지: 흔들리는 공명 길 가운데의 짧은 안전 단 위에서만 기억을 남길 수 있다.
-    'chorus-memory': [{ x: 466, y: 252, w: 30, h: 28, label: '세 번째 음의 기억' }],
+    chorus: [
+      { x: 364, y: 332, w: 30, h: 28, label: '첫 번째 노래 기억' },
+      { x: 786, y: 392, w: 30, h: 28, label: '마지막 후렴 기억' },
+    ],
+    // 9스테이지: 두 개의 숨은 음계를 각각 되감아야 완성되는 공명 지그재그다.
+    'chorus-memory': [
+      { x: 466, y: 252, w: 30, h: 28, label: '세 번째 음의 기억' },
+      { x: 704, y: 252, w: 30, h: 28, label: '마지막 파동의 기억', hidden: true },
+    ],
     duet: [
       { x: 150, y: 462, w: 30, h: 28, label: '첫 번째 빈 의자' },
       { x: 520, y: 462, w: 30, h: 28, label: '두 번째 빈 의자' },
@@ -1383,10 +1389,12 @@ function setupPuzzle(layout, echoGoal) {
     'choir-balcony': [
       { x: 356, y: 332, w: 30, h: 28, label: '낮은 빈 의자' },
       { x: 594, y: 196, w: 30, h: 28, label: '높은 빈 의자' },
+      { x: 850, y: 350, w: 30, h: 28, label: '마지막 후렴 자리' },
     ],
     'harmony-spiral': [
       { x: 358, y: 326, w: 30, h: 28, label: '낮은 음의 자리' },
       { x: 598, y: 326, w: 30, h: 28, label: '높은 음의 자리' },
+      { x: 842, y: 386, w: 30, h: 28, label: '마지막 후렴 자리' },
     ],
     relay: [{ x: 135, y: 462, w: 30, h: 28, label: '출발 신호' }],
     dash: [{ x: 138, y: 462, w: 30, h: 28, label: '질주 기억' }],
@@ -2854,35 +2862,54 @@ function drawYunaScorePlatform(item) {
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   if (hidden) { ctx.shadowBlur = 18; ctx.shadowColor = '#8effdc'; }
-  const surface = ctx.createLinearGradient(x, y, x, y + h);
-  surface.addColorStop(0, ground ? '#244c5a' : '#285e68');
-  surface.addColorStop(.23, ground ? '#173947' : '#183f4e');
-  surface.addColorStop(1, '#081c32');
-  ctx.fillStyle = surface; ctx.fillRect(x, y, w, h);
+  const casing = ctx.createLinearGradient(x, y, x, y + h);
+  casing.addColorStop(0, hidden ? '#2a8f89' : '#263b50');
+  casing.addColorStop(.28, hidden ? '#155d68' : '#142537');
+  casing.addColorStop(1, '#071325');
+  ctx.fillStyle = casing; ctx.fillRect(x, y, w, h);
   ctx.shadowBlur = 0;
-  ctx.fillStyle = hidden ? '#d2fff0' : '#e2c884'; ctx.fillRect(x, y, w, 3);
-  ctx.fillStyle = '#57c8bd'; ctx.fillRect(x + 2, y + 4, Math.max(0, w - 4), 2);
-  ctx.fillStyle = 'rgba(4, 20, 39, .65)'; ctx.fillRect(x + 3, y + h - 5, Math.max(0, w - 6), 3);
-  if (ground) {
-    for (let line = 0; line < 3; line += 1) {
-      ctx.fillStyle = line === 0 ? 'rgba(239, 216, 157, .34)' : 'rgba(93, 203, 192, .22)';
-      ctx.fillRect(x + 6, y + 10 + line * 7, Math.max(0, w - 12), 1);
-    }
-    for (let tileX = x + 10; tileX < x + w - 8; tileX += 26) {
-      ctx.fillStyle = 'rgba(6, 27, 47, .58)'; ctx.fillRect(tileX, y + 8, 2, h - 15);
-      ctx.fillStyle = tileX % 52 === 10 ? '#e0c07e' : '#62bfb5'; ctx.fillRect(tileX + 7, y + 18, 5, 5);
-      ctx.fillStyle = 'rgba(236, 225, 180, .5)'; ctx.fillRect(tileX + 12, y + 13, 1, 9);
-    }
-  } else {
-    ctx.fillStyle = 'rgba(228, 242, 214, .26)';
-    for (let line = 0; line < Math.min(3, Math.floor((h - 5) / 4)); line += 1) ctx.fillRect(x + 5, y + 7 + line * 4, Math.max(0, w - 10), 1);
-    for (let noteX = x + 13; noteX < x + w - 8; noteX += 28) {
-      const noteY = y + Math.min(h - 6, 8 + ((noteX - x) / 28 % 2) * 3);
-      ctx.fillStyle = hidden ? '#b9fff0' : '#f0d48d'; ctx.fillRect(Math.round(noteX), Math.round(noteY), 5, 3);
-      ctx.fillRect(Math.round(noteX + 4), Math.round(noteY - 6), 1, 7);
-    }
+
+  // 유나의 길은 악보가 아니라 실제 연주할 수 있는 피아노 건반이다.
+  // 흰 건반은 안전한 박자, 검은 건반은 리듬을 읽기 위한 대비를 만든다.
+  const inset = 2;
+  const keyTop = y + 3;
+  const keyHeight = Math.max(7, h - 7);
+  const keyWidth = ground ? 24 : Math.max(14, Math.min(19, Math.floor((w - inset * 2) / 4)));
+  const keyEnd = x + w - inset;
+  const whiteKey = hidden ? '#c5fff1' : '#f6f0d8';
+  const whiteKeyShadow = hidden ? '#78d9ca' : '#c9bea3';
+  for (let keyX = x + inset; keyX < keyEnd; keyX += keyWidth) {
+    const currentWidth = Math.min(keyWidth - 1, keyEnd - keyX);
+    if (currentWidth <= 0) continue;
+    const keySurface = ctx.createLinearGradient(keyX, keyTop, keyX, keyTop + keyHeight);
+    keySurface.addColorStop(0, hidden ? '#effff8' : '#fffdf0');
+    keySurface.addColorStop(.72, whiteKey);
+    keySurface.addColorStop(1, whiteKeyShadow);
+    ctx.fillStyle = keySurface; ctx.fillRect(keyX, keyTop, currentWidth, keyHeight);
+    ctx.fillStyle = 'rgba(7, 22, 39, .56)'; ctx.fillRect(keyX + currentWidth, keyTop, 1, keyHeight);
   }
-  ctx.strokeStyle = hidden ? 'rgba(158, 255, 229, .88)' : 'rgba(232, 201, 130, .65)';
+
+  // 한 옥타브의 검은 건반 배열(C#, D#, F#, G#, A#)을 반복한다.
+  const blackKeyPositions = new Set([0, 1, 3, 4, 5]);
+  const blackWidth = Math.max(4, Math.round(keyWidth * .5));
+  const blackHeight = Math.max(5, Math.round(keyHeight * .56));
+  let pianoKey = 0;
+  for (let keyX = x + inset; keyX + keyWidth < keyEnd; keyX += keyWidth) {
+    if (blackKeyPositions.has(pianoKey % 7)) {
+      const blackX = Math.round(keyX + keyWidth - blackWidth / 2);
+      const blackSurface = ctx.createLinearGradient(blackX, keyTop, blackX, keyTop + blackHeight);
+      blackSurface.addColorStop(0, hidden ? '#143e57' : '#162235');
+      blackSurface.addColorStop(1, hidden ? '#061c33' : '#050d1a');
+      ctx.fillStyle = blackSurface; ctx.fillRect(blackX, keyTop, blackWidth, blackHeight);
+      ctx.fillStyle = hidden ? 'rgba(157, 255, 234, .45)' : 'rgba(255, 236, 177, .3)';
+      ctx.fillRect(blackX + 1, keyTop + 1, Math.max(1, blackWidth - 2), 1);
+    }
+    pianoKey += 1;
+  }
+
+  ctx.fillStyle = hidden ? '#a8ffe8' : '#e2c884'; ctx.fillRect(x, y, w, 2);
+  ctx.fillStyle = 'rgba(3, 14, 30, .78)'; ctx.fillRect(x + 2, y + h - 3, Math.max(0, w - 4), 2);
+  ctx.strokeStyle = hidden ? 'rgba(158, 255, 229, .92)' : 'rgba(247, 225, 170, .74)';
   ctx.lineWidth = 1; ctx.strokeRect(x + .5, y + .5, w - 1, h - 1);
   ctx.restore();
 }
