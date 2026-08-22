@@ -182,8 +182,8 @@ const STAGES = [
     layout: 'harmony-spiral', echoGoal: 2, hint: 'L로 나선형 음계를 드러내며 낮은 음과 높은 음의 빈자리에 기억의 나를 남기세요.',
   },
   {
-    chapter: '유나 · 사라진 노래', name: '침묵을 삼킨 합창단', type: 'boss', skills: ['resonance'], objective: '공명으로 세 개의 잃어버린 음을 되찾아라',
-    intro: '유나는 아무리 크게 노래해도 아무에게도 닿지 않을까 봐 두려웠다. 그 두려움은 “침묵을 삼킨 합창단”이 되어 모든 소리를 지운다. 먼저 과거의 나 둘에게 서로 다른 화음 앵커를 맡겨. 그 다음 별빛 고리가 밝아지는 박자에 맞춰 L을 짧게 눌러, 네 음을 순서대로 되찾자. 침묵은 음표 탄막으로 길을 막지만, 옆으로 흐르면 피할 수 있어.',
+    chapter: '유나 · 사라진 노래', name: '침묵을 삼킨 합창단', type: 'boss', skills: ['resonance'], objective: '공명으로 여섯 개의 잃어버린 음을 되찾아라',
+    intro: '유나는 아무리 크게 노래해도 아무에게도 닿지 않을까 봐 두려웠다. 그 두려움은 “침묵을 삼킨 합창단”이 되어 모든 소리를 지운다. 먼저 과거의 나 둘에게 서로 다른 화음 앵커를 맡겨. 그 다음 별빛 고리가 밝아지는 박자에 맞춰 L을 짧게 눌러, 여섯 음을 순서대로 되찾자. 음을 되찾을수록 유나의 노래에 새로운 레이어가 쌓이지만, 합창단의 음표 탄막도 더 촘촘해진다.',
     boss: '침묵을 삼킨 합창단', bossConfig: {
       mode: 'resonance', visual: 'choir',
       moveBounds: { xMin: 45, xMax: 720, yMin: 86, yMax: 437 },
@@ -194,11 +194,13 @@ const STAGES = [
       resonanceGates: [
         { x: 452, y: 116, w: 52, h: 52, label: '첫 음' },
         { x: 532, y: 266, w: 52, h: 52, label: '두 번째 음' },
-        { x: 628, y: 390, w: 52, h: 52, label: '마지막 음' },
-        { x: 672, y: 202, w: 42, h: 42, label: '되찾은 후렴' },
+        { x: 642, y: 390, w: 52, h: 52, label: '세 번째 음' },
+        { x: 624, y: 104, w: 52, h: 52, label: '네 번째 음' },
+        { x: 500, y: 404, w: 52, h: 52, label: '다섯 번째 음' },
+        { x: 386, y: 210, w: 52, h: 52, label: '되찾은 후렴' },
       ],
     },
-    hint: '① 기억의 나 둘을 화음 앵커에 남기기 ② 밝아지는 고리 앞에서 L을 짧게 눌러 음 4개를 순서대로 되찾기 ③ 침묵 탄막은 옆으로 흘려 보내세요.',
+    hint: '① 기억의 나 둘을 화음 앵커에 남기기 ② 밝아지는 고리 앞에서 L을 짧게 눌러 음 6개를 순서대로 되찾기 ③ 음을 되찾을수록 유나의 곡이 완성됩니다. 침묵 탄막은 옆으로 흘려 보내세요.',
   },
   {
     chapter: '유나 · 사라진 노래', name: '유나의 노래가 남긴 별', type: 'puzzle', skills: ['resonance'], objective: '되찾은 노랫길을 따라 다음 꿈으로 향하라',
@@ -502,6 +504,8 @@ let lastFrame = 0;
 let game = {};
 const stageBgm = { enabled: true, key: null, audio: null };
 let gameSfxContext = null;
+const yunaLoopStation = { active: false, stageIndex: -1, key: null, level: 0, maxLevel: 0, milestones: new Set(), lastStep: -1 };
+const YUNA_LOOP_LAYER_NAMES = Object.freeze(['잔상 베이스', '공명 리듬', '별빛 멜로디', '합창 패드']);
 
 const MOVEMENT_TUNING = {
   puzzle: { maxSpeed: 290, accelerationTime: .16, stopTime: .11, turnTime: .18, airControl: .55 },
@@ -643,6 +647,7 @@ function startStageBgm(stage = currentStage()) {
   } else stageBgm.audio.currentTime = 0;
   updateBgmToggle(key);
   playStageBgm();
+  startYunaLoopStation(stage);
 }
 
 function pauseStageBgm() {
@@ -654,6 +659,7 @@ function resumeStageBgm() {
 }
 
 function stopStageBgm() {
+  stopYunaLoopStation();
   if (stageBgm.audio) {
     stageBgm.audio.pause();
     stageBgm.audio.currentTime = 0;
@@ -688,6 +694,118 @@ function playResonanceBassHit(strong = false) {
   oscillator.connect(gain).connect(audio.destination);
   oscillator.start(now);
   oscillator.stop(now + duration + .02);
+}
+
+function startYunaLoopStation(stage = currentStage()) {
+  const key = stageBgmKey(stage);
+  if (!key) {
+    stopYunaLoopStation();
+    return;
+  }
+  yunaLoopStation.active = true;
+  yunaLoopStation.stageIndex = game.stageIndex;
+  yunaLoopStation.key = key;
+  yunaLoopStation.level = 0;
+  yunaLoopStation.maxLevel = stage.type === 'boss' ? 4 : 3;
+  yunaLoopStation.milestones = new Set();
+  yunaLoopStation.lastStep = -1;
+  // 보스 이후의 짧은 길은 유나가 되찾은 완성된 노래를 들려주는 보상 구간이다.
+  if (stage.layout === 'walk') {
+    yunaLoopStation.level = yunaLoopStation.maxLevel;
+    yunaLoopStation.milestones.add('recovered-song');
+  }
+}
+
+function stopYunaLoopStation() {
+  yunaLoopStation.active = false;
+  yunaLoopStation.stageIndex = -1;
+  yunaLoopStation.key = null;
+  yunaLoopStation.level = 0;
+  yunaLoopStation.maxLevel = 0;
+  yunaLoopStation.milestones = new Set();
+  yunaLoopStation.lastStep = -1;
+}
+
+function yunaLoopRoot() {
+  return ({ tide: 220, glass: 246.94, silent: 196, resonance: 220 })[yunaLoopStation.key] || 220;
+}
+
+function playYunaLoopTone(frequency, duration, volume, type = 'triangle', slideTo = null) {
+  const audio = primeGameSfx();
+  if (!audio || audio.state !== 'running' || !stageBgm.enabled) return;
+  const now = audio.currentTime;
+  const oscillator = audio.createOscillator();
+  const gain = audio.createGain();
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, now);
+  if (slideTo) oscillator.frequency.exponentialRampToValueAtTime(slideTo, now + duration);
+  gain.gain.setValueAtTime(.0001, now);
+  gain.gain.exponentialRampToValueAtTime(volume, now + .012);
+  gain.gain.exponentialRampToValueAtTime(.0001, now + duration);
+  oscillator.connect(gain).connect(audio.destination);
+  oscillator.start(now);
+  oscillator.stop(now + duration + .025);
+}
+
+function playYunaLoopBloom(level) {
+  const root = yunaLoopRoot();
+  const intervals = [[.5], [.5, .75], [.5, .75, 1.25], [.5, .75, 1.25, 1.5]][level - 1] || [];
+  intervals.forEach((ratio, index) => playYunaLoopTone(root * ratio, .34 + index * .04, .032, index % 2 ? 'sine' : 'triangle'));
+}
+
+function unlockYunaMusicLayer(milestone) {
+  if (!yunaLoopStation.active || yunaLoopStation.milestones.has(milestone)) return;
+  yunaLoopStation.milestones.add(milestone);
+  if (yunaLoopStation.level >= yunaLoopStation.maxLevel) return;
+  yunaLoopStation.level += 1;
+  playYunaLoopBloom(yunaLoopStation.level);
+  const name = YUNA_LOOP_LAYER_NAMES[yunaLoopStation.level - 1];
+  say(`LOOP ${String(yunaLoopStation.level).padStart(2, '0')} · ${name}가 유나의 노래에 쌓였습니다.`);
+}
+
+function updateYunaLoopStation() {
+  if (!yunaLoopStation.active || yunaLoopStation.stageIndex !== game.stageIndex || game.phase !== 'playing') return;
+  const stepLength = yunaLoopStation.key === 'resonance' ? .28 : .3;
+  const step = Math.floor((game.elapsed || 0) / stepLength);
+  if (step === yunaLoopStation.lastStep) return;
+  yunaLoopStation.lastStep = step;
+  if (!stageBgm.enabled || yunaLoopStation.level <= 0) return;
+  const root = yunaLoopRoot();
+  const beat = step % 8;
+  if (yunaLoopStation.level >= 1 && beat % 4 === 0) playYunaLoopTone(root * .25, .18, .04, 'sine', root * .19);
+  if (yunaLoopStation.level >= 2 && (beat === 2 || beat === 6)) playYunaLoopTone(root * .5, .12, .026, 'triangle');
+  if (yunaLoopStation.level >= 3 && beat % 2 === 1) {
+    const melody = [1.25, 1.5, 1.25, 1.875][Math.floor(step / 2) % 4];
+    playYunaLoopTone(root * melody, .15, .026, 'sine');
+  }
+  if (yunaLoopStation.level >= 4 && beat === 4) {
+    [1, 1.25, 1.5].forEach((ratio) => playYunaLoopTone(root * ratio, .42, .018, 'sine'));
+  }
+}
+
+function playerIsHoldingYunaPlatform(platform) {
+  const p = game.player;
+  return Boolean(p && p.x + p.w > platform.x + 3 && p.x < platform.x + platform.w - 3 && Math.abs(p.y + p.h - platform.y) < 10);
+}
+
+function updateYunaPuzzleMusic(techniques) {
+  if (!yunaLoopStation.active || currentStage()?.type !== 'puzzle') return;
+  if (techniques.resonance) {
+    game.platforms.filter((platform) => platform.hidden && playerIsHoldingYunaPlatform(platform)).forEach((platform) => {
+      unlockYunaMusicLayer(`resonance-path:${platform.label}`);
+    });
+  }
+  game.memoryPads.forEach((pad) => {
+    if (activeMemoryPads([pad]) > 0) unlockYunaMusicLayer(`memory-pad:${pad.label}`);
+  });
+}
+
+function updateYunaBossMusic(b) {
+  if (!yunaLoopStation.active || b.mode !== 'resonance') return;
+  b.memoryPads.forEach((pad) => {
+    if (activeMemoryPads([pad]) > 0) unlockYunaMusicLayer(`harmony-anchor:${pad.label}`);
+  });
+  for (let index = 0; index < b.resonanceProgress; index += 1) unlockYunaMusicLayer(`restored-note:${index}`);
 }
 
 function isSkillBlocked(skill) {
@@ -1668,6 +1786,7 @@ function updatePuzzle(dt) {
     p.y = H - p.h; p.vy = 0; p.grounded = true;
   }
   updateMemoryLoops(dt);
+  updateYunaPuzzleMusic(techniques);
   if (stage.layout === 'watcher' && !game.watcherResolved) {
     const watcher = getWatcher();
     const echoCrossingWatcher = game.echoes.some((echo) => !echo.holding && overlaps(echo, watcher));
@@ -1740,7 +1859,7 @@ function finalBossPhase(b) {
 function nextBossAttackDelay(b) {
   if (b.mode === 'final') return b.phase === 3 ? 99 : b.phase === 2 ? .68 : .82;
   if (b.mode === 'mirror') return .94;
-  if (b.mode === 'resonance') return 1.02;
+  if (b.mode === 'resonance') return .92;
   if (b.mode === 'chase') return .88;
   return 1.05;
 }
@@ -1764,7 +1883,8 @@ function spawnNightmarePattern() {
   }
 
   if (b.mode === 'resonance') {
-    if (attackNumber % 3 === 0) launchNightmareRing(origin, 7, { speed: 205, r: 9, kind: 'note', offset: game.elapsed * .7 });
+    if (attackNumber % 4 === 0) launchNightmareRing(origin, 8, { speed: 220, r: 9, kind: 'note', offset: game.elapsed * .7 });
+    else if (attackNumber % 4 === 3) launchNightmareFan(origin, p, 5, .72, { speed: 280, r: 9, kind: 'note' });
     else launchNightmareFan(origin, p, 3, .52, { speed: 265, r: 10, kind: 'note' });
     return;
   }
@@ -2130,6 +2250,7 @@ function updateBoss(dt) {
   if (b.mode === 'resonance') {
     b.activePads = activeMemoryPads(b.memoryPads);
     b.phase = Math.min(3, b.resonanceProgress + 1);
+    updateYunaBossMusic(b);
     if (b.activePads >= b.memoryPads.length) {
       updateResonanceBassCue(b);
       updateResonanceGates(b, techniques);
@@ -3330,6 +3451,7 @@ function drawPuzzle() {
   drawDreamTrails(false);
   if (game.player) drawChild(game.player);
   if (stage02GateSprite) drawHarinStage02GateLayer(stage02GateSprite, stage02GateStructure, 'near');
+  drawYunaLoopStationMeter();
   drawPhaseGuide();
 }
 
@@ -3416,6 +3538,25 @@ function drawDreamGate(gate, active, cleared, kind = 'resonance', revealed = tru
   }
   ctx.restore();
   ctx.fillStyle = cleared ? '#8bc6c1' : active ? '#f4fff9' : '#a9c8c7'; ctx.font = '800 9px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(gate.label, gate.x + gate.w / 2, gate.y - 12);
+}
+
+function drawYunaLoopStationMeter() {
+  if (!yunaLoopStation.active || yunaLoopStation.stageIndex !== game.stageIndex) return;
+  const x = 18;
+  const y = 60;
+  const total = yunaLoopStation.maxLevel;
+  ctx.save();
+  ctx.fillStyle = 'rgba(7, 24, 43, .8)'; ctx.fillRect(x - 8, y - 17, 144, 38);
+  ctx.strokeStyle = 'rgba(158, 255, 215, .65)'; ctx.lineWidth = 1; ctx.strokeRect(x - 7.5, y - 16.5, 143, 37);
+  ctx.fillStyle = '#c8ffec'; ctx.font = '800 8px ui-monospace, monospace'; ctx.textAlign = 'left';
+  ctx.fillText(`LOOP STATION · ${yunaLoopStation.level}/${total}`, x, y - 5);
+  for (let index = 0; index < total; index += 1) {
+    const active = index < yunaLoopStation.level;
+    ctx.fillStyle = active ? '#9effd7' : 'rgba(158, 255, 215, .18)';
+    ctx.shadowBlur = active ? 10 : 0; ctx.shadowColor = '#9effd7';
+    ctx.fillRect(x + index * 29, y + 4, 22, 7);
+  }
+  ctx.restore();
 }
 
 function drawFinalMemoryTarget(target, active, resolved) {
@@ -3527,6 +3668,7 @@ function drawBoss() {
     ctx.save(); ctx.translate(p.x + p.w / 2, p.y + p.h / 2); ctx.strokeStyle = '#9effea'; ctx.lineWidth = 3; ctx.shadowBlur = 18; ctx.shadowColor = '#9effea'; ctx.beginPath(); ctx.arc(0, 0, 38 + Math.sin(game.elapsed * 8) * 3, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
   }
   drawChild(game.player, true);
+  drawYunaLoopStationMeter();
   drawPhaseGuide();
 }
 
@@ -3548,6 +3690,7 @@ function update(dt) {
     updateMemoryCollapse(dt, frozenTime());
   } else updatePuzzle(dt);
   updateDreamTrails(dt);
+  updateYunaLoopStation();
   updateHud();
 }
 
