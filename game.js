@@ -171,9 +171,9 @@ const STAGES = [
     layout: 'bridge', echoGoal: 1, hint: '① K 시작 → ② 기억 발판까지 이동 → ③ K 되감기. 기억의 나가 마지막 발판을 지키면 문이 열립니다.',
   },
   {
-    chapter: '하린 · 잃어버린 웃음', name: '달빛 유원지의 벽', type: 'puzzle', skills: ['bridge'], objective: '악몽의 잔상으로 깊은 틈을 넘어라',
-    intro: '하린이 좋아하던 달빛 유원지가 기계의 벽에 갇혔어. 이 구역의 추출기는 바닥을 길게 지워 버렸지만, 잔상 발판만은 기억의 틈에 나타날 수 있어. 과거의 나에게 첫 약속을 맡긴 뒤, 1로 나타나는 발판을 건너자.',
-    layout: 'wall', echoGoal: 1, hint: '기억의 나를 발판에 남기고 1의 잔상 발판으로 깊은 틈을 건너세요.',
+    chapter: '하린 · 잃어버린 웃음', name: '웃음을 모으는 거리', type: 'puzzle', skills: ['bridge'], objective: '거리 세 곳에 기억의 나를 남겨 빼앗긴 웃음등을 모두 밝혀라',
+    intro: '웃음 수집탑은 거리 곳곳에 남은 하린의 추억을 빨아들여 광대의 억지웃음으로 바꾸고 있어. 낮은 달빛길, 높은 별풍선 지붕, 회전목마 앞의 웃음등에 과거의 나를 하나씩 남겨 줘. 세 추억이 동시에 빛나면 탑에 붙은 가짜 미소가 무너지고 다음 꿈으로 가는 통로가 열릴 거야.',
+    layout: 'wall', echoGoal: 3, hint: '① O로 중앙 기억 교차로 이동 ② 교차로에서 K 기록 시작 ③ 낮은 길·높은 잔상길·오른쪽 길의 추억등에 각각 K 잔상 남기기 ④ 세 등불이 모두 켜지면 출구로 이동.',
   },
   {
     chapter: '하린 · 잃어버린 웃음', name: '무너지는 회전목마', type: 'puzzle', skills: [], blockedSkills: ['bridge'], objective: '기억의 나가 돌린 회전목마를 타고 큰 벽을 넘어라',
@@ -258,7 +258,7 @@ const STAGES = [
   {
     chapter: '하늘 · 멈춰 버린 발걸음', name: '역풍의 높은 벽', type: 'puzzle', skills: ['bridge', 'dash'], objective: '절벽의 낮은 길과 높은 길을 이어 역풍을 통과하라',
     intro: '하늘의 길은 이제 벽 하나가 아니라 여러 높이로 갈라진 절벽이 되었어. 기억의 나가 붙잡은 잔상 발판으로 첫 틈을 넘고, 점프로 높은 바람 선반을 따라가 거대한 역풍 기둥을 피해 가자. 마지막 좁은 틈은 Space 질주로 가른다.',
-    layout: 'wind-cliff', echoGoal: 1, hint: '① 기억의 나를 출발 약속에 남기기 ② 1로 첫 틈 건너기 ③ 점프로 높은 바람 선반 오르기 ④ Space로 마지막 틈 돌파.',
+    layout: 'wind-cliff', echoGoal: 1, hint: '① 기억의 나를 출발 약속에 남기기 ② O로 첫 틈 건너기 ③ 점프로 높은 바람 선반 오르기 ④ Space로 마지막 틈 돌파.',
   },
   {
     chapter: '하늘 · 멈춰 버린 발걸음', name: '되돌아오는 표지판', type: 'puzzle', skills: ['resonance', 'dash'], objective: '층마다 다른 표지판을 지나 진짜 출발점에 닿아라',
@@ -1188,6 +1188,10 @@ function phaseGuide() {
     if (stage.layout === 'carousel') {
       return { step: 'STEP 2 / 3', text: '움직이는 달빛 발판에 올라타세요. 발판이 벽 위까지 실어 주면 점프로 반대편 선반으로 건너세요.', compact: '달빛 발판을 타고 벽 위로 건너라' };
     }
+    if (stage.layout === 'wall') {
+      if (goal > active) return { step: `MEMORY RELAY · ${active} / ${goal}`, text: '중앙 기억 교차로에서 K 기록을 시작해 낮은 길·높은 길·오른쪽 길의 웃음 중계기에 기억의 나를 하나씩 남기세요.', compact: `진짜 웃음 중계기 ${active} / ${goal}` };
+      return { step: 'RELAY COMPLETE', text: '세 갈래 기억이 수집탑의 흡입을 멈췄습니다. 열린 셔터 너머의 꿈의 문으로 가세요.', compact: '멈춘 수집탑을 통과하라' };
+    }
     if (goal > active) return { step: `STEP 1 / 2 · ${active} / ${goal}`, text: 'K로 길을 기록해 과거의 나를 기억 발판에 남기세요.', compact: `기억 발판 ${active} / ${goal}을 채워라` };
     if (goal > 0) return { step: 'STEP 2 / 2', text: '기억의 나가 길을 지키는 동안 꿈의 문으로 가세요.', compact: '열린 꿈의 문으로 가라' };
     return { step: 'EXPLORE', text: stage.hint, compact: stage.objective };
@@ -1661,15 +1665,16 @@ function setupPuzzle(layout, echoGoal) {
     game.fallZones = [];
   } else if (layout === 'wall') {
     game.platforms = [
-      { x: 0, y: 500, w: 235, h: 40, label: 'MEMORY SHORE' },
-      { x: 510, y: 500, w: 450, h: 40, label: 'MOONLIGHT SHORE' },
-      { x: 650, y: 180, w: 80, h: 320, wall: true, label: 'DREAM EXTRACTOR' },
-      { x: 745, y: 352, w: 125, h: 18, label: 'MOONLIGHT SHELF' },
-      { x: 300, y: 420, w: 112, h: 14, hidden: true, label: '기억의 박동' },
-      { x: 476, y: 356, w: 118, h: 14, hidden: true, label: '공포 숨결' },
+      { x: 0, y: 500, w: 205, h: 40, label: 'MEMORY SHORE' },
+      { x: 318, y: 430, w: 132, h: 18, label: 'MEMORY CROSSROADS' },
+      { x: 525, y: 470, w: 112, h: 18, label: 'MOONLIGHT LAMP' },
+      { x: 110, y: 235, w: 200, h: 18, label: 'STAR BALLOON ROOF' },
+      { x: 740, y: 390, w: 112, h: 18, label: 'CAROUSEL LAMP' },
+      { x: 858, y: 80, w: 48, h: 420, wall: true, label: 'LAUGH COLLECTOR' },
+      { x: 906, y: 500, w: 54, h: 40, label: 'NEXT DREAM SHORE' },
     ];
-    game.exit = { x: 900, y: 418, w: 36, h: 82, label: 'LAUGH CORE' };
-    game.fallZones = [{ x: 235, y: 500, w: 275, h: 40 }];
+    game.exit = { x: 918, y: 418, w: 36, h: 82, label: 'LAUGH CORE' };
+    game.fallZones = [{ x: 205, y: 500, w: 701, h: 40 }];
   } else if (layout === 'carousel') {
     game.platforms = [
       { x: 0, y: 500, w: 960, h: 40, label: 'CAROUSEL FLOOR' },
@@ -1696,7 +1701,11 @@ function setupPuzzle(layout, echoGoal) {
     walk: [],
     'lantern-river': [],
     bridge: [{ x: 165, y: 462, w: 30, h: 28, label: '첫 약속' }],
-    wall: [{ x: 165, y: 462, w: 30, h: 28, label: '별빛 약속' }],
+    wall: [
+      { x: 566, y: 432, w: 30, h: 28, label: '달빛 약속등' },
+      { x: 190, y: 197, w: 30, h: 28, label: '별풍선 추억등' },
+      { x: 780, y: 352, w: 30, h: 28, label: '회전목마 웃음등' },
+    ],
     chorus: [{ x: 478, y: 342, w: 30, h: 28, label: '첫 번째 노래 기억' }],
     'chorus-memory': [{ x: 378, y: 246, w: 30, h: 28, label: '높은 음의 기억' }],
     duet: [
@@ -1925,7 +1934,7 @@ function spend(amount) {
 
 function activeTechniques() {
   return {
-    bridge: game.phase === 'playing' && hasSkill('bridge') && keys.has('Digit1') && game.imagination > 0,
+    bridge: game.phase === 'playing' && hasSkill('bridge') && keys.has('KeyO') && game.imagination > 0,
     time: game.phase === 'playing' && hasSkill('time') && (keys.has('ShiftLeft') || keys.has('ShiftRight')) && game.imagination > 0,
     resonance: game.phase === 'playing' && hasSkill('resonance') && keys.has('KeyL') && game.imagination > 0,
   };
@@ -1992,8 +2001,19 @@ function imaginationRegen(dt, techniques) {
   } else game.imagination = Math.min(100, game.imagination + 11 * dt);
 }
 
-function getBridge() {
-  return { x: 313 + Math.sin(game.elapsed * 2.2) * 56, y: 452, w: 92, h: 18 };
+function getWallBridges() {
+  const t = game.elapsed || 0;
+  return [
+    { x: 205 + Math.sin(t * 1.7) * 6, y: 452, w: 108, h: 16, label: 'HUB PATH' },
+    { x: 454, y: 442 + Math.sin(t * 1.25 + .8) * 6, w: 82, h: 16, label: 'LOW PATH' },
+    { x: 250 + Math.sin(t * 1.45 + 1.6) * 4, y: 350, w: 160, h: 16, label: 'UP PATH 01' },
+    { x: 160, y: 305 + Math.sin(t * 1.2 + 2.5) * 4, w: 170, h: 16, label: 'UP PATH 02' },
+    { x: 635 + Math.sin(t * 1.4 + 3.1) * 5, y: 420, w: 130, h: 16, label: 'LOW LINK' },
+  ];
+}
+
+function getLegacyBridge() {
+  return { x: 313 + Math.sin(game.elapsed * 2.2) * 56, y: 452, w: 92, h: 18, label: 'MEMORY PATH' };
 }
 
 function getCarouselRide() {
@@ -2122,7 +2142,10 @@ function updatePuzzle(dt) {
   p.y += p.vy * dt;
   p.grounded = false;
   const colliders = game.platforms.filter((item) => !item.wall && (!item.hidden || techniques.resonance));
-  if (game.bridge) colliders.push(getBridge());
+  if (game.bridge) {
+    if (stage.layout === 'wall') colliders.push(...getWallBridges());
+    else colliders.push(getLegacyBridge());
+  }
   if (stage.layout === 'carousel' && game.carouselRideProgress > .02) colliders.push(getCarouselRide());
   // 기억의 나는 단순 스위치가 아니라, 필요할 때 한 칸 더 올라설 수 있는 움직이는 기억 발판이다.
   const echoColliders = game.echoes.map((echo) => ({ x: echo.x, y: echo.y, w: echo.w, h: echo.h, memoryEcho: true }));
@@ -2144,6 +2167,7 @@ function updatePuzzle(dt) {
     p.y = H - p.h; p.vy = 0; p.grounded = true;
   }
   updateMemoryLoops(dt);
+  const memoryPadsReady = activeMemoryPads(game.memoryPads) >= game.echoGoal;
   updateYunaPuzzleMusic(techniques);
   if (stage.layout === 'watcher' && !game.watcherResolved) {
     const watcher = getWatcher();
@@ -2156,11 +2180,10 @@ function updatePuzzle(dt) {
       hitByNightmare('감시선에 포착됐습니다. K로 기록한 뒤, 기억의 내가 눈을 지날 때 Shift를 누르세요.', 12, true);
     }
   }
-  const memoryPadsReady = activeMemoryPads(game.memoryPads) >= game.echoGoal;
   const watcherReady = stage.layout !== 'watcher' || game.watcherResolved;
   if (overlaps(p, game.exit)) {
     if (!watcherReady) say('먼저 과거의 나를 감시선 앞으로 기록하고, 그 기억이 지나갈 때 Shift로 시간을 멈추세요.');
-    else if (!memoryPadsReady) say('먼저 기억의 나를 모든 기억 발판에 남겨야 합니다.');
+    else if (!memoryPadsReady) say(stage.layout === 'wall' ? '낮은 길·높은 길·오른쪽 길의 추억등 세 곳에 기억의 나를 하나씩 남기세요.' : '먼저 기억의 나를 모든 기억 발판에 남겨야 합니다.');
     else completeStage();
   }
 }
@@ -2973,7 +2996,7 @@ function updateHud() {
     }
   }
   const techniques = activeTechniques();
-  ruleStates.bridge.textContent = techniques.bridge ? 'HOLDING · DRAIN 16 / SEC' : 'HOLD 1 · DRAIN 16 / SEC';
+  ruleStates.bridge.textContent = techniques.bridge ? 'HOLDING · DRAIN 16 / SEC' : 'HOLD O · DRAIN 16 / SEC';
   ruleStates.time.textContent = techniques.time ? 'HOLDING · DRAIN 28 / SEC' : 'HOLD SHIFT · DRAIN 28 / SEC';
   if (ruleStates.resonance) {
     const drain = resonanceDrainPerSecond();
@@ -3346,10 +3369,72 @@ function drawPlatform(item) {
 }
 
 function drawBridge(bridge) {
+  const label = game.bridge ? bridge.label : bridge.label.replace('PATH', 'ECHO').replace('LINK', 'ECHO');
   ctx.save(); ctx.translate(bridge.x + bridge.w / 2, bridge.y + bridge.h / 2); ctx.shadowBlur = game.bridge ? 24 : 10; ctx.shadowColor = game.bridge ? '#61faff' : '#ff6d90';
   ctx.fillStyle = game.bridge ? '#2b8da7' : 'rgba(196,54,106,.34)'; ctx.fillRect(-bridge.w / 2, -bridge.h / 2, bridge.w, bridge.h);
   ctx.strokeStyle = game.bridge ? '#8fffff' : '#ff7895'; ctx.lineWidth = 2; ctx.strokeRect(-bridge.w / 2 + 1, -bridge.h / 2 + 1, bridge.w - 2, bridge.h - 2);
-  ctx.fillStyle = game.bridge ? '#d2ffff' : '#ffbbc8'; ctx.font = '800 9px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText(game.bridge ? 'MEMORY PATH' : 'NIGHTMARE ECHO', 0, 4); ctx.restore();
+  ctx.fillStyle = game.bridge ? '#d2ffff' : '#ffbbc8'; ctx.font = '800 9px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText(label, 0, 4); ctx.restore();
+}
+
+function drawLaughRelayNetwork() {
+  const collector = game.platforms.find((platform) => platform.label === 'LAUGH COLLECTOR');
+  const pads = game.memoryPads || [];
+  if (!collector || pads.length !== 3) return;
+  const activeStates = pads.map((pad) => activeMemoryPads([pad]) > 0);
+  const activeCount = activeStates.filter(Boolean).length;
+  const open = activeCount >= game.echoGoal;
+  const colors = ['#ffe37d', '#9effea', '#ffb5d7'];
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+
+  pads.forEach((pad, index) => {
+    const active = activeStates[index];
+    const color = active ? colors[index] : '#414a70';
+    const centerX = pad.x + pad.w / 2;
+    const centerY = pad.y + pad.h / 2;
+    const pipeX = collector.x - 12 - index * 7;
+    ctx.fillStyle = color;
+    for (let x = centerX + 18; x < pipeX; x += 13) ctx.fillRect(x, centerY, 8, 3);
+    const fromY = Math.min(centerY, collector.y + 60 + index * 28);
+    const toY = Math.max(centerY, collector.y + 60 + index * 28);
+    for (let y = fromY; y < toY; y += 13) ctx.fillRect(pipeX, y, 3, 8);
+    for (let x = pipeX; x < collector.x + 5; x += 9) ctx.fillRect(x, collector.y + 60 + index * 28, 6, 3);
+
+    ctx.shadowBlur = active ? 18 : 0; ctx.shadowColor = color;
+    ctx.fillStyle = '#111a35'; ctx.fillRect(pad.x - 5, pad.y - 18, pad.w + 10, pad.h + 24);
+    ctx.fillStyle = color; ctx.fillRect(pad.x - 1, pad.y - 14, pad.w + 2, 4);
+    ctx.fillRect(pad.x + 4, pad.y + pad.h + 1, pad.w - 8, 4);
+    if (index === 0) {
+      ctx.fillRect(centerX - 8, pad.y - 32, 13, 4); ctx.fillRect(centerX - 8, pad.y - 29, 4, 12);
+    } else if (index === 1) {
+      ctx.fillRect(centerX - 2, pad.y - 35, 4, 16); ctx.fillRect(centerX - 8, pad.y - 29, 16, 4);
+      ctx.fillRect(centerX - 5, pad.y - 32, 10, 10);
+    } else {
+      ctx.fillRect(centerX - 9, pad.y - 33, 18, 4); ctx.fillRect(centerX - 5, pad.y - 29, 10, 7);
+      ctx.fillRect(centerX - 2, pad.y - 22, 4, 8);
+    }
+    ctx.shadowBlur = 0;
+  });
+
+  ctx.globalAlpha = open ? .34 : 1;
+  ctx.fillStyle = open ? '#315f6b' : '#221b42'; ctx.fillRect(collector.x + 5, collector.y + 14, collector.w - 10, collector.h - 20);
+  ctx.fillStyle = open ? '#8fffff' : '#ff7895'; ctx.fillRect(collector.x + 8, collector.y + 20, 4, collector.h - 30); ctx.fillRect(collector.x + collector.w - 12, collector.y + 20, 4, collector.h - 30);
+  if (!open) {
+    ctx.fillStyle = '#613157';
+    for (let y = collector.y + 78; y < collector.y + collector.h - 18; y += 25) ctx.fillRect(collector.x + 13, y, collector.w - 26, 8);
+  }
+  ctx.globalAlpha = 1;
+  activeStates.forEach((active, index) => {
+    ctx.fillStyle = active ? colors[index] : '#4a526f';
+    ctx.fillRect(collector.x + 9 + index * 11, collector.y + 36, 8, 8);
+  });
+  ctx.fillStyle = open ? '#ffe37d' : '#ff7895';
+  ctx.fillRect(collector.x + 13, collector.y + 56, 7, 5); ctx.fillRect(collector.x + collector.w - 20, collector.y + 56, 7, 5);
+  ctx.fillRect(collector.x + 18, collector.y + 66, collector.w - 36, 4);
+  if (open) { ctx.fillStyle = '#fff4b5'; ctx.fillRect(collector.x + collector.w / 2 - 2, collector.y + 52, 4, 22); }
+  ctx.fillStyle = open ? '#fff1a8' : '#d3e3ff'; ctx.font = '800 8px ui-monospace, monospace'; ctx.textAlign = 'center';
+  ctx.fillText(`MEMORY RELAY ${activeCount} / ${game.echoGoal}`, collector.x + collector.w / 2, collector.y - 8);
+  ctx.restore();
 }
 
 function drawWatcher(watcher, frozen, resolved = false) {
@@ -3919,7 +4004,8 @@ function drawPuzzle() {
   drawBackground(false);
   drawLayoutLandmarks();
   const techniques = activeTechniques();
-  const gateOpen = (game.echoGoal === 0 || activeMemoryPads(game.memoryPads) >= game.echoGoal) && (game.layout !== 'watcher' || game.watcherResolved);
+  const memoryPadsReady = game.echoGoal === 0 || activeMemoryPads(game.memoryPads) >= game.echoGoal;
+  const gateOpen = memoryPadsReady && (game.layout !== 'watcher' || game.watcherResolved);
   const stage02GateStructure = game.layout === 'bridge'
     ? game.platforms.find((platform) => platform.wall && platform.label === 'MEMORY GATE')
     : null;
@@ -3938,7 +4024,10 @@ function drawPuzzle() {
       ctx.save(); ctx.globalAlpha = .14; drawPlatform(platform); ctx.restore();
     } else drawPlatform(platform);
   });
-  if (game.layout === 'wall') drawBridge(getBridge());
+  if (game.layout === 'wall') {
+    drawLaughRelayNetwork();
+    getWallBridges().forEach(drawBridge);
+  }
   if (game.layout === 'carousel' && game.carouselRideProgress > .02) {
     const ride = getCarouselRide();
     drawPlatform(ride);
@@ -4312,7 +4401,7 @@ restartButton.addEventListener('click', () => {
   else if (game.phase === 'truth') newGame();
 });
 ruleCards.forEach((card) => {
-  const keyForRule = { bridge: 'Digit1', time: 'ShiftLeft', resonance: 'KeyL' }[card.dataset.rule];
+  const keyForRule = { bridge: 'KeyO', time: 'ShiftLeft', resonance: 'KeyL' }[card.dataset.rule];
   card.addEventListener('pointerdown', () => {
     if (hasSkill(card.dataset.rule)) {
       if (card.dataset.rule === 'dash') triggerDash();
@@ -4350,10 +4439,10 @@ window.addEventListener('keydown', (event) => {
   }
   if (!keys.has(event.code)) pressed.add(event.code);
   keys.add(event.code);
-  const skillByKey = { Digit1: 'bridge', ShiftLeft: 'time', ShiftRight: 'time', KeyL: 'resonance', Space: 'dash' };
+  const skillByKey = { KeyO: 'bridge', ShiftLeft: 'time', ShiftRight: 'time', KeyL: 'resonance', Space: 'dash' };
   const requestedSkill = skillByKey[event.code];
   if (!event.repeat && requestedSkill && isSkillBlocked(requestedSkill)) say(currentStage().blockedHint || '이 구역의 꿈 규칙 때문에 이 상상력 기술은 사용할 수 없습니다.');
-  if (event.code === 'Digit3' && !event.repeat) say(hasSkill('time') ? '1·Shift·L은 누르고 있는 동안 상상력을 계속 소모합니다.' : '이 기술은 다음 스테이지에서 배웁니다.');
+  if (event.code === 'Digit3' && !event.repeat) say(hasSkill('time') ? 'O·Shift·L은 누르고 있는 동안 상상력을 계속 소모합니다.' : '이 기술은 다음 스테이지에서 배웁니다.');
   if (!event.repeat && event.code === 'KeyK') toggleMemoryRecording();
   if (!event.repeat && event.code === 'KeyJ') triggerBossShot();
   if (!event.repeat && event.code === 'KeyI') removeLatestEcho();
