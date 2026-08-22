@@ -2090,25 +2090,25 @@ function completeStage() {
 
 function disconnectPresentation(stage = currentStage()) {
   if (stage?.bossConfig?.mode === 'final' || stage?.page === 2) return {
-    key: 'scientist', accent: '#8ceeff', shade: '#102d49', monster: 'LAB HAND',
-    scene: '꿈 추출 기계가 연결을 강제로 차단했습니다.',
+    key: 'scientist', accent: '#8ceeff', shade: '#102d49', monster: '붙잡힌 아버지',
+    scene: '꿈을 붙잡으려는 기계가 너의 연결을 끊었다.',
   };
   const chapter = stage?.chapter || '';
   if (chapter.includes('유나')) return {
-    key: 'yuna', accent: '#9effd7', shade: '#124b50', monster: 'SILENT CHOIR',
-    scene: '유나의 검은 화음이 연결선을 삼켰습니다.',
+    key: 'yuna', accent: '#9effd7', shade: '#124b50', monster: '침묵의 합창',
+    scene: '침묵한 화음이 너의 목소리를 삼켰다.',
   };
   if (chapter.includes('하늘')) return {
-    key: 'haneul', accent: '#a6efff', shade: '#153c64', monster: 'ENDLESS WIND',
-    scene: '하늘의 역풍이 꿈의 출구를 지워 버렸습니다.',
+    key: 'haneul', accent: '#a6efff', shade: '#153c64', monster: '되돌아오는 역풍',
+    scene: '거센 바람이 너를 꿈의 가장자리로 되돌렸다.',
   };
   if (chapter.includes('딸')) return {
-    key: 'daughter', accent: '#ffb5df', shade: '#5c285a', monster: 'CRACKED PARADISE',
-    scene: '완벽한 꿈의 균열이 연결을 밀어냈습니다.',
+    key: 'daughter', accent: '#ffb5df', shade: '#5c285a', monster: '완벽한 거울',
+    scene: '완벽한 풍경이 진실을 가리며 너를 밀어냈다.',
   };
   return {
-    key: 'harin', accent: '#ff83b1', shade: '#421638', monster: 'EMPTY CLOWN',
-    scene: '하린의 악몽이 연결선을 밀어냈습니다.',
+    key: 'harin', accent: '#ff83b1', shade: '#421638', monster: '비어 버린 광대',
+    scene: '웃음이 사라진 유원지가 너를 꿈 밖으로 밀어냈다.',
   };
 }
 
@@ -2150,7 +2150,7 @@ function drawDisconnectWakeUp(presentation, progress) {
   drawCinematicPixelChild(560, 400, { hair: '#59405e', clothes: '#526aab', detail: '#fff0a6', glow: '#ffe27e' }, 1.58);
   ctx.save(); ctx.fillStyle = '#8ceeff'; ctx.shadowBlur = 12; ctx.shadowColor = '#8ceeff';
   ctx.beginPath(); ctx.ellipse(587, 294 + Math.sin(game.disconnect?.elapsed * 9 || 0) * 3, 6, 11, .28, 0, Math.PI * 2); ctx.fill();
-  ctx.globalAlpha = progress; ctx.fillStyle = '#eaf7ff'; ctx.font = '800 12px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText('DREAM LINK EMERGENCY DISCONNECT', W / 2, 88); ctx.restore();
+  ctx.globalAlpha = progress; ctx.fillStyle = '#eaf7ff'; ctx.font = '800 12px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText('접속 해제 중', W / 2, 88); ctx.restore();
 }
 
 function drawFailureArt(image, opacity = 1) {
@@ -2184,14 +2184,14 @@ function drawDreamDisconnect() {
   ctx.restore();
   if (bossOpacity > 0) {
     if (!drawFailureArt(failureArt[state.theme.key], bossOpacity)) drawDisconnectNightmare(state.theme, nightmareProgress);
-    drawDisconnectCaption(state.theme.monster, '상상력이 다해, 악몽이 연결을 삼킨다.', bossOpacity);
+    drawDisconnectCaption(state.theme.monster, '상상력이 바닥났다. 악몽이 너를 꿈 밖으로 밀어낸다.', bossOpacity);
   }
   if (wakeOpacity > 0) {
     if (!drawFailureArt(failureArt.wakeup, wakeOpacity)) {
       ctx.save(); ctx.globalAlpha = wakeOpacity; ctx.fillStyle = 'rgba(7, 18, 37, .86)'; ctx.fillRect(0, 0, W, H); ctx.restore();
       drawDisconnectWakeUp(state.theme, wakeOpacity);
     }
-    drawDisconnectCaption('DREAM LINK EMERGENCY DISCONNECT', '꿈과의 연결이 끊어졌어.', wakeOpacity);
+    drawDisconnectCaption('접속 해제', '연결은 끊겼지만, 다시 들어갈 수 있어.', wakeOpacity);
   }
   const fade = Math.max(0, (progress - .91) / .09);
   if (fade > 0) { ctx.save(); ctx.globalAlpha = fade; ctx.fillStyle = '#060714'; ctx.fillRect(0, 0, W, H); ctx.restore(); }
@@ -2227,10 +2227,10 @@ function showDisconnectResult() {
   disconnectIllustrationImage.alt = `${presentation.monster} 실패 일러스트`;
   disconnectIllustration.classList.add('has-art');
   disconnectIllustrationLabel.textContent = presentation.scene;
-  endTag.textContent = 'DREAM LINK LOST';
+  endTag.textContent = '연결 중단';
   endTitle.textContent = '꿈과의 연결이 끊어졌어.';
-  endCopy.textContent = `${presentation.scene} 기술을 쓴 뒤 잠시 멈추면 상상력이 회복됩니다. 다음 접속에서는 필요한 순간에만 상상력을 사용하세요.`;
-  restartButton.innerHTML = '이 스테이지 다시 연결 <span>↻</span>';
+  endCopy.textContent = `${presentation.scene} 기술을 잠시 멈추면 상상력은 회복됩니다. 필요한 순간을 골라 다시 접속하세요.`;
+  restartButton.innerHTML = '꿈으로 다시 들어가기 <span>↻</span>';
   endScreen.classList.remove('hidden');
 }
 
