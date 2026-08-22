@@ -92,9 +92,16 @@ canvas.connection-critical { filter: blur(4px) saturate(.4) brightness(.56); }
 .boss-hud > div { height: 7px; overflow: hidden; border-radius: 99px; background: #3a1630; }
 .boss-hud i { background: linear-gradient(90deg, #ff6789, #f33860); }
 .boss-hud strong { display: block; margin-top: 5px; color: #ffc6d1; font-family: ui-monospace, monospace; font-size: .64rem; text-align: right; }
-.bgm-toggle { position: absolute; z-index: 1; bottom: 18px; left: 18px; padding: 7px 10px; cursor: pointer; border: 1px solid rgba(158, 255, 215, .48); border-radius: 7px; color: #d8fff0; background: rgba(7, 27, 37, .74); box-shadow: 0 8px 20px rgba(0, 0, 0, .22); font-family: ui-monospace, monospace; font-size: .63rem; font-weight: 800; letter-spacing: .08em; }
+.bgm-controls { position: absolute; z-index: 1; bottom: 18px; left: 18px; display: flex; align-items: center; gap: 8px; padding: 5px; border: 1px solid rgba(158, 255, 215, .22); border-radius: 9px; background: rgba(5, 17, 30, .72); box-shadow: 0 8px 20px rgba(0, 0, 0, .22); backdrop-filter: blur(7px); }
+.bgm-controls.hidden { display: none; }
+.bgm-toggle { padding: 6px 9px; cursor: pointer; border: 1px solid rgba(158, 255, 215, .48); border-radius: 6px; color: #d8fff0; background: rgba(7, 27, 37, .74); font-family: ui-monospace, monospace; font-size: .63rem; font-weight: 800; letter-spacing: .08em; }
 .bgm-toggle:hover { border-color: #9effd7; background: rgba(17, 71, 75, .88); }
-.bgm-toggle span { color: #9effd7; }.bgm-toggle.off { border-color: rgba(184, 197, 222, .32); color: #9da8c1; }.bgm-toggle.off span { color: #ff9ab5; }.bgm-toggle.hidden { display: none; }
+.bgm-toggle span { color: #9effd7; }.bgm-toggle.off { border-color: rgba(184, 197, 222, .32); color: #9da8c1; }.bgm-toggle.off span { color: #ff9ab5; }
+.bgm-volume-control { display: flex; align-items: center; gap: 6px; min-width: 154px; color: #a9e8d3; font-family: ui-monospace, monospace; font-size: .58rem; font-weight: 800; letter-spacing: .06em; }
+.bgm-volume-slider { width: 96px; height: 16px; margin: 0; cursor: pointer; accent-color: #9effd7; }
+.bgm-volume-slider::-webkit-slider-runnable-track { height: 4px; border-radius: 99px; background: linear-gradient(90deg, rgba(158, 255, 215, .72), rgba(103, 184, 255, .48)); }
+.bgm-volume-slider::-webkit-slider-thumb { width: 13px; height: 13px; margin-top: -4.5px; border: 2px solid #e7fff5; border-radius: 50%; background: #63ddbf; box-shadow: 0 0 8px rgba(158, 255, 215, .54); -webkit-appearance: none; }
+.bgm-volume-value { min-width: 28px; color: #e8fff7; text-align: right; }
 
 .overlay { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; padding: 22px; background: rgba(4, 7, 18, 0.44); backdrop-filter: blur(5px); transition: opacity 160ms ease; }
 .overlay.hidden { opacity: 0; pointer-events: none; }
@@ -291,6 +298,9 @@ canvas.connection-critical { filter: blur(4px) saturate(.4) brightness(.56); }
   .challenge-card { top: 70px; left: 12px; min-width: 128px; padding: 8px 10px; }
   .challenge-card strong { font-size: 1.18rem; }
   .boss-hud { top: 70px; right: 12px; width: 42%; }
+  .bgm-controls { bottom: 12px; left: 12px; gap: 5px; }
+  .bgm-volume-control { min-width: 126px; }
+  .bgm-volume-slider { width: 68px; }
   .timer-card { padding: 8px 10px; }
   .timer-card strong { font-size: 1.16rem; }
   .rules-panel { grid-template-columns: 1fr; gap: 16px; }

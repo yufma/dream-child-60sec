@@ -17,6 +17,15 @@ const HARIN_BACKGROUND_PATHS = Object.freeze(
     ...Array.from({ length: 4 }, (_, index) => `assets/backgrounds/harin-stage-${String(index + 3).padStart(2, '0')}.png`),
   ],
 );
+const HARIN_STAGE_MUSIC_PATHS = Object.freeze([
+  'assets/audio/harin-stage-themes-v12-flute-test/stage-01-harin-theme-loop-soft-flute-v12.wav',
+  'assets/audio/harin-stage-themes-v12-flute-test/stage-02-remembered-theme-loop-soft-flute-v12.wav',
+  'assets/audio/harin-stage-themes-v11/stage-03-fractured-theme-332-loop-v11.wav',
+  'assets/audio/harin-stage-themes-v12-flute-test/stage-04-carousel-theme-waltz-loop-soft-flute-v12.wav',
+  'assets/audio/harin-stage-themes-v11/stage-05-darkened-harin-theme-60s-v11.wav',
+  'assets/audio/harin-stage-themes-v12-flute-test/stage-06-resolved-harin-theme-loop-soft-flute-v12.wav',
+]);
+const CHARACTER_BGM_TRIM = Object.freeze({ harin: .88, yuna: 1.15, haneul: 1 });
 const YUNA_BACKGROUND_PATHS = Object.freeze(
   [
     'assets/backgrounds/yuna-stage-07.png',
@@ -129,7 +138,10 @@ const imaginationFill = document.querySelector('#imagination-fill');
 const imaginationStatus = document.querySelector('#imagination-status');
 const gameHud = document.querySelector('.hud');
 const bossHud = document.querySelector('#boss-hud');
+const bgmControls = document.querySelector('#bgm-controls');
 const bgmToggleButton = document.querySelector('#bgm-toggle');
+const bgmVolumeSlider = document.querySelector('#bgm-volume');
+const bgmVolumeValue = document.querySelector('#bgm-volume-value');
 const bossNameEl = document.querySelector('#boss-name');
 const bossFill = document.querySelector('#boss-fill');
 const bossHealthEl = document.querySelector('#boss-health');
@@ -159,9 +171,9 @@ const STAGES = [
     layout: 'bridge', echoGoal: 1, hint: '① K 시작 → ② 기억 발판까지 이동 → ③ K 되감기. 기억의 나가 마지막 발판을 지키면 문이 열립니다.',
   },
   {
-    chapter: '하린 · 잃어버린 웃음', name: '달빛 유원지의 벽', type: 'puzzle', skills: ['bridge'], objective: '악몽의 잔상으로 깊은 틈을 넘어라',
-    intro: '하린이 좋아하던 달빛 유원지가 기계의 벽에 갇혔어. 이 구역의 추출기는 바닥을 길게 지워 버렸지만, 잔상 발판만은 기억의 틈에 나타날 수 있어. 과거의 나에게 첫 약속을 맡긴 뒤, 1로 나타나는 발판을 건너자.',
-    layout: 'wall', echoGoal: 1, hint: '기억의 나를 발판에 남기고 1의 잔상 발판으로 깊은 틈을 건너세요.',
+    chapter: '하린 · 잃어버린 웃음', name: '웃음을 모으는 거리', type: 'puzzle', skills: ['bridge'], objective: '거리 세 곳에 기억의 나를 남겨 빼앗긴 웃음등을 모두 밝혀라',
+    intro: '웃음 수집탑은 거리 곳곳에 남은 하린의 추억을 빨아들여 광대의 억지웃음으로 바꾸고 있어. 낮은 달빛길, 높은 별풍선 지붕, 회전목마 앞의 웃음등에 과거의 나를 하나씩 남겨 줘. 세 추억이 동시에 빛나면 탑에 붙은 가짜 미소가 무너지고 다음 꿈으로 가는 통로가 열릴 거야.',
+    layout: 'wall', echoGoal: 3, hint: '① O로 중앙 기억 교차로 이동 ② 교차로에서 K 기록 시작 ③ 낮은 길·높은 잔상길·오른쪽 길의 추억등에 각각 K 잔상 남기기 ④ 세 등불이 모두 켜지면 출구로 이동.',
   },
   {
     chapter: '하린 · 잃어버린 웃음', name: '무너지는 회전목마', type: 'puzzle', skills: [], blockedSkills: ['bridge'], objective: '기억의 나가 돌린 회전목마를 타고 큰 벽을 넘어라',
@@ -246,7 +258,7 @@ const STAGES = [
   {
     chapter: '하늘 · 멈춰 버린 발걸음', name: '역풍의 높은 벽', type: 'puzzle', skills: ['bridge', 'dash'], objective: '절벽의 낮은 길과 높은 길을 이어 역풍을 통과하라',
     intro: '하늘의 길은 이제 벽 하나가 아니라 여러 높이로 갈라진 절벽이 되었어. 기억의 나가 붙잡은 잔상 발판으로 첫 틈을 넘고, 점프로 높은 바람 선반을 따라가 거대한 역풍 기둥을 피해 가자. 마지막 좁은 틈은 Space 질주로 가른다.',
-    layout: 'wind-cliff', echoGoal: 1, hint: '① 기억의 나를 출발 약속에 남기기 ② 1로 첫 틈 건너기 ③ 점프로 높은 바람 선반 오르기 ④ Space로 마지막 틈 돌파.',
+    layout: 'wind-cliff', echoGoal: 1, hint: '① 기억의 나를 출발 약속에 남기기 ② O로 첫 틈 건너기 ③ 점프로 높은 바람 선반 오르기 ④ Space로 마지막 틈 돌파.',
   },
   {
     chapter: '하늘 · 멈춰 버린 발걸음', name: '되돌아오는 표지판', type: 'puzzle', skills: ['resonance', 'dash'], objective: '층마다 다른 표지판을 지나 진짜 출발점에 닿아라',
@@ -519,6 +531,8 @@ const ENDING_CINEMATIC_SCENES = [
 ];
 
 const PROGRESS_STORAGE_KEY = 'dream-child-campaign-progress-v2';
+const BGM_VOLUME_STORAGE_KEY = 'dream-child-bgm-volume-v2';
+const LEGACY_BGM_VOLUME_STORAGE_KEY = 'dream-child-bgm-volume-v1';
 const BOSS_MEMORY_COLLAPSE_SECONDS = 60;
 const campaign = loadCampaignProgress();
 
@@ -527,7 +541,20 @@ const pressed = new Set();
 let toastTimer = 0;
 let lastFrame = 0;
 let game = {};
-const stageBgm = { enabled: true, key: null, audio: null, nextAudio: null, crossfadeFrame: 0, mix: null };
+const stageBgm = {
+  enabled: true,
+  key: null,
+  family: null,
+  audio: null,
+  nextAudio: null,
+  crossfadeFrame: 0,
+  mix: null,
+  masterVolume: loadBgmMasterVolume(),
+  targetVolume: .65,
+  fadeFrame: 0,
+  frozen: false,
+  playBlocked: false,
+};
 let gameSfxContext = null;
 const yunaLoopStation = { active: false, stageIndex: -1, key: null, level: 0, maxLevel: 0, milestones: new Set() };
 const YUNA_LOOP_LAYER_NAMES = Object.freeze(['저음 레이어', '리듬 레이어', '멜로디 레이어', '합창 잔향']);
@@ -636,28 +663,130 @@ function clearStageIntroTimer() {
 }
 
 function currentStage() { return STAGES[game.stageIndex]; }
+
+function loadBgmMasterVolume() {
+  try {
+    const stored = localStorage.getItem(BGM_VOLUME_STORAGE_KEY);
+    if (stored === null) {
+      const legacy = Number(localStorage.getItem(LEGACY_BGM_VOLUME_STORAGE_KEY));
+      return Number.isFinite(legacy) && legacy > 0 && legacy <= 1 ? legacy : .65;
+    }
+    const saved = Number(stored);
+    if (Number.isFinite(saved) && saved >= 0 && saved <= 1) return saved;
+  } catch {
+    // 저장소가 제한된 브라우저에서는 기본 음량으로 계속됩니다.
+  }
+  return .65;
+}
+
+function saveBgmMasterVolume() {
+  try {
+    localStorage.setItem(BGM_VOLUME_STORAGE_KEY, stageBgm.masterVolume.toFixed(2));
+  } catch {
+    // 저장 실패는 현재 세션의 음량 조절을 막지 않습니다.
+  }
+}
+
 function stageBgmKey(stage = currentStage()) {
-  if (!(stage?.chapter || '').includes('유나')) return null;
+  const chapter = stage?.chapter || '';
+  if (chapter.includes('하린') && HARIN_STAGE_MUSIC_PATHS[game.stageIndex]) return `harin-${game.stageIndex + 1}`;
+  if (!chapter.includes('유나')) return null;
   if (stage.type === 'boss') return 'resonance';
   return ({ 7: 'tide', 8: 'glass', 9: 'silent', 10: 'glass', 12: 'tide' })[game.stageIndex + 1] || 'tide';
 }
 
+function stageBgmConfig(key) {
+  if (key?.startsWith('harin-')) {
+    const stageNumber = Number(key.slice('harin-'.length));
+    const source = HARIN_STAGE_MUSIC_PATHS[stageNumber - 1];
+    if (!source) return null;
+    return { family: 'harin', source, volume: CHARACTER_BGM_TRIM.harin, loop: stageNumber !== 5 };
+  }
+  const source = YUNA_BGM_PATHS[key];
+  return source ? { family: 'yuna', source, volume: CHARACTER_BGM_TRIM.yuna, loop: true } : null;
+}
+
+function updateBgmVolumeControl() {
+  if (!bgmVolumeSlider || !bgmVolumeValue) return;
+  const percent = Math.round(stageBgm.masterVolume * 100);
+  bgmVolumeSlider.value = String(percent);
+  bgmVolumeSlider.setAttribute('aria-valuetext', `${percent}%`);
+  bgmVolumeValue.value = `${percent}%`;
+  bgmVolumeValue.textContent = `${percent}%`;
+}
+
+function setBgmMasterVolume(value, persist = false) {
+  stageBgm.masterVolume = Math.max(0, Math.min(1, Number(value) || 0));
+  const config = stageBgmConfig(stageBgm.key);
+  if (config) stageBgm.targetVolume = Math.min(1, config.volume * stageBgm.masterVolume);
+  if (stageBgm.audio) {
+    cancelStageBgmFade();
+    stageBgm.audio.volume = stageBgm.enabled ? stageBgm.targetVolume : 0;
+    if (stageBgm.enabled && stageBgm.audio.paused && !stageBgm.frozen && game.phase === 'playing') playStageBgm();
+  }
+  updateBgmVolumeControl();
+  if (persist) saveBgmMasterVolume();
+}
+
 function updateBgmToggle(key = stageBgm.key) {
   const visible = Boolean(key);
-  bgmToggleButton.classList.toggle('hidden', !visible);
+  if (bgmControls) bgmControls.classList.toggle('hidden', !visible);
+  else bgmToggleButton.classList.toggle('hidden', !visible);
   bgmToggleButton.classList.toggle('off', !stageBgm.enabled);
-  bgmToggleButton.innerHTML = `BGM <span>${stageBgm.enabled ? 'ON' : 'OFF'}</span>`;
-  bgmToggleButton.setAttribute('aria-label', stageBgm.enabled ? '배경음악 끄기' : '배경음악 켜기');
+  const stateLabel = !stageBgm.enabled ? 'OFF' : stageBgm.playBlocked ? 'RETRY' : 'ON';
+  bgmToggleButton.innerHTML = `BGM <span>${stateLabel}</span>`;
+  bgmToggleButton.setAttribute('aria-label', stageBgm.playBlocked ? '배경음악 재생 다시 시도' : stageBgm.enabled ? '배경음악 끄기' : '배경음악 켜기');
+}
+
+function cancelStageBgmFade() {
+  if (!stageBgm.fadeFrame) return;
+  cancelAnimationFrame(stageBgm.fadeFrame);
+  stageBgm.fadeFrame = 0;
+}
+
+function fadeStageBgm(targetVolume, duration = 260, onComplete = null) {
+  const audio = stageBgm.audio;
+  if (!audio) return;
+  cancelStageBgmFade();
+  const initialVolume = audio.volume;
+  const startedAt = performance.now();
+  const tick = (now) => {
+    if (stageBgm.audio !== audio) return;
+    const progress = Math.max(0, Math.min(1, (now - startedAt) / Math.max(1, duration)));
+    audio.volume = Math.max(0, Math.min(1, initialVolume + (targetVolume - initialVolume) * progress));
+    if (progress < 1) stageBgm.fadeFrame = requestAnimationFrame(tick);
+    else {
+      stageBgm.fadeFrame = 0;
+      if (onComplete) onComplete(audio);
+    }
+  };
+  stageBgm.fadeFrame = requestAnimationFrame(tick);
 }
 
 function playStageBgm() {
-  if (!stageBgm.enabled || !stageBgm.audio) return;
-  const playback = stageBgm.audio.play();
-  if (playback?.catch) playback.catch(() => {});
+  if (!stageBgm.enabled || !stageBgm.audio || stageBgm.frozen) return;
+  const audio = stageBgm.audio;
+  audio.muted = false;
+  audio.defaultMuted = false;
+  const fadeIn = () => {
+    if (stageBgm.audio !== audio) return;
+    stageBgm.playBlocked = false;
+    updateBgmToggle(stageBgm.key);
+    fadeStageBgm(stageBgm.targetVolume, 260);
+  };
+  const markBlocked = () => {
+    if (stageBgm.audio !== audio) return;
+    stageBgm.playBlocked = true;
+    updateBgmToggle(stageBgm.key);
+  };
+  const playback = audio.play();
+  if (playback?.then) playback.then(fadeIn).catch(markBlocked);
+  else fadeIn();
 }
 
 function bgmVolume(key = stageBgm.key) {
-  return key === 'resonance' ? .27 : .2;
+  const config = stageBgmConfig(key);
+  return config ? Math.min(1, config.volume * stageBgm.masterVolume) : stageBgm.targetVolume;
 }
 
 function cancelBgmCrossfade({ discardNext = true } = {}) {
@@ -673,7 +802,9 @@ function cancelBgmCrossfade({ discardNext = true } = {}) {
 
 function startResonanceCrossfade(outgoing) {
   if (!stageBgm.enabled || stageBgm.key !== 'resonance' || stageBgm.audio !== outgoing || stageBgm.nextAudio) return;
-  const incoming = new Audio(YUNA_BGM_PATHS.resonance);
+  const config = stageBgmConfig('resonance');
+  if (!config) return;
+  const incoming = new Audio(config.source);
   incoming.loop = false;
   incoming.preload = 'auto';
   incoming.volume = 0;
@@ -717,9 +848,10 @@ function watchResonanceLoop(audio) {
   });
 }
 
-function createStageBgmAudio(key) {
-  const audio = new Audio(YUNA_BGM_PATHS[key]);
-  audio.loop = key !== 'resonance';
+function createStageBgmAudio(key, config = stageBgmConfig(key)) {
+  if (!config) return null;
+  const audio = new Audio(config.source);
+  audio.loop = key === 'resonance' ? false : config.loop;
   audio.preload = 'auto';
   audio.volume = bgmVolume(key);
   if (key === 'resonance') watchResonanceLoop(audio);
@@ -728,29 +860,45 @@ function createStageBgmAudio(key) {
 
 function startStageBgm(stage = currentStage()) {
   const key = stageBgmKey(stage);
-  if (!key) {
+  const config = stageBgmConfig(key);
+  if (!key || !config) {
     stopStageBgm();
     return;
   }
   if (stageBgm.key !== key || !stageBgm.audio) {
+    cancelStageBgmFade();
     cancelBgmCrossfade();
+    stopYunaLoopStation();
     if (stageBgm.audio) stageBgm.audio.pause();
     stageBgm.key = key;
-    stageBgm.audio = createStageBgmAudio(key);
+    stageBgm.family = config.family;
+    stageBgm.audio = createStageBgmAudio(key, config);
     stageBgm.mix = null;
   } else {
+    cancelStageBgmFade();
     cancelBgmCrossfade();
     stageBgm.audio.currentTime = 0;
   }
+  stageBgm.targetVolume = Math.min(1, config.volume * stageBgm.masterVolume);
+  stageBgm.audio.volume = 0;
+  stageBgm.frozen = false;
+  stageBgm.playBlocked = false;
   updateBgmToggle(key);
-  if (key !== 'resonance') setupYunaLoopMix();
-  startYunaLoopStation(stage);
+  if (config.family === 'yuna') {
+    if (key !== 'resonance') setupYunaLoopMix();
+    startYunaLoopStation(stage);
+  } else stopYunaLoopStation();
   playStageBgm();
 }
 
 function pauseStageBgm() {
+  cancelStageBgmFade();
   cancelBgmCrossfade();
-  if (stageBgm.audio) stageBgm.audio.pause();
+  const audio = stageBgm.audio;
+  if (!audio || audio.paused) return;
+  fadeStageBgm(0, 180, (finishedAudio) => {
+    if (stageBgm.audio === finishedAudio) finishedAudio.pause();
+  });
 }
 
 function resumeStageBgm() {
@@ -758,16 +906,42 @@ function resumeStageBgm() {
 }
 
 function stopStageBgm() {
+  cancelStageBgmFade();
   stopYunaLoopStation();
   cancelBgmCrossfade();
   if (stageBgm.audio) {
     stageBgm.audio.pause();
     stageBgm.audio.currentTime = 0;
+    stageBgm.audio.volume = 0;
   }
   stageBgm.key = null;
+  stageBgm.family = null;
   stageBgm.audio = null;
   stageBgm.mix = null;
+  stageBgm.frozen = false;
+  stageBgm.playBlocked = false;
   updateBgmToggle(null);
+}
+
+function primeGameAudio() {
+  primeGameSfx();
+  if (game.phase === 'playing' && stageBgm.enabled && stageBgm.audio?.paused && !stageBgm.frozen) playStageBgm();
+}
+
+function syncBossBgmTimeStop() {
+  if (game.stageIndex !== 4 || stageBgm.key !== 'harin-5') {
+    stageBgm.frozen = false;
+    return;
+  }
+  const shouldFreeze = game.phase === 'playing' && frozenTime();
+  if (shouldFreeze && !stageBgm.frozen) {
+    cancelStageBgmFade();
+    if (stageBgm.audio) stageBgm.audio.pause();
+    stageBgm.frozen = true;
+  } else if (!shouldFreeze && stageBgm.frozen) {
+    stageBgm.frozen = false;
+    playStageBgm();
+  }
 }
 
 function primeGameSfx() {
@@ -992,43 +1166,11 @@ function stopYunaLoopStation() {
   yunaLoopStation.milestones = new Set();
 }
 
-// 활성화 음은 같은 원곡을 저음·리듬·멜로디·잔향으로 분리한 레이어다.
-// 조성이 다른 합성음을 별도로 얹지 않아 어떤 유나 트랙에서도 어긋나지 않는다.
+// 유나의 기본 BGM은 브라우저의 미디어 출력으로 직접 재생한다.
+// Web Audio가 일시 정지된 환경에서도 원곡이 무음으로 빠지지 않게 한다.
 function setupYunaLoopMix() {
   if (!stageBgm.audio || !stageBgm.key || stageBgm.mix) return;
-  const audio = primeGameSfx();
-  if (!audio) return;
-  try {
-    const source = audio.createMediaElementSource(stageBgm.audio);
-    const dry = audio.createGain();
-    const bassFilter = audio.createBiquadFilter();
-    const bassGain = audio.createGain();
-    const rhythmFilter = audio.createBiquadFilter();
-    const rhythmGain = audio.createGain();
-    const melodyFilter = audio.createBiquadFilter();
-    const melodyGain = audio.createGain();
-    const roomFilter = audio.createBiquadFilter();
-    const roomDelay = audio.createDelay(.6);
-    const roomFeedback = audio.createGain();
-    const roomGain = audio.createGain();
-    bassFilter.type = 'lowpass'; bassFilter.frequency.value = 210; bassFilter.Q.value = .7;
-    rhythmFilter.type = 'bandpass'; rhythmFilter.frequency.value = 980; rhythmFilter.Q.value = .52;
-    melodyFilter.type = 'highpass'; melodyFilter.frequency.value = 2200; melodyFilter.Q.value = .45;
-    roomFilter.type = 'bandpass'; roomFilter.frequency.value = 1450; roomFilter.Q.value = .34;
-    roomDelay.delayTime.value = .18; roomFeedback.gain.value = .13;
-    dry.gain.value = 1;
-    bassGain.gain.value = 0; rhythmGain.gain.value = 0; melodyGain.gain.value = 0; roomGain.gain.value = 0;
-    source.connect(dry).connect(audio.destination);
-    source.connect(bassFilter).connect(bassGain).connect(audio.destination);
-    source.connect(rhythmFilter).connect(rhythmGain).connect(audio.destination);
-    source.connect(melodyFilter).connect(melodyGain).connect(audio.destination);
-    source.connect(roomFilter).connect(roomDelay); roomDelay.connect(roomGain).connect(audio.destination);
-    roomDelay.connect(roomFeedback).connect(roomDelay);
-    stageBgm.mix = { audio, dry, bassGain, rhythmGain, melodyGain, roomGain };
-  } catch {
-    // 지원하지 않는 브라우저에서는 원곡만 자연스럽게 재생한다.
-    stageBgm.mix = { unavailable: true };
-  }
+  stageBgm.mix = { unavailable: true, direct: true };
 }
 
 function rampYunaMixGain(gain, value) {
@@ -1125,6 +1267,10 @@ function phaseGuide() {
     if (stage.layout === 'carousel') {
       return { step: 'STEP 2 / 3', text: '움직이는 달빛 발판에 올라타세요. 발판이 벽 위까지 실어 주면 점프로 반대편 선반으로 건너세요.', compact: '달빛 발판을 타고 벽 위로 건너라' };
     }
+    if (stage.layout === 'wall') {
+      if (goal > active) return { step: `MEMORY RELAY · ${active} / ${goal}`, text: '중앙 기억 교차로에서 K 기록을 시작해 낮은 길·높은 길·오른쪽 길의 웃음 중계기에 기억의 나를 하나씩 남기세요.', compact: `진짜 웃음 중계기 ${active} / ${goal}` };
+      return { step: 'RELAY COMPLETE', text: '세 갈래 기억이 수집탑의 흡입을 멈췄습니다. 열린 셔터 너머의 꿈의 문으로 가세요.', compact: '멈춘 수집탑을 통과하라' };
+    }
     if (goal > active) return { step: `STEP 1 / 2 · ${active} / ${goal}`, text: 'K로 길을 기록해 과거의 나를 기억 발판에 남기세요.', compact: `기억 발판 ${active} / ${goal}을 채워라` };
     if (goal > 0) return { step: 'STEP 2 / 2', text: '기억의 나가 길을 지키는 동안 꿈의 문으로 가세요.', compact: '열린 꿈의 문으로 가라' };
     return { step: 'EXPLORE', text: stage.hint, compact: stage.objective };
@@ -1200,6 +1346,7 @@ function renderStoryLine() {
 
 function showStoryBeat(beat) {
   clearStageIntroTimer();
+  pauseStageBgm();
   game.phase = 'story';
   game.storyBeat = beat;
   game.storyLineIndex = 0;
@@ -1597,15 +1744,16 @@ function setupPuzzle(layout, echoGoal) {
     game.fallZones = [];
   } else if (layout === 'wall') {
     game.platforms = [
-      { x: 0, y: 500, w: 235, h: 40, label: 'MEMORY SHORE' },
-      { x: 510, y: 500, w: 450, h: 40, label: 'MOONLIGHT SHORE' },
-      { x: 650, y: 180, w: 80, h: 320, wall: true, label: 'DREAM EXTRACTOR' },
-      { x: 745, y: 352, w: 125, h: 18, label: 'MOONLIGHT SHELF' },
-      { x: 300, y: 420, w: 112, h: 14, hidden: true, label: '기억의 박동' },
-      { x: 476, y: 356, w: 118, h: 14, hidden: true, label: '공포 숨결' },
+      { x: 0, y: 500, w: 205, h: 40, label: 'MEMORY SHORE' },
+      { x: 318, y: 430, w: 132, h: 18, label: 'MEMORY CROSSROADS' },
+      { x: 525, y: 470, w: 112, h: 18, label: 'MOONLIGHT LAMP' },
+      { x: 110, y: 235, w: 200, h: 18, label: 'STAR BALLOON ROOF' },
+      { x: 740, y: 390, w: 112, h: 18, label: 'CAROUSEL LAMP' },
+      { x: 858, y: 80, w: 48, h: 420, wall: true, label: 'LAUGH COLLECTOR' },
+      { x: 906, y: 500, w: 54, h: 40, label: 'NEXT DREAM SHORE' },
     ];
-    game.exit = { x: 900, y: 418, w: 36, h: 82, label: 'LAUGH CORE' };
-    game.fallZones = [{ x: 235, y: 500, w: 275, h: 40 }];
+    game.exit = { x: 918, y: 418, w: 36, h: 82, label: 'LAUGH CORE' };
+    game.fallZones = [{ x: 205, y: 500, w: 701, h: 40 }];
   } else if (layout === 'carousel') {
     game.platforms = [
       { x: 0, y: 500, w: 960, h: 40, label: 'CAROUSEL FLOOR' },
@@ -1632,7 +1780,11 @@ function setupPuzzle(layout, echoGoal) {
     walk: [],
     'lantern-river': [],
     bridge: [{ x: 165, y: 462, w: 30, h: 28, label: '첫 약속' }],
-    wall: [{ x: 165, y: 462, w: 30, h: 28, label: '별빛 약속' }],
+    wall: [
+      { x: 566, y: 432, w: 30, h: 28, label: '달빛 약속등' },
+      { x: 190, y: 197, w: 30, h: 28, label: '별풍선 추억등' },
+      { x: 780, y: 352, w: 30, h: 28, label: '회전목마 웃음등' },
+    ],
     chorus: [{ x: 478, y: 342, w: 30, h: 28, label: '첫 번째 노래 기억' }],
     'chorus-memory': [{ x: 378, y: 246, w: 30, h: 28, label: '높은 음의 기억' }],
     duet: [
@@ -1861,7 +2013,7 @@ function spend(amount) {
 
 function activeTechniques() {
   return {
-    bridge: game.phase === 'playing' && hasSkill('bridge') && keys.has('Digit1') && game.imagination > 0,
+    bridge: game.phase === 'playing' && hasSkill('bridge') && keys.has('KeyO') && game.imagination > 0,
     time: game.phase === 'playing' && hasSkill('time') && (keys.has('ShiftLeft') || keys.has('ShiftRight')) && game.imagination > 0,
     resonance: game.phase === 'playing' && hasSkill('resonance') && keys.has('KeyL') && game.imagination > 0,
   };
@@ -1928,8 +2080,19 @@ function imaginationRegen(dt, techniques) {
   } else game.imagination = Math.min(100, game.imagination + 11 * dt);
 }
 
-function getBridge() {
-  return { x: 313 + Math.sin(game.elapsed * 2.2) * 56, y: 452, w: 92, h: 18 };
+function getWallBridges() {
+  const t = game.elapsed || 0;
+  return [
+    { x: 205 + Math.sin(t * 1.7) * 6, y: 452, w: 108, h: 16, label: 'HUB PATH' },
+    { x: 454, y: 442 + Math.sin(t * 1.25 + .8) * 6, w: 82, h: 16, label: 'LOW PATH' },
+    { x: 250 + Math.sin(t * 1.45 + 1.6) * 4, y: 350, w: 160, h: 16, label: 'UP PATH 01' },
+    { x: 160, y: 305 + Math.sin(t * 1.2 + 2.5) * 4, w: 170, h: 16, label: 'UP PATH 02' },
+    { x: 635 + Math.sin(t * 1.4 + 3.1) * 5, y: 420, w: 130, h: 16, label: 'LOW LINK' },
+  ];
+}
+
+function getLegacyBridge() {
+  return { x: 313 + Math.sin(game.elapsed * 2.2) * 56, y: 452, w: 92, h: 18, label: 'MEMORY PATH' };
 }
 
 function getCarouselRide() {
@@ -2058,7 +2221,10 @@ function updatePuzzle(dt) {
   p.y += p.vy * dt;
   p.grounded = false;
   const colliders = game.platforms.filter((item) => !item.wall && (!item.hidden || techniques.resonance));
-  if (game.bridge) colliders.push(getBridge());
+  if (game.bridge) {
+    if (stage.layout === 'wall') colliders.push(...getWallBridges());
+    else colliders.push(getLegacyBridge());
+  }
   if (stage.layout === 'carousel' && game.carouselRideProgress > .02) colliders.push(getCarouselRide());
   // 기억의 나는 단순 스위치가 아니라, 필요할 때 한 칸 더 올라설 수 있는 움직이는 기억 발판이다.
   const echoColliders = game.echoes.map((echo) => ({ x: echo.x, y: echo.y, w: echo.w, h: echo.h, memoryEcho: true }));
@@ -2080,6 +2246,7 @@ function updatePuzzle(dt) {
     p.y = H - p.h; p.vy = 0; p.grounded = true;
   }
   updateMemoryLoops(dt);
+  const memoryPadsReady = activeMemoryPads(game.memoryPads) >= game.echoGoal;
   updateYunaPuzzleMusic(techniques);
   if (stage.layout === 'watcher' && !game.watcherResolved) {
     const watcher = getWatcher();
@@ -2092,11 +2259,10 @@ function updatePuzzle(dt) {
       hitByNightmare('감시선에 포착됐습니다. K로 기록한 뒤, 기억의 내가 눈을 지날 때 Shift를 누르세요.', 12, true);
     }
   }
-  const memoryPadsReady = activeMemoryPads(game.memoryPads) >= game.echoGoal;
   const watcherReady = stage.layout !== 'watcher' || game.watcherResolved;
   if (overlaps(p, game.exit)) {
     if (!watcherReady) say('먼저 과거의 나를 감시선 앞으로 기록하고, 그 기억이 지나갈 때 Shift로 시간을 멈추세요.');
-    else if (!memoryPadsReady) say('먼저 기억의 나를 모든 기억 발판에 남겨야 합니다.');
+    else if (!memoryPadsReady) say(stage.layout === 'wall' ? '낮은 길·높은 길·오른쪽 길의 추억등 세 곳에 기억의 나를 하나씩 남기세요.' : '먼저 기억의 나를 모든 기억 발판에 남겨야 합니다.');
     else completeStage();
   }
 }
@@ -2909,7 +3075,7 @@ function updateHud() {
     }
   }
   const techniques = activeTechniques();
-  ruleStates.bridge.textContent = techniques.bridge ? 'HOLDING · DRAIN 16 / SEC' : 'HOLD 1 · DRAIN 16 / SEC';
+  ruleStates.bridge.textContent = techniques.bridge ? 'HOLDING · DRAIN 16 / SEC' : 'HOLD O · DRAIN 16 / SEC';
   ruleStates.time.textContent = techniques.time ? 'HOLDING · DRAIN 28 / SEC' : 'HOLD SHIFT · DRAIN 28 / SEC';
   if (ruleStates.resonance) {
     const drain = resonanceDrainPerSecond();
@@ -3282,10 +3448,72 @@ function drawPlatform(item) {
 }
 
 function drawBridge(bridge) {
+  const label = game.bridge ? bridge.label : bridge.label.replace('PATH', 'ECHO').replace('LINK', 'ECHO');
   ctx.save(); ctx.translate(bridge.x + bridge.w / 2, bridge.y + bridge.h / 2); ctx.shadowBlur = game.bridge ? 24 : 10; ctx.shadowColor = game.bridge ? '#61faff' : '#ff6d90';
   ctx.fillStyle = game.bridge ? '#2b8da7' : 'rgba(196,54,106,.34)'; ctx.fillRect(-bridge.w / 2, -bridge.h / 2, bridge.w, bridge.h);
   ctx.strokeStyle = game.bridge ? '#8fffff' : '#ff7895'; ctx.lineWidth = 2; ctx.strokeRect(-bridge.w / 2 + 1, -bridge.h / 2 + 1, bridge.w - 2, bridge.h - 2);
-  ctx.fillStyle = game.bridge ? '#d2ffff' : '#ffbbc8'; ctx.font = '800 9px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText(game.bridge ? 'MEMORY PATH' : 'NIGHTMARE ECHO', 0, 4); ctx.restore();
+  ctx.fillStyle = game.bridge ? '#d2ffff' : '#ffbbc8'; ctx.font = '800 9px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText(label, 0, 4); ctx.restore();
+}
+
+function drawLaughRelayNetwork() {
+  const collector = game.platforms.find((platform) => platform.label === 'LAUGH COLLECTOR');
+  const pads = game.memoryPads || [];
+  if (!collector || pads.length !== 3) return;
+  const activeStates = pads.map((pad) => activeMemoryPads([pad]) > 0);
+  const activeCount = activeStates.filter(Boolean).length;
+  const open = activeCount >= game.echoGoal;
+  const colors = ['#ffe37d', '#9effea', '#ffb5d7'];
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+
+  pads.forEach((pad, index) => {
+    const active = activeStates[index];
+    const color = active ? colors[index] : '#414a70';
+    const centerX = pad.x + pad.w / 2;
+    const centerY = pad.y + pad.h / 2;
+    const pipeX = collector.x - 12 - index * 7;
+    ctx.fillStyle = color;
+    for (let x = centerX + 18; x < pipeX; x += 13) ctx.fillRect(x, centerY, 8, 3);
+    const fromY = Math.min(centerY, collector.y + 60 + index * 28);
+    const toY = Math.max(centerY, collector.y + 60 + index * 28);
+    for (let y = fromY; y < toY; y += 13) ctx.fillRect(pipeX, y, 3, 8);
+    for (let x = pipeX; x < collector.x + 5; x += 9) ctx.fillRect(x, collector.y + 60 + index * 28, 6, 3);
+
+    ctx.shadowBlur = active ? 18 : 0; ctx.shadowColor = color;
+    ctx.fillStyle = '#111a35'; ctx.fillRect(pad.x - 5, pad.y - 18, pad.w + 10, pad.h + 24);
+    ctx.fillStyle = color; ctx.fillRect(pad.x - 1, pad.y - 14, pad.w + 2, 4);
+    ctx.fillRect(pad.x + 4, pad.y + pad.h + 1, pad.w - 8, 4);
+    if (index === 0) {
+      ctx.fillRect(centerX - 8, pad.y - 32, 13, 4); ctx.fillRect(centerX - 8, pad.y - 29, 4, 12);
+    } else if (index === 1) {
+      ctx.fillRect(centerX - 2, pad.y - 35, 4, 16); ctx.fillRect(centerX - 8, pad.y - 29, 16, 4);
+      ctx.fillRect(centerX - 5, pad.y - 32, 10, 10);
+    } else {
+      ctx.fillRect(centerX - 9, pad.y - 33, 18, 4); ctx.fillRect(centerX - 5, pad.y - 29, 10, 7);
+      ctx.fillRect(centerX - 2, pad.y - 22, 4, 8);
+    }
+    ctx.shadowBlur = 0;
+  });
+
+  ctx.globalAlpha = open ? .34 : 1;
+  ctx.fillStyle = open ? '#315f6b' : '#221b42'; ctx.fillRect(collector.x + 5, collector.y + 14, collector.w - 10, collector.h - 20);
+  ctx.fillStyle = open ? '#8fffff' : '#ff7895'; ctx.fillRect(collector.x + 8, collector.y + 20, 4, collector.h - 30); ctx.fillRect(collector.x + collector.w - 12, collector.y + 20, 4, collector.h - 30);
+  if (!open) {
+    ctx.fillStyle = '#613157';
+    for (let y = collector.y + 78; y < collector.y + collector.h - 18; y += 25) ctx.fillRect(collector.x + 13, y, collector.w - 26, 8);
+  }
+  ctx.globalAlpha = 1;
+  activeStates.forEach((active, index) => {
+    ctx.fillStyle = active ? colors[index] : '#4a526f';
+    ctx.fillRect(collector.x + 9 + index * 11, collector.y + 36, 8, 8);
+  });
+  ctx.fillStyle = open ? '#ffe37d' : '#ff7895';
+  ctx.fillRect(collector.x + 13, collector.y + 56, 7, 5); ctx.fillRect(collector.x + collector.w - 20, collector.y + 56, 7, 5);
+  ctx.fillRect(collector.x + 18, collector.y + 66, collector.w - 36, 4);
+  if (open) { ctx.fillStyle = '#fff4b5'; ctx.fillRect(collector.x + collector.w / 2 - 2, collector.y + 52, 4, 22); }
+  ctx.fillStyle = open ? '#fff1a8' : '#d3e3ff'; ctx.font = '800 8px ui-monospace, monospace'; ctx.textAlign = 'center';
+  ctx.fillText(`MEMORY RELAY ${activeCount} / ${game.echoGoal}`, collector.x + collector.w / 2, collector.y - 8);
+  ctx.restore();
 }
 
 function drawWatcher(watcher, frozen, resolved = false) {
@@ -3855,7 +4083,8 @@ function drawPuzzle() {
   drawBackground(false);
   drawLayoutLandmarks();
   const techniques = activeTechniques();
-  const gateOpen = (game.echoGoal === 0 || activeMemoryPads(game.memoryPads) >= game.echoGoal) && (game.layout !== 'watcher' || game.watcherResolved);
+  const memoryPadsReady = game.echoGoal === 0 || activeMemoryPads(game.memoryPads) >= game.echoGoal;
+  const gateOpen = memoryPadsReady && (game.layout !== 'watcher' || game.watcherResolved);
   const stage02GateStructure = game.layout === 'bridge'
     ? game.platforms.find((platform) => platform.wall && platform.label === 'MEMORY GATE')
     : null;
@@ -3874,7 +4103,10 @@ function drawPuzzle() {
       ctx.save(); ctx.globalAlpha = .14; drawPlatform(platform); ctx.restore();
     } else drawPlatform(platform);
   });
-  if (game.layout === 'wall') drawBridge(getBridge());
+  if (game.layout === 'wall') {
+    drawLaughRelayNetwork();
+    getWallBridges().forEach(drawBridge);
+  }
   if (game.layout === 'carousel' && game.carouselRideProgress > .02) {
     const ride = getCarouselRide();
     drawPlatform(ride);
@@ -4187,6 +4419,7 @@ function update(dt) {
     return;
   }
   if (game.phase !== 'playing') return;
+  syncBossBgmTimeStop();
   game.rewindExpressionTimer = Math.max(0, (game.rewindExpressionTimer || 0) - dt);
   game.stageRealElapsed = (game.stageRealElapsed || 0) + dt;
   if (currentStage().type === 'boss') {
@@ -4219,15 +4452,27 @@ startButton.addEventListener('click', () => {
 canvas.addEventListener('click', () => {
   if (game.phase === 'ending-cinematic') advanceEndingCinematic();
 });
-window.addEventListener('pointerdown', primeGameSfx, { passive: true });
+window.addEventListener('pointerdown', primeGameAudio, { passive: true });
 resumeButton.addEventListener('click', closeStageMenu);
 routeModeButton.addEventListener('click', toggleRouteMode);
 disconnectSkipButton.addEventListener('click', skipDreamDisconnect);
 bgmToggleButton.addEventListener('click', () => {
+  if (stageBgm.enabled && stageBgm.playBlocked) {
+    stageBgm.playBlocked = false;
+    resumeStageBgm();
+    updateBgmToggle(stageBgmKey() || stageBgm.key);
+    return;
+  }
   stageBgm.enabled = !stageBgm.enabled;
   if (stageBgm.enabled) resumeStageBgm();
   else pauseStageBgm();
   updateBgmToggle(stageBgmKey() || stageBgm.key);
+});
+bgmVolumeSlider?.addEventListener('input', () => {
+  setBgmMasterVolume(Number(bgmVolumeSlider.value) / 100);
+});
+bgmVolumeSlider?.addEventListener('change', () => {
+  setBgmMasterVolume(Number(bgmVolumeSlider.value) / 100, true);
 });
 restartButton.addEventListener('click', () => {
   if (game.phase === 'failed') startStage();
@@ -4235,7 +4480,7 @@ restartButton.addEventListener('click', () => {
   else if (game.phase === 'truth') newGame();
 });
 ruleCards.forEach((card) => {
-  const keyForRule = { bridge: 'Digit1', time: 'ShiftLeft', resonance: 'KeyL' }[card.dataset.rule];
+  const keyForRule = { bridge: 'KeyO', time: 'ShiftLeft', resonance: 'KeyL' }[card.dataset.rule];
   card.addEventListener('pointerdown', () => {
     if (hasSkill(card.dataset.rule)) {
       if (card.dataset.rule === 'dash') triggerDash();
@@ -4260,7 +4505,7 @@ function handleConfirmInput() {
 }
 
 window.addEventListener('keydown', (event) => {
-  primeGameSfx();
+  primeGameAudio();
   if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'Enter', 'KeyF', 'KeyI'].includes(event.code)) event.preventDefault();
   if (!event.repeat && (event.code === 'Enter' || event.code === 'KeyF') && handleConfirmInput()) {
     event.preventDefault();
@@ -4273,10 +4518,10 @@ window.addEventListener('keydown', (event) => {
   }
   if (!keys.has(event.code)) pressed.add(event.code);
   keys.add(event.code);
-  const skillByKey = { Digit1: 'bridge', ShiftLeft: 'time', ShiftRight: 'time', KeyL: 'resonance', Space: 'dash' };
+  const skillByKey = { KeyO: 'bridge', ShiftLeft: 'time', ShiftRight: 'time', KeyL: 'resonance', Space: 'dash' };
   const requestedSkill = skillByKey[event.code];
   if (!event.repeat && requestedSkill && isSkillBlocked(requestedSkill)) say(currentStage().blockedHint || '이 구역의 꿈 규칙 때문에 이 상상력 기술은 사용할 수 없습니다.');
-  if (event.code === 'Digit3' && !event.repeat) say(hasSkill('time') ? '1·Shift·L은 누르고 있는 동안 상상력을 계속 소모합니다.' : '이 기술은 다음 스테이지에서 배웁니다.');
+  if (event.code === 'Digit3' && !event.repeat) say(hasSkill('time') ? 'O·Shift·L은 누르고 있는 동안 상상력을 계속 소모합니다.' : '이 기술은 다음 스테이지에서 배웁니다.');
   if (!event.repeat && event.code === 'KeyK') toggleMemoryRecording();
   if (!event.repeat && event.code === 'KeyJ') triggerBossShot();
   if (!event.repeat && event.code === 'KeyI') removeLatestEcho();
@@ -4289,5 +4534,6 @@ window.addEventListener('blur', () => {
   updateHud();
 });
 
+updateBgmVolumeControl();
 newGame();
 requestAnimationFrame(loop);

@@ -43,7 +43,14 @@
           <div><i id="boss-fill"></i></div>
           <strong id="boss-health">100%</strong>
         </div>
-        <button class="bgm-toggle hidden" id="bgm-toggle" type="button" aria-label="배경음악 끄기">BGM <span>ON</span></button>
+        <div class="bgm-controls hidden" id="bgm-controls">
+          <button class="bgm-toggle" id="bgm-toggle" type="button" aria-label="배경음악 끄기">BGM <span>ON</span></button>
+          <label class="bgm-volume-control" for="bgm-volume">
+            <span>VOL</span>
+            <input class="bgm-volume-slider" id="bgm-volume" type="range" min="0" max="100" step="1" value="65" aria-label="배경음악 음량" />
+            <output class="bgm-volume-value" id="bgm-volume-value" for="bgm-volume">65%</output>
+          </label>
+        </div>
 
         <div class="overlay" id="start-screen">
           <div class="overlay-card intro-card">
@@ -113,11 +120,11 @@
         </div>
         <div class="rule-grid">
           <button class="rule-card" data-rule="bridge">
-            <span class="keycap">1</span>
+            <span class="keycap">O</span>
             <span class="rule-number">RULE 01</span>
             <strong>잔상 발판</strong>
             <small>누르는 동안 무서운 악몽의 잔상을 밟을 수 있습니다.</small>
-            <span class="rule-state" id="bridge-state">HOLD 1 · DRAIN 16 / SEC</span>
+            <span class="rule-state" id="bridge-state">HOLD O · DRAIN 16 / SEC</span>
           </button>
           <button class="rule-card" data-rule="time">
             <span class="keycap">⇧</span>
@@ -196,6 +203,6 @@
 
       <p class="footer-note">A tiny browser game made for OpenAI Game Builders Seoul · Chapter 01 of a dream action adventure.</p>
     </main>
-    <script src="game.js"></script>
+    <script src="game.js?v=20260822-stage3-q2-relay-1"></script>
   </body>
 </html>
