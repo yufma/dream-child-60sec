@@ -86,6 +86,9 @@ const harinStage02GateSprites = Object.freeze({
   open: loadSprite(HARIN_STAGE_02_GATE_PATHS.open),
 });
 const failureArt = Object.freeze(Object.fromEntries(Object.entries(FAILURE_ART_PATHS).map(([key, source]) => [key, loadSprite(source)])));
+const bossSprites = Object.freeze({
+  yunaChoir: loadSprite('assets/bosses/yuna-silent-choir-sprite-v1.png'),
+});
 
 const startScreen = document.querySelector('#start-screen');
 const stageMenu = document.querySelector('#stage-menu');
@@ -527,9 +530,7 @@ let game = {};
 const stageBgm = { enabled: true, key: null, audio: null, mix: null };
 let gameSfxContext = null;
 const yunaLoopStation = { active: false, stageIndex: -1, key: null, level: 0, maxLevel: 0, milestones: new Set() };
-const yunaOrchestra = { active: false, stageIndex: -1, master: null, voices: [], timers: [], layers: new Set() };
-const YUNA_LOOP_LAYER_NAMES = Object.freeze(['첼로 저음', '피아노 아르페지오', '현악·합창 패드', '별빛 글로켄']);
-const YUNA_ORCHESTRA_ROOTS = Object.freeze({ tide: 146.83, glass: 146.83, silent: 146.83, resonance: 73.42 });
+const YUNA_LOOP_LAYER_NAMES = Object.freeze(['저음 레이어', '리듬 레이어', '멜로디 레이어', '합창 잔향']);
 
 const MOVEMENT_TUNING = {
   puzzle: { maxSpeed: 290, accelerationTime: .16, stopTime: .11, turnTime: .18, airControl: .55 },
@@ -668,8 +669,7 @@ function startStageBgm(stage = currentStage()) {
     stageBgm.mix = null;
     stageBgm.audio.loop = true;
     stageBgm.audio.preload = 'auto';
-    // 편성 레이어가 들어올 여백을 남겨, 원곡과 새 악기가 서로 뭉개지지 않게 한다.
-    stageBgm.audio.volume = key === 'resonance' ? .22 : .16;
+    stageBgm.audio.volume = key === 'resonance' ? .27 : .2;
   } else stageBgm.audio.currentTime = 0;
   updateBgmToggle(key);
   setupYunaLoopMix();
@@ -679,14 +679,10 @@ function startStageBgm(stage = currentStage()) {
 
 function pauseStageBgm() {
   if (stageBgm.audio) stageBgm.audio.pause();
-  setYunaOrchestraMuted(true);
 }
 
 function resumeStageBgm() {
-  if (stageBgmKey()) {
-    playStageBgm();
-    setYunaOrchestraMuted(false);
-  }
+  if (stageBgmKey()) playStageBgm();
 }
 
 function stopStageBgm() {
@@ -906,18 +902,15 @@ function startYunaLoopStation(stage = currentStage()) {
   yunaLoopStation.level = 0;
   yunaLoopStation.maxLevel = stage.type === 'boss' ? 4 : 3;
   yunaLoopStation.milestones = new Set();
-  setupYunaOrchestra(stage);
   // 보스 이후의 짧은 길은 유나가 되찾은 완성된 노래를 들려주는 보상 구간이다.
   if (stage.layout === 'walk') {
     yunaLoopStation.level = yunaLoopStation.maxLevel;
     yunaLoopStation.milestones.add('recovered-song');
-    for (let level = 1; level <= yunaLoopStation.maxLevel; level += 1) activateYunaOrchestraLayer(level);
   }
   applyYunaLoopMix();
 }
 
 function stopYunaLoopStation() {
-  stopYunaOrchestra();
   yunaLoopStation.active = false;
   yunaLoopStation.stageIndex = -1;
   yunaLoopStation.key = null;
@@ -926,8 +919,8 @@ function stopYunaLoopStation() {
   yunaLoopStation.milestones = new Set();
 }
 
-// 원곡의 대역을 먼저 보강하고, 그 위에 별도의 오케스트라 레이어를 얇게 올린다.
-// 원곡이 중심을 유지해 트랙마다 다른 분위기를 잃지 않는다.
+// 활성화 음은 같은 원곡을 저음·리듬·멜로디·잔향으로 분리한 레이어다.
+// 조성이 다른 합성음을 별도로 얹지 않아 어떤 유나 트랙에서도 어긋나지 않는다.
 function setupYunaLoopMix() {
   if (!stageBgm.audio || !stageBgm.key || stageBgm.mix) return;
   const audio = primeGameSfx();
@@ -977,10 +970,10 @@ function applyYunaLoopMix() {
   const mix = stageBgm.mix;
   if (!mix || mix.unavailable) return;
   const level = yunaLoopStation.active ? yunaLoopStation.level : 0;
-  rampYunaMixGain(mix.bassGain, level >= 1 ? .25 : 0);
-  rampYunaMixGain(mix.rhythmGain, level >= 2 ? .11 : 0);
-  rampYunaMixGain(mix.melodyGain, level >= 3 ? .08 : 0);
-  rampYunaMixGain(mix.roomGain, level >= 4 ? .06 : 0);
+  rampYunaMixGain(mix.bassGain, level >= 1 ? .34 : 0);
+  rampYunaMixGain(mix.rhythmGain, level >= 2 ? .14 : 0);
+  rampYunaMixGain(mix.melodyGain, level >= 3 ? .1 : 0);
+  rampYunaMixGain(mix.roomGain, level >= 4 ? .07 : 0);
 }
 
 function unlockYunaMusicLayer(milestone) {
@@ -989,7 +982,6 @@ function unlockYunaMusicLayer(milestone) {
   if (yunaLoopStation.level >= yunaLoopStation.maxLevel) return;
   yunaLoopStation.level += 1;
   applyYunaLoopMix();
-  activateYunaOrchestraLayer(yunaLoopStation.level);
   const name = YUNA_LOOP_LAYER_NAMES[yunaLoopStation.level - 1];
   say(`LOOP ${String(yunaLoopStation.level).padStart(2, '0')} · ${name}가 유나의 노래에 쌓였습니다.`);
 }
@@ -3901,22 +3893,24 @@ function drawFinalMemoryTarget(target, active, resolved) {
   ctx.fillText(active ? `TRUE · ${target.label}` : resolved ? 'MEMORY RESTORED' : 'COPY · FALSE MEMORY', target.x + target.w / 2, target.y - 11);
 }
 
-function drawYunaSilentChoirIllustration(b) {
-  const image = failureArt.yuna;
+function drawYunaSilentChoirSprite(b) {
+  const image = bossSprites.yunaChoir;
   if (!image?.complete || !image.naturalWidth) return false;
   const restoredRatio = b.resonanceProgress / Math.max(1, b.resonanceGates.length);
   const pulse = .5 + Math.sin(game.elapsed * 5.8) * .5;
   const coreX = b.x + b.w / 2;
   const coreY = b.y + 78;
+  const spriteScale = (b.phase === 1 ? .92 : b.phase === 2 ? 1 : 1.08) + pulse * .025;
+  const spriteW = 220 * spriteScale;
+  const spriteH = 294 * spriteScale;
   ctx.save();
   ctx.imageSmoothingEnabled = false;
-  ctx.globalAlpha = .96;
-  ctx.drawImage(image, 0, 0, W, H);
-  // 보스 본체 일러스트는 무대에 고정하고, 현재 공명 중인 중앙의 목소리만 살아 움직이게 한다.
-  ctx.fillStyle = `rgba(3, 11, 27, ${.14 - restoredRatio * .08})`;
-  ctx.fillRect(0, 0, W, H);
+  ctx.shadowBlur = 26 + pulse * 12; ctx.shadowColor = b.flash > 0 ? '#effff8' : '#54e7cd';
+  ctx.globalAlpha = b.flash > 0 ? .92 : 1;
+  ctx.drawImage(image, coreX - spriteW / 2, b.y + 4, spriteW, spriteH);
+  // 배경은 유지하고, 탄막을 내보내는 입 부분만 공명에 반응한다.
   ctx.globalCompositeOperation = 'screen';
-  ctx.globalAlpha = .22 + pulse * .22 + restoredRatio * .16;
+  ctx.globalAlpha = .2 + pulse * .2 + restoredRatio * .16;
   ctx.strokeStyle = '#9effd7'; ctx.lineWidth = 2;
   for (let ring = 0; ring < 3; ring += 1) {
     ctx.beginPath();
@@ -3948,7 +3942,7 @@ function drawBoss() {
   const windFear = b.visual === 'wind';
   const choirFear = b.visual === 'choir';
   const mirrorFear = b.visual === 'mirror';
-  const choirIllustration = choirFear && drawYunaSilentChoirIllustration(b);
+  const choirIllustration = choirFear && drawYunaSilentChoirSprite(b);
   if (!choirIllustration) {
     ctx.save(); ctx.fillStyle = 'rgba(255, 137, 176, .12)'; ctx.beginPath(); ctx.arc(b.x + 80, b.y + 102, 150, 0, Math.PI * 2); ctx.fill(); ctx.restore();
   }
