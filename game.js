@@ -61,7 +61,7 @@ const YUNA_BGM_PATHS = Object.freeze({
   tide: 'assets/audio/yuna-tide-lullaby-v1.wav',
   glass: 'assets/audio/yuna-glass-choir-v1.wav',
   silent: 'assets/audio/yuna-silent-choir-v1.wav',
-  resonance: 'assets/audio/yuna-resonance-run-long-v2.wav',
+  resonance: 'assets/audio/yuna-resonance-run-v1.wav',
 });
 const PLAYER_RUN_FRAME_DURATIONS = Object.freeze([83, 83, 84, 83, 83, 84, 83, 83, 84, 83, 83, 84]);
 const PLAYER_RUN_CYCLE_MS = PLAYER_RUN_FRAME_DURATIONS.reduce((total, duration) => total + duration, 0);
@@ -527,7 +527,7 @@ const pressed = new Set();
 let toastTimer = 0;
 let lastFrame = 0;
 let game = {};
-const stageBgm = { enabled: true, key: null, audio: null, mix: null };
+const stageBgm = { enabled: true, key: null, audio: null, nextAudio: null, crossfadeFrame: 0, mix: null };
 let gameSfxContext = null;
 const yunaLoopStation = { active: false, stageIndex: -1, key: null, level: 0, maxLevel: 0, milestones: new Set() };
 const YUNA_LOOP_LAYER_NAMES = Object.freeze(['저음 레이어', '리듬 레이어', '멜로디 레이어', '합창 잔향']);
@@ -656,6 +656,76 @@ function playStageBgm() {
   if (playback?.catch) playback.catch(() => {});
 }
 
+function bgmVolume(key = stageBgm.key) {
+  return key === 'resonance' ? .27 : .2;
+}
+
+function cancelBgmCrossfade({ discardNext = true } = {}) {
+  if (stageBgm.crossfadeFrame) cancelAnimationFrame(stageBgm.crossfadeFrame);
+  stageBgm.crossfadeFrame = 0;
+  if (discardNext && stageBgm.nextAudio) {
+    stageBgm.nextAudio.pause();
+    stageBgm.nextAudio.currentTime = 0;
+    stageBgm.nextAudio = null;
+  }
+  if (stageBgm.audio) stageBgm.audio.volume = bgmVolume();
+}
+
+function startResonanceCrossfade(outgoing) {
+  if (!stageBgm.enabled || stageBgm.key !== 'resonance' || stageBgm.audio !== outgoing || stageBgm.nextAudio) return;
+  const incoming = new Audio(YUNA_BGM_PATHS.resonance);
+  incoming.loop = false;
+  incoming.preload = 'auto';
+  incoming.volume = 0;
+  stageBgm.nextAudio = incoming;
+  const fadeDuration = 1250;
+  const beginFade = () => {
+    const startedAt = performance.now();
+    const fade = (now) => {
+      if (!stageBgm.enabled || stageBgm.audio !== outgoing || stageBgm.nextAudio !== incoming) return;
+      const progress = Math.min(1, (now - startedAt) / fadeDuration);
+      outgoing.volume = bgmVolume() * (1 - progress);
+      incoming.volume = bgmVolume() * progress;
+      if (progress < 1) {
+        stageBgm.crossfadeFrame = requestAnimationFrame(fade);
+        return;
+      }
+      outgoing.pause();
+      outgoing.currentTime = 0;
+      stageBgm.audio = incoming;
+      stageBgm.nextAudio = null;
+      stageBgm.crossfadeFrame = 0;
+      watchResonanceLoop(incoming);
+    };
+    stageBgm.crossfadeFrame = requestAnimationFrame(fade);
+  };
+  const started = incoming.play();
+  if (started?.then) started.then(beginFade).catch(() => cancelBgmCrossfade());
+  else beginFade();
+}
+
+function watchResonanceLoop(audio) {
+  audio.addEventListener('timeupdate', () => {
+    if (stageBgm.key !== 'resonance' || stageBgm.audio !== audio || stageBgm.nextAudio || !Number.isFinite(audio.duration)) return;
+    if (audio.currentTime >= audio.duration - 1.6) startResonanceCrossfade(audio);
+  });
+  audio.addEventListener('ended', () => {
+    if (stageBgm.key === 'resonance' && stageBgm.audio === audio && !stageBgm.nextAudio && stageBgm.enabled) {
+      audio.currentTime = 0;
+      playStageBgm();
+    }
+  });
+}
+
+function createStageBgmAudio(key) {
+  const audio = new Audio(YUNA_BGM_PATHS[key]);
+  audio.loop = key !== 'resonance';
+  audio.preload = 'auto';
+  audio.volume = bgmVolume(key);
+  if (key === 'resonance') watchResonanceLoop(audio);
+  return audio;
+}
+
 function startStageBgm(stage = currentStage()) {
   const key = stageBgmKey(stage);
   if (!key) {
@@ -663,21 +733,23 @@ function startStageBgm(stage = currentStage()) {
     return;
   }
   if (stageBgm.key !== key || !stageBgm.audio) {
+    cancelBgmCrossfade();
     if (stageBgm.audio) stageBgm.audio.pause();
     stageBgm.key = key;
-    stageBgm.audio = new Audio(YUNA_BGM_PATHS[key]);
+    stageBgm.audio = createStageBgmAudio(key);
     stageBgm.mix = null;
-    stageBgm.audio.loop = true;
-    stageBgm.audio.preload = 'auto';
-    stageBgm.audio.volume = key === 'resonance' ? .27 : .2;
-  } else stageBgm.audio.currentTime = 0;
+  } else {
+    cancelBgmCrossfade();
+    stageBgm.audio.currentTime = 0;
+  }
   updateBgmToggle(key);
-  setupYunaLoopMix();
+  if (key !== 'resonance') setupYunaLoopMix();
   startYunaLoopStation(stage);
   playStageBgm();
 }
 
 function pauseStageBgm() {
+  cancelBgmCrossfade();
   if (stageBgm.audio) stageBgm.audio.pause();
 }
 
@@ -687,6 +759,7 @@ function resumeStageBgm() {
 
 function stopStageBgm() {
   stopYunaLoopStation();
+  cancelBgmCrossfade();
   if (stageBgm.audio) {
     stageBgm.audio.pause();
     stageBgm.audio.currentTime = 0;
