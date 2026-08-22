@@ -183,25 +183,25 @@ const STAGES = [
     layout: 'lantern-river', echoGoal: 0, hint: '낮은 등불섬에서 높은 등불섬으로 점프하며 오른쪽 꿈의 문까지 건너가세요.',
   },
   {
-    chapter: '유나 · 사라진 노래', name: '별빛 합창의 문', type: 'puzzle', skills: ['resonance'], teaches: ['resonance'], objective: '공명으로 두 개의 합창 기억을 되찾아라',
-    intro: '두 번째 친구 유나는 숨은 소리를 듣는 아이야. 꿈 추출기는 그 아이의 노래를 접어 숨겨 버렸어. L을 누르면 공명이 퍼져, 보이지 않던 건반과 봉인이 드러난다. 하지만 공명을 멈추면 길도 다시 희미해져. 가운데 악보 단과 마지막 후렴 단에 기억의 나를 하나씩 남겨, 두 음이 함께 울리게 하자.',
-    layout: 'chorus', echoGoal: 2, hint: 'L로 숨은 건반 길을 유지해 두 기억 문양까지 가세요. K로 두 곳에 과거의 나를 남기면 합창길이 완성됩니다.',
+    chapter: '유나 · 사라진 노래', name: '별빛 합창의 문', type: 'puzzle', skills: ['resonance'], teaches: ['resonance'], objective: '끊어지는 건반 계단을 공명으로 올라가라',
+    intro: '두 번째 친구 유나는 숨은 소리를 듣는 아이야. 꿈 추출기는 그 아이의 노래를 접어 숨겨 버렸어. L을 누르면 공명이 퍼져, 보이지 않던 건반이 드러난다. 하지만 공명을 멈추면 길도 다시 희미해져. 짧은 숨은 건반 사이에서 점프하고, 밝은 흰 건반에 닿았을 때만 잠시 숨을 고르자.',
+    layout: 'chorus', echoGoal: 1, hint: 'L을 짧게 유지해 끊어진 건반 계단을 잇고, 중간의 밝은 건반에서 호흡을 고르며 기억 문양까지 올라가세요.',
   },
   {
-    chapter: '유나 · 사라진 노래', name: '유나의 빈 의자', type: 'puzzle', skills: ['bridge', 'time', 'resonance'], objective: '세 개의 빈자리를 기억의 메아리로 채워라',
+    chapter: '유나 · 사라진 노래', name: '유나의 빈 의자', type: 'puzzle', skills: ['bridge', 'time', 'resonance'], objective: '갈라진 옥타브를 올라 두 빈자리를 연결하라',
     blockedSkills: ['bridge'],
-    intro: '유나는 늘 누군가의 자리를 기억하던 아이였어. 꿈 추출기는 교실의 낮은 자리와 합창 발코니의 높은 자리, 그리고 마지막 후렴 자리를 지워 버렸어. 이 교실에서는 잔상 발판도 닿지 않아. L로 보이지 않는 건반 계단을 드러내고, K로 서로 다른 높이의 세 빈자리를 채우자.',
-    layout: 'choir-balcony', echoGoal: 3, hint: 'L로 발코니 건반 계단을 드러내며 낮은 자리·높은 자리·마지막 후렴 자리에 기억의 나를 하나씩 남기세요.',
+    intro: '유나는 늘 누군가의 자리를 기억하던 아이였어. 꿈 추출기는 교실의 낮은 자리와 가장 높은 합창 발코니를 멀리 갈라 놓았어. 이 교실에서는 잔상 발판도 닿지 않아. 낮은 건반 길을 오른 뒤 한 번 내려서, 다시 높은 옥타브까지 올라가 두 빈자리를 연결하자.',
+    layout: 'choir-balcony', echoGoal: 2, hint: '첫 번째 빈자리를 채운 뒤, 내려가는 숨은 건반과 다시 솟는 옥타브 계단을 이어 가장 높은 자리까지 올라가세요.',
   },
   {
-    chapter: '유나 · 사라진 노래', name: '지워진 악보의 계단', type: 'puzzle', skills: ['resonance'], objective: '두 개의 사라진 음계를 공명으로 되돌려라',
-    intro: '유나의 악보에는 음표 사이사이가 통째로 지워져 있어. L을 누르는 동안에만 빠진 음계와 그 위의 기억 문양이 돌아온다. 먼저 공명으로 세 번째 음계까지 올라가고, 다시 반대편 마지막 파동까지 건너가. 두 곳에 K로 짧은 기억을 남기면, 과거의 네가 각각의 음을 붙잡고 길을 완성할 거야.',
-    layout: 'chorus-memory', echoGoal: 2, hint: '① L을 유지해 세 번째 숨은 음계에 기억을 남기세요. ② 다시 공명 길을 따라 마지막 파동까지 건너 두 번째 기억을 남기세요.',
+    chapter: '유나 · 사라진 노래', name: '지워진 악보의 계단', type: 'puzzle', skills: ['resonance'], objective: '오르내리는 반음계 길을 공명으로 되돌려라',
+    intro: '유나의 악보에는 음표 사이사이가 통째로 지워져 있어. L을 누르는 동안에만 빠진 음계와 그 위의 기억 문양이 돌아온다. 빠르게 높은 음까지 오른 뒤, 아래로 떨어지는 반음계를 타고 다시 올라가야 해. 같은 방향으로만 걷는 길이 아니니, 다음 건반의 높이를 보고 점프하자.',
+    layout: 'chorus-memory', echoGoal: 1, hint: 'L로 짧은 반음계를 이어 높은 기억 단까지 오른 뒤, 내려가는 건반과 마지막 상승 구간을 정확히 연결하세요.',
   },
   {
-    chapter: '유나 · 사라진 노래', name: '두 사람의 화음', type: 'puzzle', skills: ['resonance'], objective: '나선형 악보 위 세 빈자리를 채워 화음을 완성하라',
-    intro: '마지막 한 소절은 직선이 아니라, 위아래로 감긴 악보에 숨어 있어. 유나는 자신이 혼자 노래하고 있었다고 믿지만, 서로 다른 높이의 세 빈자리에 기억의 나를 남기면 잊었던 화음이 돌아올 거야. 마지막 후렴 자리는 가장 멀리 있으니, 공명 게이지를 아껴 두자.',
-    layout: 'harmony-spiral', echoGoal: 3, hint: 'L로 나선형 건반 길을 드러내며 낮은 음·높은 음·마지막 후렴 자리에 기억의 나를 남기세요.',
+    chapter: '유나 · 사라진 노래', name: '두 사람의 화음', type: 'puzzle', skills: ['resonance'], objective: '침묵의 기둥을 넘어 두 사람의 화음을 완성하라',
+    intro: '마지막 한 소절은 직선이 아니라, 위아래로 감긴 악보에 숨어 있어. 길 한가운데에는 소리를 삼키는 검은 건반 기둥이 서 있어. 낮은 화음에서 위쪽 길로 올라 기둥 위를 넘은 뒤, 반대편의 두 번째 화음까지 정확히 이어 가자.',
+    layout: 'harmony-spiral', echoGoal: 2, hint: '낮은 화음에 기억을 남긴 뒤, L로 위쪽 건반을 드러내 검은 기둥 위를 넘고 반대편 화음까지 도달하세요.',
   },
   {
     chapter: '유나 · 사라진 노래', name: '침묵을 삼킨 합창단', type: 'boss', skills: ['resonance'], objective: '공명으로 여섯 개의 잃어버린 음을 되찾아라',
@@ -1192,27 +1192,34 @@ function setupPuzzle(layout, echoGoal) {
     ];
   } else if (layout === 'chorus') {
     game.platforms = [
-      { x: 0, y: 500, w: 176, h: 40, label: 'CHOIR FLOOR' },
-      { x: 204, y: 424, w: 74, h: 16, hidden: true, label: '숨은 첫 음' },
-      { x: 328, y: 360, w: 104, h: 18, label: '기억의 악보 단' },
-      { x: 472, y: 296, w: 80, h: 16, hidden: true, label: '반향 다리' },
-      { x: 598, y: 350, w: 94, h: 18, label: '합창 난간' },
-      { x: 748, y: 420, w: 212, h: 18, label: 'RESONANCE HALL' },
+      // 7스테이지: 숨은 검은 건반과 밝은 흰 건반을 번갈아 딛는 상승 아르페지오.
+      { x: 0, y: 500, w: 148, h: 40, label: 'CHOIR FLOOR' },
+      { x: 190, y: 432, w: 54, h: 16, hidden: true, label: 'BLACK KEY 01' },
+      { x: 282, y: 362, w: 56, h: 18, label: 'WHITE KEY REST 01' },
+      { x: 376, y: 298, w: 50, h: 16, hidden: true, label: 'BLACK KEY 02' },
+      { x: 466, y: 370, w: 54, h: 18, label: 'WHITE KEY REST 02' },
+      { x: 558, y: 304, w: 50, h: 16, hidden: true, label: 'BLACK KEY 03' },
+      { x: 650, y: 370, w: 54, h: 18, label: 'WHITE KEY REST 03' },
+      { x: 742, y: 292, w: 52, h: 16, hidden: true, label: 'BLACK KEY 04' },
+      { x: 838, y: 356, w: 122, h: 18, label: 'RESONANCE HALL' },
     ];
-    game.exit = { x: 862, y: 338, w: 36, h: 82, label: 'SONG GATE' };
+    game.exit = { x: 884, y: 274, w: 36, h: 82, label: 'SONG GATE' };
     game.fallZones = [];
   } else if (layout === 'chorus-memory') {
-    // 9스테이지는 공명을 오래 유지해야 하는 좁은 음계 지그재그다. 가운데의 짧은 안전 단에서만 기억을 남길 수 있다.
+    // 9스테이지: 높은 음까지 올랐다가 떨어지는 반음계를 타고 다시 솟는 크로매틱 루트.
     game.platforms = [
-      { x: 0, y: 500, w: 180, h: 40, label: 'CHOIR START' },
-      { x: 208, y: 420, w: 68, h: 16, hidden: true, label: '숨은 음계 1' },
-      { x: 322, y: 350, w: 72, h: 16, hidden: true, label: '숨은 음계 2' },
-      { x: 440, y: 280, w: 82, h: 18, label: '기억의 음계' },
-      { x: 566, y: 350, w: 72, h: 16, hidden: true, label: '되돌아가는 음' },
-      { x: 682, y: 280, w: 72, h: 16, hidden: true, label: '별빛 파동' },
-      { x: 800, y: 420, w: 160, h: 18, label: 'RESONANCE HALL' },
+      { x: 0, y: 500, w: 156, h: 40, label: 'CHOIR START' },
+      { x: 194, y: 426, w: 48, h: 16, hidden: true, label: 'HALF STEP 01' },
+      { x: 278, y: 350, w: 46, h: 16, hidden: true, label: 'HALF STEP 02' },
+      { x: 360, y: 274, w: 68, h: 18, label: 'HIGH NOTE REST' },
+      { x: 464, y: 342, w: 48, h: 16, hidden: true, label: 'FALLING NOTE 01' },
+      { x: 552, y: 412, w: 56, h: 18, label: 'LOW NOTE REST' },
+      { x: 646, y: 334, w: 50, h: 16, hidden: true, label: 'RISING NOTE 01' },
+      { x: 732, y: 258, w: 68, h: 18, label: 'HIGH NOTE REST 02' },
+      { x: 826, y: 330, w: 50, h: 16, hidden: true, label: 'FINAL HALF STEP' },
+      { x: 900, y: 396, w: 60, h: 18, label: 'RESONANCE HALL' },
     ];
-    game.exit = { x: 862, y: 338, w: 36, h: 82, label: 'SONG GATE' };
+    game.exit = { x: 914, y: 314, w: 32, h: 82, label: 'SONG GATE' };
     game.fallZones = [];
   } else if (layout === 'dash') {
     game.platforms = [
@@ -1243,27 +1250,34 @@ function setupPuzzle(layout, echoGoal) {
     game.fallZones = [];
   } else if (layout === 'choir-balcony') {
     game.platforms = [
-      { x: 0, y: 500, w: 180, h: 40, label: 'CLASSROOM FLOOR' },
-      { x: 208, y: 432, w: 70, h: 16, hidden: true, label: 'LOW NOTE STAIR' },
-      { x: 330, y: 360, w: 82, h: 18, label: 'LOW BALCONY' },
-      { x: 448, y: 288, w: 70, h: 16, hidden: true, label: 'HIGH NOTE STAIR' },
-      { x: 562, y: 224, w: 94, h: 18, label: 'CHOIR BALCONY' },
-      { x: 700, y: 310, w: 68, h: 16, hidden: true, label: 'DESCENT NOTE' },
-      { x: 810, y: 378, w: 150, h: 18, label: 'EXIT DESCENT' },
+      // 8스테이지: 낮은 옥타브를 찍고 내려갔다가, 반대편 최고음까지 다시 올라가는 M자 루트.
+      { x: 0, y: 500, w: 156, h: 40, label: 'CLASSROOM FLOOR' },
+      { x: 194, y: 430, w: 52, h: 16, hidden: true, label: 'LOW OCTAVE 01' },
+      { x: 282, y: 356, w: 68, h: 18, label: 'LOW BALCONY' },
+      { x: 388, y: 424, w: 50, h: 16, hidden: true, label: 'DESCENT KEY' },
+      { x: 476, y: 344, w: 62, h: 18, label: 'MIDDLE OCTAVE' },
+      { x: 578, y: 268, w: 52, h: 16, hidden: true, label: 'HIGH OCTAVE 01' },
+      { x: 668, y: 194, w: 88, h: 18, label: 'CHOIR BALCONY' },
+      { x: 792, y: 270, w: 48, h: 16, hidden: true, label: 'DESCENT KEY 02' },
+      { x: 876, y: 350, w: 84, h: 18, label: 'EXIT DESCENT' },
     ];
-    game.exit = { x: 882, y: 296, w: 36, h: 82, label: 'BALCONY GATE' };
+    game.exit = { x: 892, y: 268, w: 36, h: 82, label: 'BALCONY GATE' };
     game.fallZones = [];
   } else if (layout === 'harmony-spiral') {
     game.platforms = [
-      { x: 0, y: 500, w: 184, h: 40, label: 'SCORE START' },
-      { x: 214, y: 426, w: 74, h: 16, hidden: true, label: 'SPIRAL NOTE 01' },
-      { x: 332, y: 354, w: 82, h: 18, label: 'LOW HARMONY' },
-      { x: 452, y: 282, w: 74, h: 16, hidden: true, label: 'SPIRAL NOTE 02' },
-      { x: 572, y: 354, w: 82, h: 18, label: 'HIGH HARMONY' },
-      { x: 692, y: 276, w: 78, h: 16, hidden: true, label: 'FINAL REFRAIN' },
-      { x: 812, y: 414, w: 148, h: 18, label: 'CHORUS EXIT' },
+      // 10스테이지: 화음을 남긴 뒤, 검은 건반 기둥의 꼭대기를 타고 반대편 선율로 넘어간다.
+      { x: 0, y: 500, w: 154, h: 40, label: 'SCORE START' },
+      { x: 194, y: 430, w: 52, h: 16, hidden: true, label: 'SPIRAL NOTE 01' },
+      { x: 284, y: 354, w: 70, h: 18, label: 'LOW HARMONY' },
+      { x: 394, y: 278, w: 54, h: 16, hidden: true, label: 'SPIRAL NOTE 02' },
+      { x: 484, y: 204, w: 58, h: 18, label: 'UPPER OCTAVE' },
+      { x: 572, y: 190, w: 54, h: 310, wall: true, persistentWall: true, label: 'SILENT KEY' },
+      { x: 656, y: 270, w: 54, h: 16, hidden: true, label: 'SPIRAL NOTE 03' },
+      { x: 748, y: 344, w: 72, h: 18, label: 'HIGH HARMONY' },
+      { x: 856, y: 272, w: 46, h: 16, hidden: true, label: 'FINAL REFRAIN' },
+      { x: 882, y: 350, w: 78, h: 18, label: 'CHORUS EXIT' },
     ];
-    game.exit = { x: 882, y: 332, w: 36, h: 82, label: 'HARMONY GATE' };
+    game.exit = { x: 904, y: 268, w: 36, h: 82, label: 'HARMONY GATE' };
     game.fallZones = [];
   } else if (layout === 'wind-tunnel') {
     game.platforms = [
@@ -1373,28 +1387,19 @@ function setupPuzzle(layout, echoGoal) {
     'lantern-river': [],
     bridge: [{ x: 165, y: 462, w: 30, h: 28, label: '첫 약속' }],
     wall: [{ x: 165, y: 462, w: 30, h: 28, label: '별빛 약속' }],
-    chorus: [
-      { x: 364, y: 332, w: 30, h: 28, label: '첫 번째 노래 기억' },
-      { x: 786, y: 392, w: 30, h: 28, label: '마지막 후렴 기억' },
-    ],
-    // 9스테이지: 두 개의 숨은 음계를 각각 되감아야 완성되는 공명 지그재그다.
-    'chorus-memory': [
-      { x: 466, y: 252, w: 30, h: 28, label: '세 번째 음의 기억' },
-      { x: 704, y: 252, w: 30, h: 28, label: '마지막 파동의 기억', hidden: true },
-    ],
+    chorus: [{ x: 478, y: 342, w: 30, h: 28, label: '첫 번째 노래 기억' }],
+    'chorus-memory': [{ x: 378, y: 246, w: 30, h: 28, label: '높은 음의 기억' }],
     duet: [
       { x: 150, y: 462, w: 30, h: 28, label: '첫 번째 빈 의자' },
       { x: 520, y: 462, w: 30, h: 28, label: '두 번째 빈 의자' },
     ],
     'choir-balcony': [
-      { x: 356, y: 332, w: 30, h: 28, label: '낮은 빈 의자' },
-      { x: 594, y: 196, w: 30, h: 28, label: '높은 빈 의자' },
-      { x: 850, y: 350, w: 30, h: 28, label: '마지막 후렴 자리' },
+      { x: 300, y: 328, w: 30, h: 28, label: '낮은 빈 의자' },
+      { x: 696, y: 166, w: 30, h: 28, label: '높은 빈 의자' },
     ],
     'harmony-spiral': [
-      { x: 358, y: 326, w: 30, h: 28, label: '낮은 음의 자리' },
-      { x: 598, y: 326, w: 30, h: 28, label: '높은 음의 자리' },
-      { x: 842, y: 386, w: 30, h: 28, label: '마지막 후렴 자리' },
+      { x: 304, y: 326, w: 30, h: 28, label: '낮은 음의 자리' },
+      { x: 770, y: 316, w: 30, h: 28, label: '높은 음의 자리' },
     ],
     relay: [{ x: 135, y: 462, w: 30, h: 28, label: '출발 신호' }],
     dash: [{ x: 138, y: 462, w: 30, h: 28, label: '질주 기억' }],
@@ -2914,9 +2919,34 @@ function drawYunaScorePlatform(item) {
   ctx.restore();
 }
 
+function drawYunaSilentKeyWall(item) {
+  const { x, y, w, h } = item;
+  ctx.save();
+  ctx.shadowBlur = 24; ctx.shadowColor = '#67ead5';
+  const body = ctx.createLinearGradient(x, y, x + w, y);
+  body.addColorStop(0, '#08162a'); body.addColorStop(.52, '#1c3042'); body.addColorStop(1, '#07101e');
+  ctx.fillStyle = body; ctx.fillRect(x, y, w, h);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#dffff4'; ctx.fillRect(x + 2, y + 2, w - 4, 4);
+  ctx.fillStyle = '#72dac9'; ctx.fillRect(x + 5, y + 8, w - 10, 2);
+  for (let keyY = y + 28; keyY < y + h - 15; keyY += 34) {
+    ctx.fillStyle = keyY % 68 === (y + 28) % 68 ? '#163d53' : '#10283d';
+    ctx.fillRect(x + 9, keyY, w - 18, 18);
+    ctx.fillStyle = 'rgba(190, 255, 239, .4)'; ctx.fillRect(x + 11, keyY + 3, w - 22, 1);
+  }
+  ctx.strokeStyle = '#9effd7'; ctx.lineWidth = 2; ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+  ctx.translate(x + w / 2, y + h / 2); ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = '#e5fff4'; ctx.font = '900 9px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText('SILENT KEY · JUMP OVER', 0, 3);
+  ctx.restore();
+}
+
 function drawPlatform(item) {
   if (item.wall) {
     if (item.persistentWall) {
+      if (dreamTheme().id === 'yuna') {
+        drawYunaSilentKeyWall(item);
+        return;
+      }
       const carouselWall = game.layout === 'carousel';
       const wallGradient = ctx.createLinearGradient(item.x, item.y, item.x + item.w, item.y);
       wallGradient.addColorStop(0, carouselWall ? '#171a48' : '#2b114d');
