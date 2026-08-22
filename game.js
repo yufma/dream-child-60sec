@@ -527,7 +527,9 @@ let game = {};
 const stageBgm = { enabled: true, key: null, audio: null, mix: null };
 let gameSfxContext = null;
 const yunaLoopStation = { active: false, stageIndex: -1, key: null, level: 0, maxLevel: 0, milestones: new Set() };
-const YUNA_LOOP_LAYER_NAMES = Object.freeze(['잔상 베이스', '공명 리듬', '별빛 멜로디', '합창 패드']);
+const yunaOrchestra = { active: false, stageIndex: -1, master: null, voices: [], timers: [], layers: new Set() };
+const YUNA_LOOP_LAYER_NAMES = Object.freeze(['첼로 저음', '피아노 아르페지오', '현악·합창 패드', '별빛 글로켄']);
+const YUNA_ORCHESTRA_ROOTS = Object.freeze({ tide: 146.83, glass: 146.83, silent: 146.83, resonance: 73.42 });
 
 const MOVEMENT_TUNING = {
   puzzle: { maxSpeed: 290, accelerationTime: .16, stopTime: .11, turnTime: .18, airControl: .55 },
@@ -666,7 +668,8 @@ function startStageBgm(stage = currentStage()) {
     stageBgm.mix = null;
     stageBgm.audio.loop = true;
     stageBgm.audio.preload = 'auto';
-    stageBgm.audio.volume = key === 'resonance' ? .27 : .2;
+    // 편성 레이어가 들어올 여백을 남겨, 원곡과 새 악기가 서로 뭉개지지 않게 한다.
+    stageBgm.audio.volume = key === 'resonance' ? .22 : .16;
   } else stageBgm.audio.currentTime = 0;
   updateBgmToggle(key);
   setupYunaLoopMix();
@@ -676,10 +679,14 @@ function startStageBgm(stage = currentStage()) {
 
 function pauseStageBgm() {
   if (stageBgm.audio) stageBgm.audio.pause();
+  setYunaOrchestraMuted(true);
 }
 
 function resumeStageBgm() {
-  if (stageBgmKey()) playStageBgm();
+  if (stageBgmKey()) {
+    playStageBgm();
+    setYunaOrchestraMuted(false);
+  }
 }
 
 function stopStageBgm() {
@@ -721,6 +728,172 @@ function playResonanceBassHit(strong = false) {
   oscillator.stop(now + duration + .02);
 }
 
+function rampYunaOrchestraMaster(value, duration = .26) {
+  const master = yunaOrchestra.master;
+  const audio = gameSfxContext;
+  if (!master || !audio) return;
+  const now = audio.currentTime;
+  master.gain.cancelScheduledValues(now);
+  master.gain.setValueAtTime(Math.max(.0001, master.gain.value), now);
+  master.gain.linearRampToValueAtTime(Math.max(.0001, value), now + duration);
+}
+
+function stopYunaOrchestra() {
+  yunaOrchestra.timers.forEach((timer) => clearInterval(timer));
+  const audio = gameSfxContext;
+  const now = audio?.currentTime || 0;
+  yunaOrchestra.voices.forEach((voice) => {
+    try {
+      voice.gain.gain.cancelScheduledValues(now);
+      voice.gain.gain.setValueAtTime(voice.gain.gain.value, now);
+      voice.gain.gain.linearRampToValueAtTime(.0001, now + .08);
+      voice.osc.stop(now + .1);
+    } catch {}
+  });
+  if (yunaOrchestra.master) {
+    try { yunaOrchestra.master.disconnect(); } catch {}
+  }
+  yunaOrchestra.active = false;
+  yunaOrchestra.stageIndex = -1;
+  yunaOrchestra.master = null;
+  yunaOrchestra.voices = [];
+  yunaOrchestra.timers = [];
+  yunaOrchestra.layers = new Set();
+}
+
+function setupYunaOrchestra(stage = currentStage()) {
+  const key = stageBgmKey(stage);
+  stopYunaOrchestra();
+  if (!key) return;
+  const audio = primeGameSfx();
+  if (!audio) return;
+  const master = audio.createGain();
+  master.gain.value = .0001;
+  master.connect(audio.destination);
+  yunaOrchestra.active = true;
+  yunaOrchestra.stageIndex = game.stageIndex;
+  yunaOrchestra.master = master;
+  rampYunaOrchestraMaster(stageBgm.enabled ? .76 : .0001, .38);
+}
+
+function createYunaOrchestraVoice(frequency, type, volume, filterFrequency) {
+  const audio = gameSfxContext;
+  const master = yunaOrchestra.master;
+  if (!audio || !master) return null;
+  const now = audio.currentTime;
+  const osc = audio.createOscillator();
+  const filter = audio.createBiquadFilter();
+  const gain = audio.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(frequency, now);
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(filterFrequency, now);
+  filter.Q.value = .55;
+  gain.gain.setValueAtTime(.0001, now);
+  gain.gain.linearRampToValueAtTime(volume, now + .55);
+  osc.connect(filter).connect(gain).connect(master);
+  osc.start(now);
+  const voice = { osc, gain };
+  yunaOrchestra.voices.push(voice);
+  return voice;
+}
+
+function yunaOrchestraRoot() {
+  return YUNA_ORCHESTRA_ROOTS[stageBgm.key] || 146.83;
+}
+
+function playYunaPianoTone(frequency, startAt, volume = .065) {
+  const audio = gameSfxContext;
+  const master = yunaOrchestra.master;
+  if (!audio || !master) return;
+  const tone = audio.createOscillator();
+  const sparkle = audio.createOscillator();
+  const filter = audio.createBiquadFilter();
+  const gain = audio.createGain();
+  tone.type = 'triangle'; sparkle.type = 'sine';
+  tone.frequency.setValueAtTime(frequency, startAt);
+  sparkle.frequency.setValueAtTime(frequency * 2, startAt);
+  filter.type = 'lowpass'; filter.frequency.setValueAtTime(2100, startAt); filter.Q.value = .45;
+  gain.gain.setValueAtTime(.0001, startAt);
+  gain.gain.exponentialRampToValueAtTime(volume, startAt + .012);
+  gain.gain.exponentialRampToValueAtTime(Math.max(.0001, volume * .26), startAt + .16);
+  gain.gain.exponentialRampToValueAtTime(.0001, startAt + .84);
+  tone.connect(filter).connect(gain).connect(master);
+  sparkle.connect(gain);
+  tone.start(startAt); sparkle.start(startAt);
+  tone.stop(startAt + .88); sparkle.stop(startAt + .62);
+}
+
+function playYunaGlockTone(frequency, startAt, volume = .05) {
+  const audio = gameSfxContext;
+  const master = yunaOrchestra.master;
+  if (!audio || !master) return;
+  const tone = audio.createOscillator();
+  const overtone = audio.createOscillator();
+  const gain = audio.createGain();
+  tone.type = 'sine'; overtone.type = 'sine';
+  tone.frequency.setValueAtTime(frequency, startAt);
+  overtone.frequency.setValueAtTime(frequency * 2.76, startAt);
+  gain.gain.setValueAtTime(.0001, startAt);
+  gain.gain.exponentialRampToValueAtTime(volume, startAt + .01);
+  gain.gain.exponentialRampToValueAtTime(.0001, startAt + 1.15);
+  tone.connect(gain).connect(master);
+  overtone.connect(gain);
+  tone.start(startAt); overtone.start(startAt);
+  tone.stop(startAt + 1.2); overtone.stop(startAt + .78);
+}
+
+function playYunaPianoArpeggio() {
+  if (!yunaOrchestra.active || !yunaOrchestra.master) return;
+  const audio = gameSfxContext;
+  if (!audio) return;
+  const root = yunaOrchestraRoot();
+  const highRoot = root < 100 ? root * 4 : root * 2;
+  const notes = [highRoot, highRoot * 1.18921, highRoot * 1.5, highRoot * 1.7818, highRoot * 1.5, highRoot * 1.18921];
+  notes.forEach((note, index) => playYunaPianoTone(note, audio.currentTime + index * .19, index === 0 ? .072 : .048));
+}
+
+function playYunaGlockChord() {
+  if (!yunaOrchestra.active || !yunaOrchestra.master) return;
+  const audio = gameSfxContext;
+  if (!audio) return;
+  const root = yunaOrchestraRoot();
+  const highRoot = root < 100 ? root * 4 : root * 2;
+  [highRoot, highRoot * 1.18921, highRoot * 1.5].forEach((note, index) => playYunaGlockTone(note, audio.currentTime + index * .12, index === 0 ? .055 : .04));
+}
+
+function activateYunaOrchestraLayer(level) {
+  if (!yunaOrchestra.active || yunaOrchestra.layers.has(level)) return;
+  const audio = gameSfxContext;
+  if (!audio || !yunaOrchestra.master) return;
+  yunaOrchestra.layers.add(level);
+  const root = yunaOrchestraRoot();
+  if (level === 1) {
+    // 첫 건반은 곡의 바닥을 잡는 첼로 저음으로, 원곡의 저역을 과도하게 덮지 않게 얇게 깐다.
+    createYunaOrchestraVoice(root, 'triangle', .028, 430);
+    createYunaOrchestraVoice(root * 2, 'sine', .012, 620);
+    playYunaPianoTone(root * 2, audio.currentTime, .055);
+  } else if (level === 2) {
+    playYunaPianoArpeggio();
+    yunaOrchestra.timers.push(setInterval(playYunaPianoArpeggio, 2400));
+  } else if (level === 3) {
+    // 현악과 합창은 D단조 화음의 지속음이라, 원곡의 박자와 무관하게 자연스럽게 겹친다.
+    const chordRoot = root < 100 ? root * 2 : root;
+    createYunaOrchestraVoice(chordRoot, 'sine', .013, 940);
+    createYunaOrchestraVoice(chordRoot * 1.18921, 'triangle', .011, 1280);
+    createYunaOrchestraVoice(chordRoot * 1.5, 'sine', .01, 1500);
+    playYunaPianoArpeggio();
+  } else if (level === 4) {
+    playYunaGlockChord();
+    yunaOrchestra.timers.push(setInterval(playYunaGlockChord, 3600));
+  }
+}
+
+function setYunaOrchestraMuted(muted) {
+  if (!yunaOrchestra.active) return;
+  rampYunaOrchestraMaster(muted ? .0001 : .76, muted ? .12 : .24);
+}
+
 function startYunaLoopStation(stage = currentStage()) {
   const key = stageBgmKey(stage);
   if (!key) {
@@ -733,15 +906,18 @@ function startYunaLoopStation(stage = currentStage()) {
   yunaLoopStation.level = 0;
   yunaLoopStation.maxLevel = stage.type === 'boss' ? 4 : 3;
   yunaLoopStation.milestones = new Set();
+  setupYunaOrchestra(stage);
   // 보스 이후의 짧은 길은 유나가 되찾은 완성된 노래를 들려주는 보상 구간이다.
   if (stage.layout === 'walk') {
     yunaLoopStation.level = yunaLoopStation.maxLevel;
     yunaLoopStation.milestones.add('recovered-song');
+    for (let level = 1; level <= yunaLoopStation.maxLevel; level += 1) activateYunaOrchestraLayer(level);
   }
   applyYunaLoopMix();
 }
 
 function stopYunaLoopStation() {
+  stopYunaOrchestra();
   yunaLoopStation.active = false;
   yunaLoopStation.stageIndex = -1;
   yunaLoopStation.key = null;
@@ -750,8 +926,8 @@ function stopYunaLoopStation() {
   yunaLoopStation.milestones = new Set();
 }
 
-// 별도 음을 얹지 않고, 현재 재생 중인 원곡에서 저음·리듬·멜로디 대역을 분리해 단계별로 더한다.
-// 그래서 어떤 유나 트랙에서도 조성과 박자가 어긋나지 않는다.
+// 원곡의 대역을 먼저 보강하고, 그 위에 별도의 오케스트라 레이어를 얇게 올린다.
+// 원곡이 중심을 유지해 트랙마다 다른 분위기를 잃지 않는다.
 function setupYunaLoopMix() {
   if (!stageBgm.audio || !stageBgm.key || stageBgm.mix) return;
   const audio = primeGameSfx();
@@ -801,10 +977,10 @@ function applyYunaLoopMix() {
   const mix = stageBgm.mix;
   if (!mix || mix.unavailable) return;
   const level = yunaLoopStation.active ? yunaLoopStation.level : 0;
-  rampYunaMixGain(mix.bassGain, level >= 1 ? .42 : 0);
-  rampYunaMixGain(mix.rhythmGain, level >= 2 ? .17 : 0);
-  rampYunaMixGain(mix.melodyGain, level >= 3 ? .13 : 0);
-  rampYunaMixGain(mix.roomGain, level >= 4 ? .09 : 0);
+  rampYunaMixGain(mix.bassGain, level >= 1 ? .25 : 0);
+  rampYunaMixGain(mix.rhythmGain, level >= 2 ? .11 : 0);
+  rampYunaMixGain(mix.melodyGain, level >= 3 ? .08 : 0);
+  rampYunaMixGain(mix.roomGain, level >= 4 ? .06 : 0);
 }
 
 function unlockYunaMusicLayer(milestone) {
@@ -813,6 +989,7 @@ function unlockYunaMusicLayer(milestone) {
   if (yunaLoopStation.level >= yunaLoopStation.maxLevel) return;
   yunaLoopStation.level += 1;
   applyYunaLoopMix();
+  activateYunaOrchestraLayer(yunaLoopStation.level);
   const name = YUNA_LOOP_LAYER_NAMES[yunaLoopStation.level - 1];
   say(`LOOP ${String(yunaLoopStation.level).padStart(2, '0')} · ${name}가 유나의 노래에 쌓였습니다.`);
 }
