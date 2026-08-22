@@ -207,25 +207,25 @@ const STAGES = [
     layout: 'harmony-spiral', echoGoal: 2, hint: '낮은 화음에 기억을 남긴 뒤, L로 위쪽 건반을 드러내 검은 기둥 위를 넘고 반대편 화음까지 도달하세요.',
   },
   {
-    chapter: '유나 · 사라진 노래', name: '침묵을 삼킨 합창단', type: 'boss', skills: ['resonance'], objective: '공명으로 여섯 개의 잃어버린 음을 되찾아라',
-    intro: '유나는 아무리 크게 노래해도 아무에게도 닿지 않을까 봐 두려웠다. 그 두려움은 “침묵을 삼킨 합창단”이 되어 모든 소리를 지운다. 먼저 과거의 나 둘에게 서로 다른 화음 앵커를 맡겨. 그 다음 별빛 고리가 밝아지는 박자에 맞춰 L을 짧게 눌러, 여섯 음을 순서대로 되찾자. 음을 되찾을수록 유나의 노래에 새로운 레이어가 쌓이지만, 합창단의 음표 탄막도 더 촘촘해진다.',
+    chapter: '유나 · 사라진 노래', name: '침묵을 삼킨 합창단', type: 'boss', skills: ['resonance'], objective: '여섯 음을 되찾고 20초간 불협화음을 버텨라',
+    intro: '유나는 아무리 크게 노래해도 아무에게도 닿지 않을까 봐 두려웠다. 그 두려움은 “침묵을 삼킨 합창단”이 되어 모든 소리를 지운다. 먼저 과거의 나 둘에게 서로 다른 화음 앵커를 맡겨. 그 다음 보스 바깥에 떠 있는 별빛 고리가 밝아지는 박자에 맞춰 L을 짧게 눌러, 여섯 음을 순서대로 되찾자. 마지막 음이 돌아오면 합창단은 무너지는 불협화음으로 20초간 발악한다. 그 시간을 피하면 유나의 노래가 완성된다.',
     boss: '침묵을 삼킨 합창단', bossConfig: {
-      mode: 'resonance', visual: 'choir', x: 420, y: 76, w: 120, h: 170,
+      mode: 'resonance', visual: 'choir', x: 420, y: 76, w: 120, h: 170, codaDuration: 20,
       moveBounds: { xMin: 45, xMax: 720, yMin: 86, yMax: 437 },
       memoryPads: [
         { x: 174, y: 142, w: 42, h: 42, label: '낮은 화음' },
         { x: 330, y: 346, w: 42, h: 42, label: '높은 화음' },
       ],
       resonanceGates: [
-        { x: 452, y: 116, w: 52, h: 52, label: '첫 음' },
-        { x: 532, y: 266, w: 52, h: 52, label: '두 번째 음' },
-        { x: 642, y: 390, w: 52, h: 52, label: '세 번째 음' },
-        { x: 624, y: 104, w: 52, h: 52, label: '네 번째 음' },
-        { x: 500, y: 404, w: 52, h: 52, label: '다섯 번째 음' },
-        { x: 386, y: 210, w: 52, h: 52, label: '되찾은 후렴' },
+        { x: 676, y: 104, w: 52, h: 52, label: '첫 음' },
+        { x: 690, y: 232, w: 52, h: 52, label: '두 번째 음' },
+        { x: 638, y: 386, w: 52, h: 52, label: '세 번째 음' },
+        { x: 388, y: 432, w: 52, h: 52, label: '네 번째 음' },
+        { x: 150, y: 392, w: 52, h: 52, label: '다섯 번째 음' },
+        { x: 68, y: 232, w: 52, h: 52, label: '되찾은 후렴' },
       ],
     },
-    hint: '① 기억의 나 둘을 화음 앵커에 남기기 ② 밝아지는 고리 앞에서 L을 짧게 눌러 음 6개를 순서대로 되찾기 ③ 음을 되찾을수록 유나의 곡이 완성됩니다. 침묵 탄막은 옆으로 흘려 보내세요.',
+    hint: '① 기억의 나 둘을 화음 앵커에 남기기 ② 보스 바깥의 밝아지는 고리에서 L을 짧게 눌러 음 6개를 순서대로 되찾기 ③ 마지막에는 20초간 불협화음 음표 탄막을 피하세요.',
   },
   {
     chapter: '유나 · 사라진 노래', name: '유나의 노래가 남긴 별', type: 'puzzle', skills: ['resonance'], objective: '되찾은 노랫길을 따라 다음 꿈으로 향하라',
@@ -1063,6 +1063,10 @@ function phaseGuide() {
       : { step: 'STEP 2 / 2', text: '마지막 빛 위에서 Shift를 유지해 하린을 안심시키세요.', compact: 'Shift로 안심의 순간을 만들어라' };
   }
   if (boss.mode === 'resonance') {
+    if (boss.codaActive) {
+      const remaining = Math.max(0, boss.codaDuration - boss.codaElapsed);
+      return { step: 'FINAL CODA', text: '합창단이 무너진 불협화음을 쏟아내고 있습니다. 공격하지 말고, 20초 동안 음표 탄막을 피하세요.', compact: `불협화음 버티기 ${remaining.toFixed(1)}초` };
+    }
     return boss.activePads < boss.memoryPads.length
       ? { step: 'STEP 1 / 2', text: '두 기억의 나를 화음 앵커에 남기세요.', compact: `화음 앵커 ${boss.activePads} / ${boss.memoryPads.length}` }
       : { step: 'STEP 2 / 2', text: '별빛 고리가 밝아지는 박자에 맞춰 L을 짧게 한 번씩 눌러, 음을 순서대로 되찾으세요.', compact: `박자 탭 · 음 ${boss.resonanceProgress} / ${boss.resonanceGates.length}` };
@@ -1612,6 +1616,7 @@ function setupBoss(name, config = {}) {
     distortedMemoryPads: (config.distortedMemoryPads || []).map((pad) => ({ ...pad })),
     decoyPads: (config.decoyPads || []).map((pad) => ({ ...pad })), windGates: (config.windGates || []).map((gate) => ({ ...gate })), chaseProgress: 0, courageDeadline: 0,
     resonanceGates: (config.resonanceGates || []).map((gate) => ({ ...gate })), resonanceProgress: 0, lastRhythmPulse: null,
+    codaDuration: Number(config.codaDuration) || 0, codaElapsed: 0, codaActive: false,
     mirrorGates: (config.mirrorGates || []).map((gate) => ({ ...gate })), fakeMirrorGates: (config.fakeMirrorGates || []).map((gate) => ({ ...gate })), mirrorProgress: 0, falseMirrorCooldown: 0,
     truthTargets: (config.truthTargets || []).map((target) => ({
       ...target,
@@ -2046,7 +2051,7 @@ function launchNightmareShot(origin, angle, options = {}) {
   game.nightmareShots.push({
     x: origin.x, y: origin.y, r: options.r || 10,
     vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
-    kind: options.kind || 'nightmare', decoyShot: Boolean(options.decoyShot),
+    angle, kind: options.kind || 'nightmare', decoyShot: Boolean(options.decoyShot),
   });
 }
 
@@ -2075,7 +2080,7 @@ function finalBossPhase(b) {
 function nextBossAttackDelay(b) {
   if (b.mode === 'final') return b.phase === 3 ? 99 : b.phase === 2 ? .68 : .82;
   if (b.mode === 'mirror') return .94;
-  if (b.mode === 'resonance') return .92;
+  if (b.mode === 'resonance') return b.codaActive ? .48 : .92;
   if (b.mode === 'chase') return .88;
   return 1.05;
 }
@@ -2101,9 +2106,17 @@ function spawnNightmarePattern() {
   }
 
   if (b.mode === 'resonance') {
-    if (attackNumber % 4 === 0) launchNightmareRing(origin, 8, { speed: 220, r: 9, kind: 'note', offset: game.elapsed * .7 });
-    else if (attackNumber % 4 === 3) launchNightmareFan(origin, p, 5, .72, { speed: 280, r: 9, kind: 'note' });
-    else launchNightmareFan(origin, p, 3, .52, { speed: 265, r: 10, kind: 'note' });
+    if (b.codaActive) {
+      // 마지막 20초는 기존의 박자 맞추기와 전혀 다른, 불규칙한 불협화음 생존 패턴이다.
+      if (attackNumber % 3 === 0) launchNightmareRing(origin, 12, { speed: 236, r: 10, kind: 'dissonant-note', offset: game.elapsed * 1.45 });
+      else if (attackNumber % 3 === 1) launchNightmareFan(origin, p, 7, .98, { speed: 315, r: 10, kind: 'dissonant-note' });
+      else {
+        launchNightmareRing(origin, 7, { speed: 190, r: 9, kind: 'dissonant-note', offset: game.elapsed * .48 });
+        launchNightmareFan(origin, p, 3, .34, { speed: 340, r: 9, kind: 'dissonant-note' });
+      }
+    } else if (attackNumber % 4 === 0) launchNightmareRing(origin, 8, { speed: 220, r: 9, kind: 'dissonant-note', offset: game.elapsed * .7 });
+    else if (attackNumber % 4 === 3) launchNightmareFan(origin, p, 5, .72, { speed: 280, r: 9, kind: 'dissonant-note' });
+    else launchNightmareFan(origin, p, 3, .52, { speed: 265, r: 10, kind: 'dissonant-note' });
     return;
   }
 
@@ -2471,12 +2484,22 @@ function updateBoss(dt) {
   }
   if (b.mode === 'resonance') {
     b.activePads = activeMemoryPads(b.memoryPads);
-    b.phase = Math.min(3, b.resonanceProgress + 1);
+    b.phase = b.codaActive ? 3 : Math.min(3, b.resonanceProgress + 1);
     updateYunaBossMusic(b);
-    if (b.activePads >= b.memoryPads.length) {
+    if (b.codaActive) {
+      if (!frozen) b.codaElapsed = Math.min(b.codaDuration, b.codaElapsed + dt);
+      if (b.codaElapsed >= b.codaDuration) resolveBoss(b, '불협화음이 끝나고, 유나의 노래가 꿈 전체에 울려 퍼집니다.');
+    } else if (b.activePads >= b.memoryPads.length) {
       updateResonanceBassCue(b);
       updateResonanceGates(b, techniques);
-      if (b.resonanceProgress >= b.resonanceGates.length) resolveBoss(b, '침묵이 갈라지고 유나의 노래가 꿈 전체에 울려 퍼집니다.');
+      if (b.resonanceProgress >= b.resonanceGates.length) {
+        b.codaActive = true;
+        b.codaElapsed = 0;
+        b.flash = .6;
+        game.nightmareShots = [];
+        game.nextAttack = .3;
+        say('마지막 음이 돌아왔습니다. 합창단의 불협화음을 20초 동안 피하세요!');
+      }
     }
     return;
   }
@@ -2764,6 +2787,10 @@ function updateHud() {
     } else if (game.boss.mode === 'resonance' && game.boss.activePads < game.boss.memoryPads.length) {
       bossFill.style.width = `${game.boss.activePads / Math.max(1, game.boss.memoryPads.length) * 100}%`;
       bossHealthEl.textContent = `화음 앵커 ${game.boss.activePads} / ${game.boss.memoryPads.length}`;
+    } else if (game.boss.mode === 'resonance' && game.boss.codaActive) {
+      const remaining = Math.max(0, game.boss.codaDuration - game.boss.codaElapsed);
+      bossFill.style.width = `${game.boss.codaElapsed / Math.max(1, game.boss.codaDuration) * 100}%`;
+      bossHealthEl.textContent = `불협화음 버티기 ${remaining.toFixed(1)}초`;
     } else if (game.boss.mode === 'resonance') {
       bossFill.style.width = `${game.boss.resonanceProgress / Math.max(1, game.boss.resonanceGates.length) * 100}%`;
       bossHealthEl.textContent = `되찾은 음 ${game.boss.resonanceProgress} / ${game.boss.resonanceGates.length}`;
@@ -2833,7 +2860,9 @@ function updateMemoryLoopUI() {
     } else if (boss.mode === 'resonance') {
       memoryStatus.textContent = active < boss.memoryPads.length
         ? `화음 앵커 ${active} / ${boss.memoryPads.length} · 두 기억의 나를 앵커에 남기세요.`
-        : `되찾은 음 ${boss.resonanceProgress} / ${boss.resonanceGates.length} · ${resonanceBeat(boss).open ? '지금은 별빛 박자입니다. L을 짧게 한 번 누르세요.' : '별빛 고리가 밝아질 때까지 다음 음 앞에서 기다리세요.'}`;
+        : boss.codaActive
+          ? `불협화음 버티기 ${Math.max(0, boss.codaDuration - boss.codaElapsed).toFixed(1)}초 · 공격하지 말고, 깨진 음표 탄막 사이를 피하세요.`
+          : `되찾은 음 ${boss.resonanceProgress} / ${boss.resonanceGates.length} · ${resonanceBeat(boss).open ? '지금은 별빛 박자입니다. L을 짧게 한 번 누르세요.' : '별빛 고리가 밝아질 때까지 다음 음 앞에서 기다리세요.'}`;
     } else if (boss.mode === 'chase' && boss.echoHits < boss.requiredEchoHits) {
       memoryStatus.textContent = `바람 유인 ${boss.echoHits} / ${boss.requiredEchoHits} · 두 기억 미끼를 출발 깃발에 남기고, 돌풍이 한 명을 따라간 뒤 다른 기억으로 교대하게 하세요.`;
     } else if (boss.mode === 'chase') {
@@ -3931,6 +3960,27 @@ function drawYunaSilentChoirSprite(b) {
   return true;
 }
 
+function drawDissonantNoteShot(shot) {
+  const size = Math.max(.75, shot.r / 10);
+  const drift = Math.sin(game.elapsed * 12 + shot.x * .03) * .16;
+  const color = frozenTime() ? '#9e9ab5' : '#cfa2ff';
+  ctx.save();
+  ctx.translate(shot.x, shot.y);
+  ctx.rotate((shot.angle || Math.atan2(shot.vy, shot.vx)) * .16 + drift);
+  ctx.scale(size, size);
+  ctx.shadowBlur = 16; ctx.shadowColor = '#b8ffe7';
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.ellipse(-3, 5, 7, 4.6, -.34, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#83f7d2';
+  ctx.beginPath(); ctx.ellipse(4, 2, 4.5, 3.2, .38, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#e9d2ff'; ctx.fillRect(2, -17, 3, 20);
+  ctx.strokeStyle = '#a8ffe2'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(5, -17); ctx.lineTo(13, -12); ctx.lineTo(7, -8); ctx.lineTo(15, -3); ctx.stroke();
+  ctx.strokeStyle = 'rgba(17, 20, 59, .9)'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(-9, -2); ctx.lineTo(8, 8); ctx.moveTo(-6, 9); ctx.lineTo(10, -4); ctx.stroke();
+  ctx.restore();
+}
+
 function drawBoss() {
   ensureBossStage();
   const b = game.boss;
@@ -3973,17 +4023,23 @@ function drawBoss() {
     b.windGates.forEach((gate, index) => drawWindGate(gate, index, windGatesUnlocked && index === b.chaseProgress, index < b.chaseProgress, windGatesUnlocked));
   }
   if (b.mode === 'resonance') {
-    const beat = resonanceBeat(b);
-    const beatOpen = beat.open;
-    const resonanceHeld = activeTechniques().resonance;
-    const heartbeat = resonanceHeartbeat(beat);
-    b.resonanceGates.forEach((gate, index) => {
-      const current = index === b.resonanceProgress;
-      const revealed = beatOpen && (current || resonanceHeld);
-      drawDreamGate(gate, current, index < b.resonanceProgress, 'resonance', revealed, current ? heartbeat : 0);
-    });
-    ctx.save(); ctx.fillStyle = beatOpen ? '#effff8' : '#92aea9'; ctx.font = '800 10px ui-monospace, monospace'; ctx.textAlign = 'center';
-    ctx.fillText(beatOpen ? 'BEAT OPEN · TAP L NOW' : 'LISTEN · WAIT FOR THE LIGHT', W / 2, 54); ctx.restore();
+    if (b.codaActive) {
+      const remaining = Math.max(0, b.codaDuration - b.codaElapsed);
+      ctx.save(); ctx.fillStyle = '#ffd0ff'; ctx.shadowBlur = 10; ctx.shadowColor = '#c7a3ff'; ctx.font = '900 11px ui-monospace, monospace'; ctx.textAlign = 'center';
+      ctx.fillText(`FINAL CODA · DODGE THE DISSONANCE · ${remaining.toFixed(1)}s`, W / 2, 54); ctx.restore();
+    } else {
+      const beat = resonanceBeat(b);
+      const beatOpen = beat.open;
+      const resonanceHeld = activeTechniques().resonance;
+      const heartbeat = resonanceHeartbeat(beat);
+      b.resonanceGates.forEach((gate, index) => {
+        const current = index === b.resonanceProgress;
+        const revealed = beatOpen && (current || resonanceHeld);
+        drawDreamGate(gate, current, index < b.resonanceProgress, 'resonance', revealed, current ? heartbeat : 0);
+      });
+      ctx.save(); ctx.fillStyle = beatOpen ? '#effff8' : '#92aea9'; ctx.font = '800 10px ui-monospace, monospace'; ctx.textAlign = 'center';
+      ctx.fillText(beatOpen ? 'BEAT OPEN · TAP L NOW' : 'LISTEN · WAIT FOR THE LIGHT', W / 2, 54); ctx.restore();
+    }
   }
   if (b.mode === 'mirror') {
     const photoReady = activeMemoryPads(b.memoryPads) >= b.memoryPads.length;
@@ -4018,9 +4074,13 @@ function drawBoss() {
   for (const shot of game.dreamShots) { ctx.save(); ctx.shadowBlur = 14; ctx.shadowColor = '#ffe57d'; ctx.fillStyle = '#fff1a4'; ctx.fillRect(shot.x, shot.y, shot.w, shot.h); ctx.restore(); }
   for (const shot of game.nightmareShots) {
     const shotColor = shot.kind === 'wind' ? '#a6efff'
-      : shot.kind === 'note' ? '#c7a3ff'
+      : shot.kind === 'note' || shot.kind === 'dissonant-note' ? '#c7a3ff'
         : shot.kind === 'shard' ? '#ffb5df'
           : shot.kind === 'memory' ? '#7be9ff' : '#ff5a83';
+    if (shot.kind === 'dissonant-note') {
+      drawDissonantNoteShot(shot);
+      continue;
+    }
     ctx.save(); ctx.shadowBlur = 16; ctx.shadowColor = shotColor; ctx.fillStyle = frozenTime() ? '#9e9ab5' : shotColor;
     ctx.beginPath(); ctx.arc(shot.x, shot.y, shot.r, 0, Math.PI * 2); ctx.fill(); ctx.restore();
   }
