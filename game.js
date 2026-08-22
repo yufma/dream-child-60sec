@@ -17,6 +17,15 @@ const HARIN_BACKGROUND_PATHS = Object.freeze(
     ...Array.from({ length: 4 }, (_, index) => `assets/backgrounds/harin-stage-${String(index + 3).padStart(2, '0')}.png`),
   ],
 );
+const HARIN_STAGE_MUSIC_PATHS = Object.freeze([
+  'assets/audio/harin-stage-themes-v12-flute-test/stage-01-harin-theme-loop-soft-flute-v12.wav',
+  'assets/audio/harin-stage-themes-v12-flute-test/stage-02-remembered-theme-loop-soft-flute-v12.wav',
+  'assets/audio/harin-stage-themes-v11/stage-03-fractured-theme-332-loop-v11.wav',
+  'assets/audio/harin-stage-themes-v12-flute-test/stage-04-carousel-theme-waltz-loop-soft-flute-v12.wav',
+  'assets/audio/harin-stage-themes-v11/stage-05-darkened-harin-theme-60s-v11.wav',
+  'assets/audio/harin-stage-themes-v12-flute-test/stage-06-resolved-harin-theme-loop-soft-flute-v12.wav',
+]);
+const CHARACTER_BGM_TRIM = Object.freeze({ harin: .88, yuna: 1.15, haneul: 1 });
 const YUNA_BACKGROUND_PATHS = Object.freeze(
   [
     'assets/backgrounds/yuna-stage-07.png',
@@ -129,7 +138,10 @@ const imaginationFill = document.querySelector('#imagination-fill');
 const imaginationStatus = document.querySelector('#imagination-status');
 const gameHud = document.querySelector('.hud');
 const bossHud = document.querySelector('#boss-hud');
+const bgmControls = document.querySelector('#bgm-controls');
 const bgmToggleButton = document.querySelector('#bgm-toggle');
+const bgmVolumeSlider = document.querySelector('#bgm-volume');
+const bgmVolumeValue = document.querySelector('#bgm-volume-value');
 const bossNameEl = document.querySelector('#boss-name');
 const bossFill = document.querySelector('#boss-fill');
 const bossHealthEl = document.querySelector('#boss-health');
@@ -519,6 +531,8 @@ const ENDING_CINEMATIC_SCENES = [
 ];
 
 const PROGRESS_STORAGE_KEY = 'dream-child-campaign-progress-v2';
+const BGM_VOLUME_STORAGE_KEY = 'dream-child-bgm-volume-v2';
+const LEGACY_BGM_VOLUME_STORAGE_KEY = 'dream-child-bgm-volume-v1';
 const BOSS_MEMORY_COLLAPSE_SECONDS = 60;
 const campaign = loadCampaignProgress();
 
@@ -527,7 +541,18 @@ const pressed = new Set();
 let toastTimer = 0;
 let lastFrame = 0;
 let game = {};
-const stageBgm = { enabled: true, key: null, audio: null, mix: null };
+const stageBgm = {
+  enabled: true,
+  key: null,
+  family: null,
+  audio: null,
+  mix: null,
+  masterVolume: loadBgmMasterVolume(),
+  targetVolume: .65,
+  fadeFrame: 0,
+  frozen: false,
+  playBlocked: false,
+};
 let gameSfxContext = null;
 const yunaLoopStation = { active: false, stageIndex: -1, key: null, level: 0, maxLevel: 0, milestones: new Set() };
 const YUNA_LOOP_LAYER_NAMES = Object.freeze(['저음 레이어', '리듬 레이어', '멜로디 레이어', '합창 잔향']);
@@ -636,49 +661,166 @@ function clearStageIntroTimer() {
 }
 
 function currentStage() { return STAGES[game.stageIndex]; }
+
+function loadBgmMasterVolume() {
+  try {
+    const stored = localStorage.getItem(BGM_VOLUME_STORAGE_KEY);
+    if (stored === null) {
+      const legacy = Number(localStorage.getItem(LEGACY_BGM_VOLUME_STORAGE_KEY));
+      return Number.isFinite(legacy) && legacy > 0 && legacy <= 1 ? legacy : .65;
+    }
+    const saved = Number(stored);
+    if (Number.isFinite(saved) && saved >= 0 && saved <= 1) return saved;
+  } catch {
+    // 저장소가 제한된 브라우저에서는 기본 음량으로 계속됩니다.
+  }
+  return .65;
+}
+
+function saveBgmMasterVolume() {
+  try {
+    localStorage.setItem(BGM_VOLUME_STORAGE_KEY, stageBgm.masterVolume.toFixed(2));
+  } catch {
+    // 저장 실패는 현재 세션의 음량 조절을 막지 않습니다.
+  }
+}
+
 function stageBgmKey(stage = currentStage()) {
-  if (!(stage?.chapter || '').includes('유나')) return null;
+  const chapter = stage?.chapter || '';
+  if (chapter.includes('하린') && HARIN_STAGE_MUSIC_PATHS[game.stageIndex]) return `harin-${game.stageIndex + 1}`;
+  if (!chapter.includes('유나')) return null;
   if (stage.type === 'boss') return 'resonance';
   return ({ 7: 'tide', 8: 'glass', 9: 'silent', 10: 'glass', 12: 'tide' })[game.stageIndex + 1] || 'tide';
 }
 
+function stageBgmConfig(key) {
+  if (key?.startsWith('harin-')) {
+    const stageNumber = Number(key.slice('harin-'.length));
+    const source = HARIN_STAGE_MUSIC_PATHS[stageNumber - 1];
+    if (!source) return null;
+    return { family: 'harin', source, volume: CHARACTER_BGM_TRIM.harin, loop: stageNumber !== 5 };
+  }
+  const source = YUNA_BGM_PATHS[key];
+  return source ? { family: 'yuna', source, volume: CHARACTER_BGM_TRIM.yuna, loop: true } : null;
+}
+
+function updateBgmVolumeControl() {
+  if (!bgmVolumeSlider || !bgmVolumeValue) return;
+  const percent = Math.round(stageBgm.masterVolume * 100);
+  bgmVolumeSlider.value = String(percent);
+  bgmVolumeSlider.setAttribute('aria-valuetext', `${percent}%`);
+  bgmVolumeValue.value = `${percent}%`;
+  bgmVolumeValue.textContent = `${percent}%`;
+}
+
+function setBgmMasterVolume(value, persist = false) {
+  stageBgm.masterVolume = Math.max(0, Math.min(1, Number(value) || 0));
+  const config = stageBgmConfig(stageBgm.key);
+  if (config) stageBgm.targetVolume = Math.min(1, config.volume * stageBgm.masterVolume);
+  if (stageBgm.audio) {
+    cancelStageBgmFade();
+    stageBgm.audio.volume = stageBgm.enabled ? stageBgm.targetVolume : 0;
+    if (stageBgm.enabled && stageBgm.audio.paused && !stageBgm.frozen && game.phase === 'playing') playStageBgm();
+  }
+  updateBgmVolumeControl();
+  if (persist) saveBgmMasterVolume();
+}
+
 function updateBgmToggle(key = stageBgm.key) {
   const visible = Boolean(key);
-  bgmToggleButton.classList.toggle('hidden', !visible);
+  if (bgmControls) bgmControls.classList.toggle('hidden', !visible);
+  else bgmToggleButton.classList.toggle('hidden', !visible);
   bgmToggleButton.classList.toggle('off', !stageBgm.enabled);
-  bgmToggleButton.innerHTML = `BGM <span>${stageBgm.enabled ? 'ON' : 'OFF'}</span>`;
-  bgmToggleButton.setAttribute('aria-label', stageBgm.enabled ? '배경음악 끄기' : '배경음악 켜기');
+  const stateLabel = !stageBgm.enabled ? 'OFF' : stageBgm.playBlocked ? 'RETRY' : 'ON';
+  bgmToggleButton.innerHTML = `BGM <span>${stateLabel}</span>`;
+  bgmToggleButton.setAttribute('aria-label', stageBgm.playBlocked ? '배경음악 재생 다시 시도' : stageBgm.enabled ? '배경음악 끄기' : '배경음악 켜기');
+}
+
+function cancelStageBgmFade() {
+  if (!stageBgm.fadeFrame) return;
+  cancelAnimationFrame(stageBgm.fadeFrame);
+  stageBgm.fadeFrame = 0;
+}
+
+function fadeStageBgm(targetVolume, duration = 260, onComplete = null) {
+  const audio = stageBgm.audio;
+  if (!audio) return;
+  cancelStageBgmFade();
+  const initialVolume = audio.volume;
+  const startedAt = performance.now();
+  const tick = (now) => {
+    if (stageBgm.audio !== audio) return;
+    const progress = Math.max(0, Math.min(1, (now - startedAt) / Math.max(1, duration)));
+    audio.volume = Math.max(0, Math.min(1, initialVolume + (targetVolume - initialVolume) * progress));
+    if (progress < 1) stageBgm.fadeFrame = requestAnimationFrame(tick);
+    else {
+      stageBgm.fadeFrame = 0;
+      if (onComplete) onComplete(audio);
+    }
+  };
+  stageBgm.fadeFrame = requestAnimationFrame(tick);
 }
 
 function playStageBgm() {
-  if (!stageBgm.enabled || !stageBgm.audio) return;
-  const playback = stageBgm.audio.play();
-  if (playback?.catch) playback.catch(() => {});
+  if (!stageBgm.enabled || !stageBgm.audio || stageBgm.frozen) return;
+  const audio = stageBgm.audio;
+  audio.muted = false;
+  audio.defaultMuted = false;
+  const fadeIn = () => {
+    if (stageBgm.audio !== audio) return;
+    stageBgm.playBlocked = false;
+    updateBgmToggle(stageBgm.key);
+    fadeStageBgm(stageBgm.targetVolume, 260);
+  };
+  const markBlocked = () => {
+    if (stageBgm.audio !== audio) return;
+    stageBgm.playBlocked = true;
+    updateBgmToggle(stageBgm.key);
+  };
+  const playback = audio.play();
+  if (playback?.then) playback.then(fadeIn).catch(markBlocked);
+  else fadeIn();
 }
 
 function startStageBgm(stage = currentStage()) {
   const key = stageBgmKey(stage);
-  if (!key) {
+  const config = stageBgmConfig(key);
+  if (!key || !config) {
     stopStageBgm();
     return;
   }
   if (stageBgm.key !== key || !stageBgm.audio) {
+    cancelStageBgmFade();
+    stopYunaLoopStation();
     if (stageBgm.audio) stageBgm.audio.pause();
     stageBgm.key = key;
-    stageBgm.audio = new Audio(YUNA_BGM_PATHS[key]);
+    stageBgm.family = config.family;
+    stageBgm.audio = new Audio(config.source);
     stageBgm.mix = null;
-    stageBgm.audio.loop = true;
+    stageBgm.audio.loop = config.loop;
     stageBgm.audio.preload = 'auto';
-    stageBgm.audio.volume = key === 'resonance' ? .27 : .2;
-  } else stageBgm.audio.currentTime = 0;
+  } else {
+    cancelStageBgmFade();
+    stageBgm.audio.currentTime = 0;
+  }
+  stageBgm.targetVolume = Math.min(1, config.volume * stageBgm.masterVolume);
+  stageBgm.audio.volume = 0;
+  stageBgm.frozen = false;
+  stageBgm.playBlocked = false;
   updateBgmToggle(key);
-  setupYunaLoopMix();
-  startYunaLoopStation(stage);
+  if (config.family === 'yuna') {
+    setupYunaLoopMix();
+    startYunaLoopStation(stage);
+  } else stopYunaLoopStation();
   playStageBgm();
 }
 
 function pauseStageBgm() {
-  if (stageBgm.audio) stageBgm.audio.pause();
+  const audio = stageBgm.audio;
+  if (!audio || audio.paused) return;
+  fadeStageBgm(0, 180, (finishedAudio) => {
+    if (stageBgm.audio === finishedAudio) finishedAudio.pause();
+  });
 }
 
 function resumeStageBgm() {
@@ -686,15 +828,41 @@ function resumeStageBgm() {
 }
 
 function stopStageBgm() {
+  cancelStageBgmFade();
   stopYunaLoopStation();
   if (stageBgm.audio) {
     stageBgm.audio.pause();
     stageBgm.audio.currentTime = 0;
+    stageBgm.audio.volume = 0;
   }
   stageBgm.key = null;
+  stageBgm.family = null;
   stageBgm.audio = null;
   stageBgm.mix = null;
+  stageBgm.frozen = false;
+  stageBgm.playBlocked = false;
   updateBgmToggle(null);
+}
+
+function primeGameAudio() {
+  primeGameSfx();
+  if (game.phase === 'playing' && stageBgm.enabled && stageBgm.audio?.paused && !stageBgm.frozen) playStageBgm();
+}
+
+function syncBossBgmTimeStop() {
+  if (game.stageIndex !== 4 || stageBgm.key !== 'harin-5') {
+    stageBgm.frozen = false;
+    return;
+  }
+  const shouldFreeze = game.phase === 'playing' && frozenTime();
+  if (shouldFreeze && !stageBgm.frozen) {
+    cancelStageBgmFade();
+    if (stageBgm.audio) stageBgm.audio.pause();
+    stageBgm.frozen = true;
+  } else if (!shouldFreeze && stageBgm.frozen) {
+    stageBgm.frozen = false;
+    playStageBgm();
+  }
 }
 
 function primeGameSfx() {
@@ -919,43 +1087,11 @@ function stopYunaLoopStation() {
   yunaLoopStation.milestones = new Set();
 }
 
-// 활성화 음은 같은 원곡을 저음·리듬·멜로디·잔향으로 분리한 레이어다.
-// 조성이 다른 합성음을 별도로 얹지 않아 어떤 유나 트랙에서도 어긋나지 않는다.
+// 유나의 기본 BGM은 브라우저의 미디어 출력으로 직접 재생한다.
+// Web Audio가 일시 정지된 환경에서도 원곡이 무음으로 빠지지 않게 한다.
 function setupYunaLoopMix() {
   if (!stageBgm.audio || !stageBgm.key || stageBgm.mix) return;
-  const audio = primeGameSfx();
-  if (!audio) return;
-  try {
-    const source = audio.createMediaElementSource(stageBgm.audio);
-    const dry = audio.createGain();
-    const bassFilter = audio.createBiquadFilter();
-    const bassGain = audio.createGain();
-    const rhythmFilter = audio.createBiquadFilter();
-    const rhythmGain = audio.createGain();
-    const melodyFilter = audio.createBiquadFilter();
-    const melodyGain = audio.createGain();
-    const roomFilter = audio.createBiquadFilter();
-    const roomDelay = audio.createDelay(.6);
-    const roomFeedback = audio.createGain();
-    const roomGain = audio.createGain();
-    bassFilter.type = 'lowpass'; bassFilter.frequency.value = 210; bassFilter.Q.value = .7;
-    rhythmFilter.type = 'bandpass'; rhythmFilter.frequency.value = 980; rhythmFilter.Q.value = .52;
-    melodyFilter.type = 'highpass'; melodyFilter.frequency.value = 2200; melodyFilter.Q.value = .45;
-    roomFilter.type = 'bandpass'; roomFilter.frequency.value = 1450; roomFilter.Q.value = .34;
-    roomDelay.delayTime.value = .18; roomFeedback.gain.value = .13;
-    dry.gain.value = 1;
-    bassGain.gain.value = 0; rhythmGain.gain.value = 0; melodyGain.gain.value = 0; roomGain.gain.value = 0;
-    source.connect(dry).connect(audio.destination);
-    source.connect(bassFilter).connect(bassGain).connect(audio.destination);
-    source.connect(rhythmFilter).connect(rhythmGain).connect(audio.destination);
-    source.connect(melodyFilter).connect(melodyGain).connect(audio.destination);
-    source.connect(roomFilter).connect(roomDelay); roomDelay.connect(roomGain).connect(audio.destination);
-    roomDelay.connect(roomFeedback).connect(roomDelay);
-    stageBgm.mix = { audio, dry, bassGain, rhythmGain, melodyGain, roomGain };
-  } catch {
-    // 지원하지 않는 브라우저에서는 원곡만 자연스럽게 재생한다.
-    stageBgm.mix = { unavailable: true };
-  }
+  stageBgm.mix = { unavailable: true, direct: true };
 }
 
 function rampYunaMixGain(gain, value) {
@@ -1127,6 +1263,7 @@ function renderStoryLine() {
 
 function showStoryBeat(beat) {
   clearStageIntroTimer();
+  pauseStageBgm();
   game.phase = 'story';
   game.storyBeat = beat;
   game.storyLineIndex = 0;
@@ -4114,6 +4251,7 @@ function update(dt) {
     return;
   }
   if (game.phase !== 'playing') return;
+  syncBossBgmTimeStop();
   game.rewindExpressionTimer = Math.max(0, (game.rewindExpressionTimer || 0) - dt);
   game.stageRealElapsed = (game.stageRealElapsed || 0) + dt;
   if (currentStage().type === 'boss') {
@@ -4146,15 +4284,27 @@ startButton.addEventListener('click', () => {
 canvas.addEventListener('click', () => {
   if (game.phase === 'ending-cinematic') advanceEndingCinematic();
 });
-window.addEventListener('pointerdown', primeGameSfx, { passive: true });
+window.addEventListener('pointerdown', primeGameAudio, { passive: true });
 resumeButton.addEventListener('click', closeStageMenu);
 routeModeButton.addEventListener('click', toggleRouteMode);
 disconnectSkipButton.addEventListener('click', skipDreamDisconnect);
 bgmToggleButton.addEventListener('click', () => {
+  if (stageBgm.enabled && stageBgm.playBlocked) {
+    stageBgm.playBlocked = false;
+    resumeStageBgm();
+    updateBgmToggle(stageBgmKey() || stageBgm.key);
+    return;
+  }
   stageBgm.enabled = !stageBgm.enabled;
   if (stageBgm.enabled) resumeStageBgm();
   else pauseStageBgm();
   updateBgmToggle(stageBgmKey() || stageBgm.key);
+});
+bgmVolumeSlider?.addEventListener('input', () => {
+  setBgmMasterVolume(Number(bgmVolumeSlider.value) / 100);
+});
+bgmVolumeSlider?.addEventListener('change', () => {
+  setBgmMasterVolume(Number(bgmVolumeSlider.value) / 100, true);
 });
 restartButton.addEventListener('click', () => {
   if (game.phase === 'failed') startStage();
@@ -4187,7 +4337,7 @@ function handleConfirmInput() {
 }
 
 window.addEventListener('keydown', (event) => {
-  primeGameSfx();
+  primeGameAudio();
   if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'Enter', 'KeyF', 'KeyI'].includes(event.code)) event.preventDefault();
   if (!event.repeat && (event.code === 'Enter' || event.code === 'KeyF') && handleConfirmInput()) {
     event.preventDefault();
@@ -4216,5 +4366,6 @@ window.addEventListener('blur', () => {
   updateHud();
 });
 
+updateBgmVolumeControl();
 newGame();
 requestAnimationFrame(loop);
