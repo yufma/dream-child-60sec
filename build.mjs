@@ -20,7 +20,7 @@ await rm(output, { recursive: true, force: true });
 await mkdir(join(output, 'server'), { recursive: true });
 await mkdir(client, { recursive: true });
 
-for (const file of ['index.html', 'styles.css', 'game.js', 'Char.png']) {
+for (const file of ['index.html', 'styles.css', 'game.js', 'Char.png', 'og.png']) {
   const source = join(root, file);
   if (await exists(source)) await cp(source, join(client, file));
 }
