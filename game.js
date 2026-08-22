@@ -17,6 +17,26 @@ const HARIN_BACKGROUND_PATHS = Object.freeze(
     ...Array.from({ length: 4 }, (_, index) => `assets/backgrounds/harin-stage-${String(index + 3).padStart(2, '0')}.png`),
   ],
 );
+const YUNA_BACKGROUND_PATHS = Object.freeze(
+  [
+    'assets/backgrounds/yuna-stage-07.png',
+    'assets/backgrounds/yuna-stage-08.png',
+    'assets/backgrounds/yuna-stage-09-v2.png',
+    'assets/backgrounds/yuna-stage-10.png',
+    'assets/backgrounds/yuna-stage-11.png',
+    'assets/backgrounds/yuna-stage-12.png',
+  ],
+);
+const HANEUL_BACKGROUND_PATHS = Object.freeze(
+  [
+    'assets/backgrounds/haneul-stage-13.png',
+    'assets/backgrounds/haneul-stage-14.png',
+    'assets/backgrounds/haneul-stage-15.png',
+    'assets/backgrounds/haneul-stage-16-v2.png',
+    'assets/backgrounds/haneul-stage-17.png',
+    'assets/backgrounds/haneul-stage-18.png',
+  ],
+);
 const HARIN_STAGE_02_GATE_PATHS = Object.freeze({
   blocked: 'assets/backgrounds/harin-stage-02-wall-ruined-structural-side10-clean-dark-outline-alpha-v15.png',
   open: 'assets/backgrounds/harin-stage-02-wall-restored-side10-clean-dark-outline-alpha-v15.png',
@@ -45,6 +65,8 @@ const playerSprites = Object.freeze({
   jump: PLAYER_JUMP_SPRITE_PATHS.map(loadSprite),
 });
 const harinBackgrounds = Object.freeze(HARIN_BACKGROUND_PATHS.map(loadSprite));
+const yunaBackgrounds = Object.freeze(YUNA_BACKGROUND_PATHS.map(loadSprite));
+const haneulBackgrounds = Object.freeze(HANEUL_BACKGROUND_PATHS.map(loadSprite));
 const harinStage02GateSprites = Object.freeze({
   blocked: loadSprite(HARIN_STAGE_02_GATE_PATHS.blocked),
   open: loadSprite(HARIN_STAGE_02_GATE_PATHS.open),
@@ -2292,6 +2314,42 @@ function drawHarinPixelBackground(stageIndex, boss) {
   return true;
 }
 
+function drawYunaPixelBackground(stageIndex, boss) {
+  const yunaStageIndex = stageIndex - 6;
+  const image = yunaBackgrounds[yunaStageIndex];
+  if (!image?.complete || image.naturalWidth === 0) return false;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#061a2d';
+  ctx.fillRect(0, 0, W, H);
+  drawCoverImage(image);
+  const shade = boss ? .12 : yunaStageIndex === 5 ? .02 : .06;
+  ctx.fillStyle = `rgba(3, 13, 31, ${shade})`;
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = 'rgba(2, 10, 25, .08)';
+  ctx.fillRect(0, Math.round(H * .62), W, Math.round(H * .38));
+  ctx.restore();
+  return true;
+}
+
+function drawHaneulPixelBackground(stageIndex, boss) {
+  const haneulStageIndex = stageIndex - 12;
+  const image = haneulBackgrounds[haneulStageIndex];
+  if (!image?.complete || image.naturalWidth === 0) return false;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#071a3b';
+  ctx.fillRect(0, 0, W, H);
+  drawCoverImage(image);
+  const shade = boss ? .14 : haneulStageIndex === 5 ? .04 : .08;
+  ctx.fillStyle = `rgba(3, 12, 35, ${shade})`;
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = 'rgba(2, 9, 28, .07)';
+  ctx.fillRect(0, Math.round(H * .62), W, Math.round(H * .38));
+  ctx.restore();
+  return true;
+}
+
 function getHarinStage02GateSprite(gateOpen) {
   const state = gateOpen ? 'open' : 'blocked';
   const image = harinStage02GateSprites[state];
@@ -2322,7 +2380,9 @@ function drawHarinStage02GateLayer(gateSprite, structure, layer) {
 
 function drawBackground(boss = false, bossLabel = '') {
   const theme = dreamTheme();
-  const bitmapDrawn = theme.id === 'harin' && drawHarinPixelBackground(game.stageIndex, boss);
+  const bitmapDrawn = (theme.id === 'harin' && drawHarinPixelBackground(game.stageIndex, boss))
+    || (theme.id === 'yuna' && drawYunaPixelBackground(game.stageIndex, boss))
+    || (theme.id === 'haneul' && drawHaneulPixelBackground(game.stageIndex, boss));
   if (!bitmapDrawn) {
     const g = ctx.createLinearGradient(0, 0, W, H);
     g.addColorStop(0, theme.top);
@@ -2350,31 +2410,9 @@ function drawThemeAtmosphere(theme, boss) {
   if (theme.id === 'harin') {
     // 하린의 첫 여섯 스테이지는 생성된 픽셀 배경 이미지를 사용한다.
   } else if (theme.id === 'yuna') {
-    ctx.globalAlpha = .22; ctx.strokeStyle = theme.soft; ctx.lineWidth = 1;
-    for (let line = 0; line < 5; line += 1) {
-      const y = 118 + line * 12;
-      ctx.beginPath(); ctx.moveTo(38, y); ctx.bezierCurveTo(260, y - 12, 620, y + 12, 922, y); ctx.stroke();
-    }
-    ctx.globalAlpha = .55; ctx.fillStyle = theme.accent;
-    for (let i = 0; i < 9; i += 1) {
-      const x = 84 + i * 102;
-      const y = 166 + ((i * 53) % 180) + Math.sin(t * 2 + i) * 9;
-      ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill();
-      ctx.fillRect(x + 5, y - 27, 2, 27);
-      if (i % 2 === 0) ctx.fillRect(x + 7, y - 27, 14, 2);
-    }
+    // 유나의 여섯 스테이지는 생성된 악보 픽셀 배경 이미지를 사용한다.
   } else if (theme.id === 'haneul') {
-    ctx.globalAlpha = .27; ctx.strokeStyle = theme.accent; ctx.lineWidth = 2;
-    for (let i = 0; i < 5; i += 1) {
-      const y = 104 + i * 72;
-      const shift = (t * 55 + i * 130) % 280;
-      ctx.beginPath(); ctx.moveTo(-60 + shift, y); ctx.bezierCurveTo(160 + shift, y - 34, 264 + shift, y + 34, 500 + shift, y - 4); ctx.stroke();
-    }
-    ctx.globalAlpha = .18; ctx.fillStyle = '#d7f5ff';
-    [[170, 158], [610, 104], [806, 254]].forEach(([x, y], index) => {
-      const bob = Math.sin(t + index) * 4;
-      ctx.beginPath(); ctx.ellipse(x, y + bob, 46, 15, 0, 0, Math.PI * 2); ctx.ellipse(x + 36, y - 7 + bob, 30, 16, 0, 0, Math.PI * 2); ctx.fill();
-    });
+    // 하늘의 여섯 스테이지는 생성된 바람길 픽셀 배경 이미지를 사용한다.
   } else if (theme.id === 'daughter') {
     ctx.globalAlpha = .2; ctx.fillStyle = '#8cffb1'; ctx.fillRect(0, 442, W, 58);
     ctx.globalAlpha = .63;
@@ -3072,28 +3110,17 @@ function drawLayoutLandmarks() {
   if (layout === 'lantern-river') {
     // 실제 픽셀 배경의 수로와 반사를 그대로 사용해 도형 장식이 겹치지 않게 한다.
   } else if (layout === 'choir-balcony') {
-    ctx.strokeStyle = 'rgba(158, 255, 215, .25)'; ctx.lineWidth = 3;
-    [210, 348, 490, 624, 778].forEach((x) => { ctx.beginPath(); ctx.moveTo(x, 132); ctx.lineTo(x, 486); ctx.stroke(); });
-    ctx.fillStyle = 'rgba(199, 163, 255, .15)'; ctx.fillRect(26, 246, 870, 7); ctx.fillRect(26, 272, 870, 7); ctx.fillRect(26, 298, 870, 7);
+    // 교실과 합창 발코니는 실제 픽셀 배경에 포함되어 있다.
   } else if (layout === 'harmony-spiral') {
-    ctx.strokeStyle = 'rgba(199, 163, 255, .22)'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(116, 458); ctx.bezierCurveTo(286, 242, 442, 244, 486, 330); ctx.bezierCurveTo(562, 480, 752, 180, 892, 336); ctx.stroke();
-    for (let x = 150; x < 860; x += 78) { ctx.fillStyle = 'rgba(158, 255, 215, .28)'; ctx.beginPath(); ctx.arc(x, 110 + (x * 7) % 196, 4, 0, Math.PI * 2); ctx.fill(); }
+    // 두 선율의 나선은 실제 픽셀 배경에 포함되어 있다.
   } else if (layout === 'wind-tunnel') {
-    ctx.strokeStyle = 'rgba(166, 239, 255, .22)'; ctx.lineWidth = 3;
-    for (let row = 0; row < 5; row += 1) { const y = 118 + row * 76; ctx.beginPath(); ctx.moveTo(0, y); ctx.bezierCurveTo(240, y - 54, 498, y + 54, W, y - 8); ctx.stroke(); }
+    // 위아래로 갈라지는 바람 터널은 실제 픽셀 배경에 포함되어 있다.
   } else if (layout === 'wind-cliff') {
-    ctx.fillStyle = 'rgba(5, 16, 39, .46)'; ctx.fillRect(214, 0, 556, H);
-    ctx.strokeStyle = 'rgba(166, 239, 255, .32)'; ctx.lineWidth = 2;
-    [250, 430, 610, 790].forEach((x) => { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x - 56, H); ctx.stroke(); });
-    ctx.fillStyle = 'rgba(255, 226, 126, .38)'; ctx.fillRect(284, 48, 520, 8);
+    // 여러 높이의 절벽과 역풍 기둥은 실제 픽셀 배경에 포함되어 있다.
   } else if (layout === 'signpost-maze') {
-    ctx.strokeStyle = 'rgba(166, 239, 255, .24)'; ctx.lineWidth = 2;
-    [[286, 454], [416, 374], [548, 446], [688, 322]].forEach(([x, y], index) => { ctx.save(); ctx.translate(x, y); ctx.rotate(index % 2 ? Math.PI : 0); ctx.beginPath(); ctx.moveTo(-22, -10); ctx.lineTo(17, -10); ctx.lineTo(17, -20); ctx.lineTo(35, 0); ctx.lineTo(17, 20); ctx.lineTo(17, 10); ctx.lineTo(-22, 10); ctx.closePath(); ctx.stroke(); ctx.restore(); });
+    // 되돌아가는 표지판과 지그재그 바람길은 실제 픽셀 배경에 포함되어 있다.
   } else if (layout === 'starlight-ferry') {
-    ctx.strokeStyle = 'rgba(255, 226, 126, .28)'; ctx.lineWidth = 2; ctx.setLineDash([3, 8]);
-    ctx.beginPath(); ctx.moveTo(120, 474); ctx.quadraticCurveTo(420, 282, 822, 312); ctx.stroke();
-    ctx.setLineDash([]); [310, 455, 600, 786].forEach((x, index) => { ctx.fillStyle = '#fff0a6'; ctx.globalAlpha = .25 + index * .1; ctx.beginPath(); ctx.arc(x, 170 + index * 52, 5, 0, Math.PI * 2); ctx.fill(); });
+    // 발자국 빛과 완벽한 정원으로 이어지는 전환은 실제 픽셀 배경에 포함되어 있다.
   } else if (layout === 'garden-roots') {
     ctx.strokeStyle = 'rgba(184, 255, 207, .22)'; ctx.lineWidth = 5;
     [138, 330, 514, 702].forEach((x, index) => { ctx.beginPath(); ctx.moveTo(x, 76); ctx.bezierCurveTo(x - 48, 210, x + 86, 344, x + (index % 2 ? -30 : 44), 504); ctx.stroke(); });
