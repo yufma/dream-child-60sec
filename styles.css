@@ -96,6 +96,29 @@ canvas.connection-critical { filter: blur(4px) saturate(.4) brightness(.56); }
 .overlay { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; padding: 22px; background: rgba(4, 7, 18, 0.44); backdrop-filter: blur(5px); transition: opacity 160ms ease; }
 .overlay.hidden { opacity: 0; pointer-events: none; }
 .overlay-card { max-width: 510px; padding: clamp(26px, 5vw, 48px); border: 1px solid rgba(143, 201, 255, 0.24); border-radius: 18px; background: linear-gradient(135deg, rgba(25, 29, 65, 0.94), rgba(8, 13, 31, 0.96)); box-shadow: 0 20px 64px rgba(0,0,0,.45); text-align: center; }
+.disconnect-illustration { display: none; position: relative; width: min(100%, 390px); height: 132px; margin: -6px auto 20px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--disconnect-accent, #ff83b1) 52%, transparent); border-radius: 10px; background: linear-gradient(135deg, var(--disconnect-dark, #251136), #091426 72%); image-rendering: pixelated; }
+.disconnect-illustration::before { position: absolute; inset: 12px; border: 1px dashed color-mix(in srgb, var(--disconnect-accent, #ff83b1) 44%, transparent); content: ''; }
+.disconnect-screen .disconnect-illustration { display: block; animation: disconnect-card-arrive .34s ease-out both; }
+.disconnect-noise { position: absolute; inset: 0; opacity: .42; background: repeating-linear-gradient(0deg, transparent 0 5px, rgba(235, 247, 255, .1) 5px 7px), repeating-linear-gradient(90deg, transparent 0 13px, rgba(255,255,255,.08) 13px 15px); }
+.disconnect-nightmare { position: absolute; top: 27px; left: 54px; width: 71px; height: 71px; border: 6px solid var(--disconnect-accent, #ff83b1); border-radius: 48% 52% 42% 58%; background: var(--disconnect-dark, #3d163d); box-shadow: 0 0 22px var(--disconnect-accent, #ff83b1); transform: rotate(-8deg); }
+.disconnect-nightmare i { position: absolute; top: 22px; width: 13px; height: 8px; background: #f9fcff; box-shadow: 0 0 10px #fff; }
+.disconnect-nightmare i:first-child { left: 12px; }.disconnect-nightmare i:nth-child(2) { right: 12px; }
+.disconnect-nightmare b { position: absolute; bottom: 12px; left: 17px; width: 27px; height: 7px; border-bottom: 3px solid #f9fcff; }
+.disconnect-link-machine { position: absolute; top: 27px; right: 48px; width: 70px; height: 82px; border: 4px solid #8ceeff; background: #173651; box-shadow: 0 0 18px #63eaff; }
+.disconnect-link-machine::before { position: absolute; top: 12px; left: 16px; width: 30px; height: 30px; border: 4px solid #8ceeff; border-radius: 50%; content: ''; box-shadow: 0 0 14px #8ceeff; }
+.disconnect-link-machine i { position: absolute; bottom: 9px; left: 12px; width: 38px; height: 4px; background: #8ceeff; }.disconnect-link-machine i:nth-child(2) { bottom: 19px; width: 27px; background: #ff8cae; }
+.disconnect-link-machine b { position: absolute; inset: -8px; border: 2px solid rgba(140,238,255,.52); transform: rotate(45deg); }
+.disconnect-child { position: absolute; right: 134px; bottom: 21px; width: 35px; height: 54px; border-radius: 14px 14px 5px 5px; background: #57699b; box-shadow: 0 0 18px rgba(255, 227, 124, .58); }
+.disconnect-child::before { position: absolute; top: -22px; left: 5px; width: 25px; height: 26px; border-radius: 44% 44% 38% 38%; background: #ffd2b2; content: ''; }.disconnect-child::after { position: absolute; top: -25px; left: 2px; width: 30px; height: 12px; border-radius: 50% 50% 20% 20%; background: #4c426f; content: ''; }
+.disconnect-child i { position: absolute; top: -11px; right: 1px; width: 5px; height: 8px; background: #83edff; transform: rotate(18deg); box-shadow: 0 0 8px #83edff; }.disconnect-child i:nth-child(2) { right: -8px; top: -1px; width: 3px; height: 7px; opacity: .72; }
+.disconnect-child b { position: absolute; bottom: -11px; left: 3px; width: 10px; height: 13px; background: #263a68; box-shadow: 19px 0 #263a68; }
+.disconnect-illustration p { position: absolute; z-index: 2; right: 14px; bottom: 9px; margin: 0; color: #eaf7ff; font-family: ui-monospace, monospace; font-size: .56rem; font-weight: 800; letter-spacing: .065em; text-align: right; }
+.disconnect-screen .end-card { --disconnect-accent: #ff83b1; --disconnect-dark: #3e153c; border-color: color-mix(in srgb, var(--disconnect-accent) 64%, transparent); background: linear-gradient(145deg, rgba(59, 20, 55, .96), rgba(8, 18, 37, .97)); }
+.disconnect-screen[data-disconnect-theme="yuna"] .end-card { --disconnect-accent: #9effd7; --disconnect-dark: #154d51; }
+.disconnect-screen[data-disconnect-theme="haneul"] .end-card { --disconnect-accent: #a6efff; --disconnect-dark: #153b63; }
+.disconnect-screen[data-disconnect-theme="daughter"] .end-card { --disconnect-accent: #ffb5df; --disconnect-dark: #5d2859; }
+.disconnect-screen[data-disconnect-theme="scientist"] .end-card { --disconnect-accent: #8ceeff; --disconnect-dark: #173c58; }
+@keyframes disconnect-card-arrive { from { opacity: 0; transform: translateY(10px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
 .overlay.story-mode { background: linear-gradient(135deg, rgba(13, 22, 54, .72), rgba(49, 20, 59, .64)); }
 .overlay.story-mode .overlay-card { width: min(860px, 100%); max-width: 860px; border-color: rgba(255, 224, 126, .48); background: linear-gradient(140deg, rgba(34, 28, 75, .96), rgba(16, 47, 76, .94)); box-shadow: 0 24px 82px rgba(65, 38, 112, .38); }
 .overlay.story-mode .tag { color: #ffe27e; }

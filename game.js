@@ -53,6 +53,7 @@ const harinStage02GateSprites = Object.freeze({
 const startScreen = document.querySelector('#start-screen');
 const stageMenu = document.querySelector('#stage-menu');
 const endScreen = document.querySelector('#end-screen');
+const disconnectIllustrationLabel = document.querySelector('#disconnect-illustration-label');
 const startButton = document.querySelector('#start-button');
 const resumeButton = document.querySelector('#resume-button');
 const stageSelectGrid = document.querySelector('#stage-select-grid');
@@ -1704,6 +1705,8 @@ function updateMemoryCollapse(dt, frozen = false) {
 function failMemoryCollapse() {
   if (game.phase !== 'playing') return;
   game.phase = 'failed';
+  endScreen.classList.remove('disconnect-screen');
+  delete endScreen.dataset.disconnectTheme;
   endTag.textContent = 'MEMORY COLLAPSED';
   endTitle.textContent = '60초 안에 기억을 붙잡지 못했어.';
   endCopy.textContent = '공포는 세게 싸워서 이기는 것이 아니라, 각 기억의 역할을 빠르게 이어야 풀립니다. 보스의 목표 안내를 보고 필요한 기술만 사용해 다시 도전하세요.';
@@ -2071,12 +2074,117 @@ function completeStage() {
   } else showChapterEnd();
 }
 
+function disconnectPresentation(stage = currentStage()) {
+  if (stage?.bossConfig?.mode === 'final' || stage?.page === 2) return {
+    key: 'scientist', accent: '#8ceeff', shade: '#102d49', monster: 'LAB HAND',
+    scene: '꿈 추출 기계가 연결을 강제로 차단했습니다.',
+  };
+  const chapter = stage?.chapter || '';
+  if (chapter.includes('유나')) return {
+    key: 'yuna', accent: '#9effd7', shade: '#124b50', monster: 'SILENT CHOIR',
+    scene: '유나의 검은 화음이 연결선을 삼켰습니다.',
+  };
+  if (chapter.includes('하늘')) return {
+    key: 'haneul', accent: '#a6efff', shade: '#153c64', monster: 'ENDLESS WIND',
+    scene: '하늘의 역풍이 꿈의 출구를 지워 버렸습니다.',
+  };
+  if (chapter.includes('딸')) return {
+    key: 'daughter', accent: '#ffb5df', shade: '#5c285a', monster: 'CRACKED PARADISE',
+    scene: '완벽한 꿈의 균열이 연결을 밀어냈습니다.',
+  };
+  return {
+    key: 'harin', accent: '#ff83b1', shade: '#421638', monster: 'EMPTY CLOWN',
+    scene: '하린의 악몽이 연결선을 밀어냈습니다.',
+  };
+}
+
+function drawDisconnectNightmare(presentation, progress) {
+  const pulse = 1 + Math.sin(game.disconnect?.elapsed * 18 || 0) * .06;
+  ctx.save();
+  ctx.translate(W * .72, H * .39); ctx.scale(pulse, pulse);
+  ctx.shadowBlur = 36; ctx.shadowColor = presentation.accent; ctx.fillStyle = presentation.shade;
+  if (presentation.key === 'yuna') {
+    [-58, 0, 58].forEach((offset, index) => {
+      ctx.beginPath(); ctx.ellipse(offset, index === 1 ? -5 : 9, 34, 59, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = presentation.accent; ctx.fillRect(offset - 15, index === 1 ? -12 : 2, 11, 5); ctx.fillRect(offset + 5, index === 1 ? -12 : 2, 11, 5); ctx.fillStyle = presentation.shade;
+    });
+  } else if (presentation.key === 'haneul') {
+    ctx.strokeStyle = presentation.accent; ctx.lineWidth = 10; ctx.beginPath(); ctx.arc(0, 0, 85, .1, Math.PI * 1.82); ctx.stroke();
+    ctx.fillStyle = presentation.shade; ctx.beginPath(); ctx.ellipse(0, 0, 76, 52, 0, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = presentation.accent; ctx.beginPath(); ctx.ellipse(0, 0, 28, 31, 0, 0, Math.PI * 2); ctx.fill();
+  } else if (presentation.key === 'daughter') {
+    ctx.rotate(Math.PI / 4); ctx.fillRect(-61, -61, 122, 122); ctx.strokeStyle = presentation.accent; ctx.lineWidth = 5; ctx.strokeRect(-61, -61, 122, 122); ctx.rotate(-Math.PI / 4);
+    ctx.strokeStyle = '#fff2fa'; ctx.lineWidth = 3; [[-55, -24, -6, 8], [-7, 9, 42, -32], [-22, 52, 18, 16]].forEach(([x1, y1, x2, y2]) => { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); });
+  } else if (presentation.key === 'scientist') {
+    ctx.fillRect(-62, -52, 124, 104); ctx.strokeStyle = presentation.accent; ctx.lineWidth = 6; ctx.strokeRect(-62, -52, 124, 104);
+    ctx.fillStyle = presentation.accent; ctx.fillRect(-22, -18, 16, 11); ctx.fillRect(6, -18, 16, 11); ctx.strokeStyle = presentation.accent; ctx.beginPath(); ctx.arc(0, 21, 28, .05, Math.PI - .05); ctx.stroke();
+    ctx.fillStyle = presentation.shade; ctx.fillRect(-102, 42, 204, 26);
+  } else {
+    ctx.beginPath(); ctx.ellipse(0, 0, 76, 96, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = presentation.accent; ctx.beginPath(); ctx.arc(-29, -16, 23, 0, Math.PI * 2); ctx.arc(29, -16, 23, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#150d25'; ctx.fillRect(-40, -20, 21, 8); ctx.fillRect(19, -20, 21, 8); ctx.strokeStyle = presentation.accent; ctx.lineWidth = 8; ctx.beginPath(); ctx.arc(0, 33, 27, 0, Math.PI); ctx.stroke();
+  }
+  ctx.restore();
+  ctx.save(); ctx.fillStyle = presentation.accent; ctx.font = '800 11px ui-monospace, monospace'; ctx.textAlign = 'center';
+  ctx.fillText(presentation.monster, W * .72, H * .67); ctx.restore();
+}
+
+function drawDisconnectWakeUp(presentation, progress) {
+  const pulse = .26 + Math.sin(game.disconnect?.elapsed * 12 || 0) * .1;
+  drawCinematicMachine(238, 264, pulse, true);
+  ctx.save(); ctx.strokeStyle = presentation.accent; ctx.globalAlpha = .76; ctx.lineWidth = 3;
+  [[311, 243, 498, 326], [311, 278, 494, 370], [304, 300, 465, 401]].forEach(([x1, y1, x2, y2]) => { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.quadraticCurveTo((x1 + x2) / 2, y1 - 64, x2, y2); ctx.stroke(); }); ctx.restore();
+  drawCinematicPixelChild(560, 400, { hair: '#59405e', clothes: '#526aab', detail: '#fff0a6', glow: '#ffe27e' }, 1.58);
+  ctx.save(); ctx.fillStyle = '#8ceeff'; ctx.shadowBlur = 12; ctx.shadowColor = '#8ceeff';
+  ctx.beginPath(); ctx.ellipse(587, 294 + Math.sin(game.disconnect?.elapsed * 9 || 0) * 3, 6, 11, .28, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = progress; ctx.fillStyle = '#eaf7ff'; ctx.font = '800 12px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText('DREAM LINK EMERGENCY DISCONNECT', W / 2, 88); ctx.restore();
+}
+
+function drawDreamDisconnect() {
+  const state = game.disconnect;
+  if (!state) return;
+  const progress = Math.max(0, Math.min(1, state.elapsed / state.duration));
+  const nightmareProgress = Math.min(1, progress / .5);
+  ctx.save(); ctx.fillStyle = `rgba(4, 7, 20, ${.24 + nightmareProgress * .43})`; ctx.fillRect(0, 0, W, H);
+  ctx.globalAlpha = .12 + nightmareProgress * .35; ctx.fillStyle = state.theme.accent;
+  for (let index = 0; index < 42; index += 1) {
+    const x = (index * 137 + Math.floor(state.elapsed * 490) * (index % 3 + 1)) % W;
+    const y = (index * 73 + Math.floor(state.elapsed * 350) * (index % 5 + 1)) % H;
+    ctx.fillRect(x, y, index % 4 === 0 ? 32 : 10, index % 5 === 0 ? 4 : 2);
+  }
+  ctx.restore();
+  if (progress < .56) {
+    drawDisconnectNightmare(state.theme, nightmareProgress);
+    ctx.save(); ctx.fillStyle = '#f7fbff'; ctx.font = '850 18px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText('상상력이 다해, 악몽이 연결을 삼킨다.', W / 2, 110); ctx.restore();
+  } else {
+    const wakeProgress = (progress - .56) / .44;
+    ctx.save(); ctx.globalAlpha = Math.min(1, wakeProgress * 2.5); ctx.fillStyle = 'rgba(7, 18, 37, .86)'; ctx.fillRect(0, 0, W, H); ctx.restore();
+    drawDisconnectWakeUp(state.theme, wakeProgress);
+  }
+  const fade = Math.max(0, (progress - .91) / .09);
+  if (fade > 0) { ctx.save(); ctx.globalAlpha = fade; ctx.fillStyle = '#060714'; ctx.fillRect(0, 0, W, H); ctx.restore(); }
+}
+
 function disconnect() {
   if (game.phase !== 'playing') return;
+  game.phase = 'disconnecting';
+  game.disconnect = { elapsed: 0, duration: 1.75, theme: disconnectPresentation() };
+  keys.clear();
+  pressed.clear();
+  gameHud.classList.add('hidden');
+  bossHud.classList.add('hidden');
+  endScreen.classList.add('hidden');
+}
+
+function showDisconnectResult() {
+  if (game.phase !== 'disconnecting') return;
+  const presentation = game.disconnect?.theme || disconnectPresentation();
   game.phase = 'failed';
+  endScreen.classList.add('disconnect-screen');
+  endScreen.dataset.disconnectTheme = presentation.key;
+  disconnectIllustrationLabel.textContent = presentation.scene;
   endTag.textContent = 'DREAM LINK LOST';
   endTitle.textContent = '꿈과의 연결이 끊어졌어.';
-  endCopy.textContent = '상상력이 모두 사라지자 하린의 악몽이 화면을 덮었습니다. 기술을 쓴 뒤 잠시 쉬어 게이지를 회복하고, 보스전에서는 꼭 필요한 순간에만 시간을 멈추세요.';
+  endCopy.textContent = `${presentation.scene} 기술을 쓴 뒤 잠시 멈추면 상상력이 회복됩니다. 다음 접속에서는 필요한 순간에만 상상력을 사용하세요.`;
   restartButton.innerHTML = '이 스테이지 다시 연결 <span>↻</span>';
   endScreen.classList.remove('hidden');
 }
@@ -2118,6 +2226,8 @@ function updateEndingCinematic(dt) {
 
 function showFinalTruth() {
   game.phase = 'truth';
+  endScreen.classList.remove('disconnect-screen');
+  delete endScreen.dataset.disconnectTheme;
   endTag.textContent = 'EPILOGUE · A NEW DREAM';
   endTitle.textContent = '새로운 기억은 함께 만들 수 있어.';
   endCopy.innerHTML = '연구실의 기록에는 딸이 사고 뒤 의식을 되찾지 못했다는 사실과, 아버지가 꿈을 훔치기 시작한 이유가 남아 있습니다. 딸은 친구들의 행복을 돌려달라고 선택하고, 아버지는 마침내 현실의 슬픔을 받아들입니다. 마지막 장면에서 아이들은 꿈을 빼앗기지 않은 채 새 기억을 만들기 위해 딸의 곁에 앉습니다.';
@@ -3267,6 +3377,11 @@ function update(dt) {
     updateEndingCinematic(dt);
     return;
   }
+  if (game.phase === 'disconnecting') {
+    game.disconnect.elapsed += dt;
+    if (game.disconnect.elapsed >= game.disconnect.duration) showDisconnectResult();
+    return;
+  }
   if (game.phase !== 'playing') return;
   game.rewindExpressionTimer = Math.max(0, (game.rewindExpressionTimer || 0) - dt);
   game.stageRealElapsed = (game.stageRealElapsed || 0) + dt;
@@ -3285,6 +3400,7 @@ function draw() {
   }
   // 인트로/자동 전환 중에도 보스 장면을 그려 전환 상태가 멈춘 것처럼 보이지 않게 한다.
   if (currentStage()?.type === 'boss') drawBoss(); else drawPuzzle();
+  if (game.phase === 'disconnecting') drawDreamDisconnect();
 }
 
 function loop(time) {
