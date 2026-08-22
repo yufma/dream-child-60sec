@@ -14,7 +14,8 @@ const HARIN_BACKGROUND_PATHS = Object.freeze(
   [
     'assets/backgrounds/harin-stage-01-v2.png',
     'assets/backgrounds/harin-stage-02-side-base-v3.png',
-    ...Array.from({ length: 4 }, (_, index) => `assets/backgrounds/harin-stage-${String(index + 3).padStart(2, '0')}.png`),
+    'assets/backgrounds/harin-stage-03-memory-relays-v4.png',
+    ...Array.from({ length: 3 }, (_, index) => `assets/backgrounds/harin-stage-${String(index + 4).padStart(2, '0')}.png`),
   ],
 );
 const HARIN_STAGE_MUSIC_PATHS = Object.freeze([
@@ -56,6 +57,42 @@ const HARIN_STAGE_02_GATE_DRAW = Object.freeze({
   blocked: Object.freeze({ entranceCenterSourceX: 590, splitSourceX: 590, groundSourceY: 1066 }),
   open: Object.freeze({ entranceCenterSourceX: 555, splitSourceX: 555, groundSourceY: 1072 }),
 });
+const HARIN_STAGE_03_STRUCTURE_PATHS = Object.freeze({
+  relays: Object.freeze([
+    Object.freeze({
+      off: 'assets/structures/harin-stage-03-moon-relay-off-game-v2.png',
+      on: 'assets/structures/harin-stage-03-moon-relay-on-game-v2.png',
+    }),
+    Object.freeze({
+      off: 'assets/structures/harin-stage-03-star-balloon-relay-off-game-v2.png',
+      on: 'assets/structures/harin-stage-03-star-balloon-relay-on-game-v2.png',
+    }),
+    Object.freeze({
+      off: 'assets/structures/harin-stage-03-carousel-relay-off-game-v2.png',
+      on: 'assets/structures/harin-stage-03-carousel-relay-on-game-v2.png',
+    }),
+  ]),
+  collector: Object.freeze({
+    closed: 'assets/structures/harin-stage-03-collector-closed-game-v2.png',
+    open: 'assets/structures/harin-stage-03-collector-open-game-v2.png',
+  }),
+  platform: Object.freeze({
+    off: 'assets/structures/harin-stage-03-memory-platform-off-v1.png',
+    on: 'assets/structures/harin-stage-03-memory-platform-on-v1.png',
+  }),
+});
+// 패드 배열 순서(달빛, 별풍선, 회전목마)와 동일하게 유지한다.
+const HARIN_STAGE_03_RELAY_DRAW = Object.freeze([
+  Object.freeze({ x: 541, y: 358, w: 80, h: 112 }),
+  Object.freeze({ x: 149, y: 107, w: 112, h: 128 }),
+  Object.freeze({ x: 747, y: 278, w: 96, h: 112 }),
+]);
+const HARIN_STAGE_03_COLLECTOR_DRAW = Object.freeze({ x: 820, y: 52, w: 122, h: 448 });
+const HARIN_STAGE_03_CABLE_ROUTES = Object.freeze([
+  Object.freeze([[610, 414], [684, 414], [684, 272], [846, 272], [846, 140], [862, 140]]),
+  Object.freeze([[237, 181], [364, 181], [364, 148], [839, 148], [839, 168], [862, 168]]),
+  Object.freeze([[827, 326], [850, 326], [850, 196], [862, 196]]),
+]);
 const HARIN_BACKGROUND_Y_OFFSETS = Object.freeze([40, 0, 0, 0, 0, 0]);
 const HARIN_STAGE_02_ROAD_ALIGNMENT = Object.freeze({ sourceY: 718, targetY: 500 });
 const FAILURE_ART_PATHS = Object.freeze({
@@ -93,6 +130,20 @@ const haneulBackgrounds = Object.freeze(HANEUL_BACKGROUND_PATHS.map(loadSprite))
 const harinStage02GateSprites = Object.freeze({
   blocked: loadSprite(HARIN_STAGE_02_GATE_PATHS.blocked),
   open: loadSprite(HARIN_STAGE_02_GATE_PATHS.open),
+});
+const harinStage03StructureSprites = Object.freeze({
+  relays: Object.freeze(HARIN_STAGE_03_STRUCTURE_PATHS.relays.map((paths) => Object.freeze({
+    off: loadSprite(paths.off),
+    on: loadSprite(paths.on),
+  }))),
+  collector: Object.freeze({
+    closed: loadSprite(HARIN_STAGE_03_STRUCTURE_PATHS.collector.closed),
+    open: loadSprite(HARIN_STAGE_03_STRUCTURE_PATHS.collector.open),
+  }),
+  platform: Object.freeze({
+    off: loadSprite(HARIN_STAGE_03_STRUCTURE_PATHS.platform.off),
+    on: loadSprite(HARIN_STAGE_03_STRUCTURE_PATHS.platform.on),
+  }),
 });
 const failureArt = Object.freeze(Object.fromEntries(Object.entries(FAILURE_ART_PATHS).map(([key, source]) => [key, loadSprite(source)])));
 const bossSprites = Object.freeze({
@@ -1669,11 +1720,14 @@ function setupPuzzle(layout, echoGoal) {
       { x: 318, y: 430, w: 132, h: 18, label: 'MEMORY CROSSROADS' },
       { x: 525, y: 470, w: 112, h: 18, label: 'MOONLIGHT LAMP' },
       { x: 110, y: 235, w: 200, h: 18, label: 'STAR BALLOON ROOF' },
-      { x: 740, y: 390, w: 112, h: 18, label: 'CAROUSEL LAMP' },
-      { x: 858, y: 80, w: 48, h: 420, wall: true, label: 'LAUGH COLLECTOR' },
+      { x: 740, y: 390, w: 90, h: 18, label: 'CAROUSEL LAMP' },
+      // 수집탑 상부는 계속 단단하고, 세 기억이 모이면 투명 아치의 셔터만 열린다.
+      { x: 858, y: 80, w: 48, h: 332, wall: true, persistentWall: true, collectorPart: true, label: 'LAUGH COLLECTOR FRAME' },
+      { x: 858, y: 412, w: 48, h: 88, wall: true, collectorPart: true, label: 'LAUGH COLLECTOR' },
       { x: 906, y: 500, w: 54, h: 40, label: 'NEXT DREAM SHORE' },
     ];
-    game.exit = { x: 918, y: 418, w: 36, h: 82, label: 'LAUGH CORE' };
+    // 열린 수집탑의 아치 자체가 다음 꿈의 문이 되도록 판정을 입구 안에 둔다.
+    game.exit = { x: 870, y: 418, w: 36, h: 82, label: 'LAUGH CORE' };
     game.fallZones = [{ x: 205, y: 500, w: 701, h: 40 }];
   } else if (layout === 'carousel') {
     game.platforms = [
@@ -3369,6 +3423,23 @@ function drawPlatform(item) {
 }
 
 function drawBridge(bridge) {
+  const memoryPlatform = game.layout === 'wall' && harinStage03PlatformArtReady()
+    ? harinStage03StructureSprites.platform[game.bridge ? 'on' : 'off']
+    : null;
+  if (memoryPlatform?.complete && memoryPlatform.naturalWidth) {
+    const drawWidth = bridge.w + 10;
+    const drawHeight = Math.max(24, Math.round(drawWidth / 5.05));
+    // 판자 장식의 윗부분이 아닌 실제 발 디딤선을 충돌 y좌표에 맞춘다.
+    const drawY = bridge.y - Math.round(drawHeight * .19);
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.globalAlpha = game.bridge ? 1 : .32;
+    ctx.shadowBlur = game.bridge ? 4 : 0;
+    ctx.shadowColor = game.bridge ? '#8fffe9' : '#7b4a85';
+    ctx.drawImage(memoryPlatform, bridge.x - 5, drawY, drawWidth, drawHeight);
+    ctx.restore();
+    return;
+  }
   const label = game.bridge ? bridge.label : bridge.label.replace('PATH', 'ECHO').replace('LINK', 'ECHO');
   ctx.save(); ctx.translate(bridge.x + bridge.w / 2, bridge.y + bridge.h / 2); ctx.shadowBlur = game.bridge ? 24 : 10; ctx.shadowColor = game.bridge ? '#61faff' : '#ff6d90';
   ctx.fillStyle = game.bridge ? '#2b8da7' : 'rgba(196,54,106,.34)'; ctx.fillRect(-bridge.w / 2, -bridge.h / 2, bridge.w, bridge.h);
@@ -3376,8 +3447,126 @@ function drawBridge(bridge) {
   ctx.fillStyle = game.bridge ? '#d2ffff' : '#ffbbc8'; ctx.font = '800 9px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText(label, 0, 4); ctx.restore();
 }
 
+function harinStage03PlatformArtReady() {
+  const { platform } = harinStage03StructureSprites;
+  return Boolean(platform.off.complete && platform.off.naturalWidth
+    && platform.on.complete && platform.on.naturalWidth);
+}
+
+function drawHarinStage03SolidPlatform(platform) {
+  const image = harinStage03StructureSprites.platform.on;
+  if (!harinStage03PlatformArtReady()) {
+    drawPlatform(platform);
+    return;
+  }
+  const imageRatio = image.naturalWidth / image.naturalHeight;
+  const drawHeight = Math.max(platform.h, Math.round(platform.w / imageRatio));
+  const drawY = platform.y - Math.round(drawHeight * .19);
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  if (platform.h > 24) {
+    ctx.globalAlpha = .88;
+    ctx.fillStyle = '#0b132c';
+    ctx.fillRect(platform.x, platform.y, platform.w, platform.h);
+  }
+  ctx.globalAlpha = .74;
+  ctx.drawImage(image, platform.x, drawY, platform.w, drawHeight);
+  ctx.restore();
+}
+
+function harinStage03RelayArtReady() {
+  const relayReady = harinStage03StructureSprites.relays.every((relay) => (
+    relay.off.complete && relay.off.naturalWidth && relay.on.complete && relay.on.naturalWidth
+  ));
+  const { collector } = harinStage03StructureSprites;
+  return Boolean(relayReady
+    && collector.closed.complete && collector.closed.naturalWidth
+    && collector.open.complete && collector.open.naturalWidth);
+}
+
+function drawHarinStage03CableRoute(points, color, active, routeIndex) {
+  ctx.save();
+  ctx.lineCap = 'square';
+  ctx.lineJoin = 'miter';
+  ctx.globalAlpha = active ? .64 : .34;
+  ctx.strokeStyle = '#26213d';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  points.forEach(([x, y], index) => index ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
+  ctx.stroke();
+
+  // 선 전체가 빛나지 않고 작은 놀이공원 전구만 순서대로 켜진다.
+  const phase = Math.floor((game.elapsed * 20 + routeIndex * 5) % 16);
+  for (let segment = 1; segment < points.length; segment += 1) {
+    const [x1, y1] = points[segment - 1];
+    const [x2, y2] = points[segment];
+    const distance = Math.hypot(x2 - x1, y2 - y1);
+    const steps = Math.max(1, Math.floor(distance / 16));
+    for (let step = 1; step < steps; step += 1) {
+      const progress = step / steps;
+      const x = Math.round(x1 + (x2 - x1) * progress);
+      const y = Math.round(y1 + (y2 - y1) * progress);
+      const lit = active && ((step * 5 + phase) % 16 < 7);
+      ctx.globalAlpha = lit ? .94 : active ? .48 : .26;
+      ctx.shadowBlur = lit ? 3 : 0;
+      ctx.shadowColor = color;
+      ctx.fillStyle = lit ? color : '#4b4561';
+      ctx.fillRect(x, y, lit ? 2 : 1, lit ? 2 : 1);
+    }
+  }
+  ctx.restore();
+}
+
+function drawHarinStage03Cables() {
+  const pads = game.memoryPads || [];
+  if (pads.length !== 3) return;
+  const activeStates = pads.map((pad) => activeMemoryPads([pad]) > 0);
+  const colors = ['#ffe37d', '#9effea', '#ffb5d7'];
+  HARIN_STAGE_03_CABLE_ROUTES.forEach((route, index) => {
+    drawHarinStage03CableRoute(route, colors[index], activeStates[index], index);
+  });
+}
+
+function drawHarinStage03Structures(gateOpen) {
+  const pads = game.memoryPads || [];
+  if (pads.length !== 3) return;
+  const activeStates = pads.map((pad) => activeMemoryPads([pad]) > 0);
+  const activeCount = activeStates.filter(Boolean).length;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  HARIN_STAGE_03_RELAY_DRAW.forEach((draw, index) => {
+    const active = activeStates[index];
+    const image = harinStage03StructureSprites.relays[index][active ? 'on' : 'off'];
+    ctx.save();
+    if (active) {
+      ctx.shadowBlur = 4;
+      ctx.shadowColor = ['#ffe37d', '#9effea', '#ffb5d7'][index];
+    }
+    ctx.drawImage(image, draw.x, draw.y, draw.w, draw.h);
+    ctx.restore();
+  });
+  const collectorImage = harinStage03StructureSprites.collector[gateOpen ? 'open' : 'closed'];
+  const collector = HARIN_STAGE_03_COLLECTOR_DRAW;
+  ctx.drawImage(collectorImage, collector.x, collector.y, collector.w, collector.h);
+  ctx.fillStyle = gateOpen ? '#fff0a8' : '#d7c7e8';
+  ctx.font = '800 9px "Segoe UI", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.shadowBlur = gateOpen ? 8 : 0;
+  ctx.shadowColor = '#ffe37d';
+  ctx.fillText(`기억 중계 ${activeCount} / ${game.echoGoal}`, collector.x + collector.w / 2, collector.y - 8);
+  ctx.restore();
+}
+
 function drawLaughRelayNetwork() {
-  const collector = game.platforms.find((platform) => platform.label === 'LAUGH COLLECTOR');
+  const collectorParts = game.platforms.filter((platform) => platform.collectorPart);
+  const collector = collectorParts.length
+    ? {
+      x: Math.min(...collectorParts.map((platform) => platform.x)),
+      y: Math.min(...collectorParts.map((platform) => platform.y)),
+      w: Math.max(...collectorParts.map((platform) => platform.x + platform.w)) - Math.min(...collectorParts.map((platform) => platform.x)),
+      h: Math.max(...collectorParts.map((platform) => platform.y + platform.h)) - Math.min(...collectorParts.map((platform) => platform.y)),
+    }
+    : game.platforms.find((platform) => platform.label === 'LAUGH COLLECTOR');
   const pads = game.memoryPads || [];
   if (!collector || pads.length !== 3) return;
   const activeStates = pads.map((pad) => activeMemoryPads([pad]) > 0);
@@ -4006,16 +4195,22 @@ function drawPuzzle() {
   const techniques = activeTechniques();
   const memoryPadsReady = game.echoGoal === 0 || activeMemoryPads(game.memoryPads) >= game.echoGoal;
   const gateOpen = memoryPadsReady && (game.layout !== 'watcher' || game.watcherResolved);
+  const stage03RelayArtReady = game.layout === 'wall' && harinStage03RelayArtReady();
   const stage02GateStructure = game.layout === 'bridge'
     ? game.platforms.find((platform) => platform.wall && platform.label === 'MEMORY GATE')
     : null;
   const stage02GateSprite = stage02GateStructure ? getHarinStage02GateSprite(gateOpen) : null;
   if (stage02GateSprite) drawHarinStage02GateLayer(stage02GateSprite, stage02GateStructure, 'far');
   (game.fallZones || []).forEach(drawFallZone);
+  if (stage03RelayArtReady) drawHarinStage03Cables();
   game.platforms.forEach((platform) => {
     const hidden = platform.hidden && !techniques.resonance;
     if (platform === stage02GateStructure && stage02GateSprite) {
       return;
+    } else if (game.layout === 'wall' && platform.collectorPart) {
+      return;
+    } else if (game.layout === 'wall' && harinStage03PlatformArtReady() && !platform.wall) {
+      drawHarinStage03SolidPlatform(platform);
     } else if (platform.wall && gateOpen && game.layout === 'carousel' && !platform.persistentWall) {
       return;
     } else if (platform.wall && gateOpen) {
@@ -4025,8 +4220,9 @@ function drawPuzzle() {
     } else drawPlatform(platform);
   });
   if (game.layout === 'wall') {
-    drawLaughRelayNetwork();
     getWallBridges().forEach(drawBridge);
+    if (stage03RelayArtReady) drawHarinStage03Structures(gateOpen);
+    else drawLaughRelayNetwork();
   }
   if (game.layout === 'carousel' && game.carouselRideProgress > .02) {
     const ride = getCarouselRide();
@@ -4037,11 +4233,12 @@ function drawPuzzle() {
   if (game.layout === 'watcher') drawWatcher(getWatcher(), frozenTime(), game.watcherResolved);
   game.memoryPads.forEach((pad, index) => {
     // 공명이 꺼져 있을 때는 9스테이지의 기억 발판도 함께 감춘다.
-    if (!pad.hidden || techniques.resonance) drawMemoryPad(pad, activeMemoryPads([pad]) > 0, index);
+    if ((!pad.hidden || techniques.resonance) && !stage03RelayArtReady) drawMemoryPad(pad, activeMemoryPads([pad]) > 0, index);
   });
   drawMemoryLoopFeedback();
   game.echoes.forEach(drawEcho);
-  if (game.exit) drawExit();
+  // 3스테이지는 수집탑의 열린 아치가 출구이므로 별도 네온 문을 겹치지 않는다.
+  if (game.exit && game.layout !== 'wall') drawExit();
   drawDreamTrails(false);
   if (game.player) drawChild(game.player);
   if (stage02GateSprite) drawHarinStage02GateLayer(stage02GateSprite, stage02GateStructure, 'near');
