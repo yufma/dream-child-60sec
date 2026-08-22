@@ -29,6 +29,14 @@ const HARIN_STAGE_02_GATE_DRAW = Object.freeze({
 });
 const HARIN_BACKGROUND_Y_OFFSETS = Object.freeze([40, 0, 0, 0, 0, 0]);
 const HARIN_STAGE_02_ROAD_ALIGNMENT = Object.freeze({ sourceY: 718, targetY: 500 });
+const FAILURE_ART_PATHS = Object.freeze({
+  harin: 'assets/failure/harin-empty-clown-v1.png',
+  yuna: 'assets/failure/yuna-silent-choir-v1.png',
+  haneul: 'assets/failure/haneul-endless-wind-v1.png',
+  daughter: 'assets/failure/daughter-mirror-guardian-v1.png',
+  scientist: 'assets/failure/scientist-dream-extractor-v1.png',
+  wakeup: 'assets/failure/dream-link-wakeup-v1.png',
+});
 const PLAYER_RUN_FRAME_DURATIONS = Object.freeze([83, 83, 84, 83, 83, 84, 83, 83, 84, 83, 83, 84]);
 const PLAYER_RUN_CYCLE_MS = PLAYER_RUN_FRAME_DURATIONS.reduce((total, duration) => total + duration, 0);
 const PLAYER_SPRITE_SIZE = Object.freeze({ width: 48, height: 72, feetY: 70 });
@@ -49,10 +57,13 @@ const harinStage02GateSprites = Object.freeze({
   blocked: loadSprite(HARIN_STAGE_02_GATE_PATHS.blocked),
   open: loadSprite(HARIN_STAGE_02_GATE_PATHS.open),
 });
+const failureArt = Object.freeze(Object.fromEntries(Object.entries(FAILURE_ART_PATHS).map(([key, source]) => [key, loadSprite(source)])));
 
 const startScreen = document.querySelector('#start-screen');
 const stageMenu = document.querySelector('#stage-menu');
 const endScreen = document.querySelector('#end-screen');
+const disconnectIllustration = document.querySelector('#disconnect-illustration');
+const disconnectIllustrationImage = document.querySelector('#disconnect-illustration-image');
 const disconnectIllustrationLabel = document.querySelector('#disconnect-illustration-label');
 const disconnectSkipButton = document.querySelector('#disconnect-skip');
 const startButton = document.querySelector('#start-button');
@@ -101,6 +112,8 @@ const ruleStates = {
 };
 const stageMenuCopy = document.querySelector('#stage-menu-copy');
 const routeModeButton = document.querySelector('#route-mode-button');
+
+disconnectIllustrationImage.addEventListener('error', () => disconnectIllustration.classList.remove('has-art'));
 
 const STAGES = [
   {
@@ -2140,12 +2153,28 @@ function drawDisconnectWakeUp(presentation, progress) {
   ctx.globalAlpha = progress; ctx.fillStyle = '#eaf7ff'; ctx.font = '800 12px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText('DREAM LINK EMERGENCY DISCONNECT', W / 2, 88); ctx.restore();
 }
 
+function drawFailureArt(image, opacity = 1) {
+  if (!image?.complete || !image.naturalWidth) return false;
+  ctx.save(); ctx.globalAlpha = Math.max(0, Math.min(1, opacity)); ctx.drawImage(image, 0, 0, W, H); ctx.restore();
+  return true;
+}
+
+function drawDisconnectCaption(eyebrow, line, opacity = 1) {
+  ctx.save(); ctx.globalAlpha = opacity; ctx.fillStyle = 'rgba(4, 8, 21, .68)'; ctx.fillRect(0, H - 116, W, 116);
+  ctx.fillStyle = '#9eeeff'; ctx.font = '800 10px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText(eyebrow, W / 2, H - 77);
+  ctx.fillStyle = '#f4f8ff'; ctx.font = '850 20px "Segoe UI", sans-serif'; ctx.fillText(line, W / 2, H - 43); ctx.restore();
+}
+
 function drawDreamDisconnect() {
   const state = game.disconnect;
   if (!state) return;
   const progress = Math.max(0, Math.min(1, state.elapsed / state.duration));
-  const nightmareProgress = Math.min(1, progress / .5);
-  ctx.save(); ctx.fillStyle = `rgba(4, 7, 20, ${.24 + nightmareProgress * .43})`; ctx.fillRect(0, 0, W, H);
+  const nightmareProgress = Math.min(1, progress / .48);
+  const crossFadeStart = .48;
+  const crossFadeEnd = .65;
+  const bossOpacity = progress < crossFadeEnd ? Math.min(1, progress / .1) * (progress <= crossFadeStart ? 1 : 1 - (progress - crossFadeStart) / (crossFadeEnd - crossFadeStart)) : 0;
+  const wakeOpacity = progress <= crossFadeStart ? 0 : Math.min(1, (progress - crossFadeStart) / (crossFadeEnd - crossFadeStart));
+  ctx.save(); ctx.fillStyle = `rgba(4, 7, 20, ${.16 + nightmareProgress * .25})`; ctx.fillRect(0, 0, W, H);
   ctx.globalAlpha = .12 + nightmareProgress * .35; ctx.fillStyle = state.theme.accent;
   for (let index = 0; index < 42; index += 1) {
     const x = (index * 137 + Math.floor(state.elapsed * 490) * (index % 3 + 1)) % W;
@@ -2153,13 +2182,16 @@ function drawDreamDisconnect() {
     ctx.fillRect(x, y, index % 4 === 0 ? 32 : 10, index % 5 === 0 ? 4 : 2);
   }
   ctx.restore();
-  if (progress < .56) {
-    drawDisconnectNightmare(state.theme, nightmareProgress);
-    ctx.save(); ctx.fillStyle = '#f7fbff'; ctx.font = '850 18px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText('상상력이 다해, 악몽이 연결을 삼킨다.', W / 2, 110); ctx.restore();
-  } else {
-    const wakeProgress = (progress - .56) / .44;
-    ctx.save(); ctx.globalAlpha = Math.min(1, wakeProgress * 2.5); ctx.fillStyle = 'rgba(7, 18, 37, .86)'; ctx.fillRect(0, 0, W, H); ctx.restore();
-    drawDisconnectWakeUp(state.theme, wakeProgress);
+  if (bossOpacity > 0) {
+    if (!drawFailureArt(failureArt[state.theme.key], bossOpacity)) drawDisconnectNightmare(state.theme, nightmareProgress);
+    drawDisconnectCaption(state.theme.monster, '상상력이 다해, 악몽이 연결을 삼킨다.', bossOpacity);
+  }
+  if (wakeOpacity > 0) {
+    if (!drawFailureArt(failureArt.wakeup, wakeOpacity)) {
+      ctx.save(); ctx.globalAlpha = wakeOpacity; ctx.fillStyle = 'rgba(7, 18, 37, .86)'; ctx.fillRect(0, 0, W, H); ctx.restore();
+      drawDisconnectWakeUp(state.theme, wakeOpacity);
+    }
+    drawDisconnectCaption('DREAM LINK EMERGENCY DISCONNECT', '꿈과의 연결이 끊어졌어.', wakeOpacity);
   }
   const fade = Math.max(0, (progress - .91) / .09);
   if (fade > 0) { ctx.save(); ctx.globalAlpha = fade; ctx.fillStyle = '#060714'; ctx.fillRect(0, 0, W, H); ctx.restore(); }
@@ -2191,6 +2223,9 @@ function showDisconnectResult() {
   disconnectSkipButton.classList.add('hidden');
   endScreen.classList.add('disconnect-screen');
   endScreen.dataset.disconnectTheme = presentation.key;
+  disconnectIllustrationImage.src = FAILURE_ART_PATHS[presentation.key];
+  disconnectIllustrationImage.alt = `${presentation.monster} 실패 일러스트`;
+  disconnectIllustration.classList.add('has-art');
   disconnectIllustrationLabel.textContent = presentation.scene;
   endTag.textContent = 'DREAM LINK LOST';
   endTitle.textContent = '꿈과의 연결이 끊어졌어.';
