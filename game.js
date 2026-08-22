@@ -61,7 +61,7 @@ const YUNA_BGM_PATHS = Object.freeze({
   tide: 'assets/audio/yuna-tide-lullaby-v1.wav',
   glass: 'assets/audio/yuna-glass-choir-v1.wav',
   silent: 'assets/audio/yuna-silent-choir-v1.wav',
-  resonance: 'assets/audio/yuna-resonance-run-v1.wav',
+  resonance: 'assets/audio/yuna-resonance-run-long-v2.wav',
 });
 const PLAYER_RUN_FRAME_DURATIONS = Object.freeze([83, 83, 84, 83, 83, 84, 83, 83, 84, 83, 83, 84]);
 const PLAYER_RUN_CYCLE_MS = PLAYER_RUN_FRAME_DURATIONS.reduce((total, duration) => total + duration, 0);
@@ -2039,7 +2039,16 @@ function hitByNightmare(message, cost, reset) {
   }
   game.imagination = Math.max(0, game.imagination - cost);
   say(message);
+  updateHud();
   if (game.imagination <= 0) disconnect();
+}
+
+function bossShotDamage(shot, boss) {
+  if (shot.kind === 'dissonant-note') return boss?.codaActive ? 28 : 22;
+  if (shot.kind === 'memory') return 24;
+  if (shot.kind === 'shard') return 22;
+  if (shot.kind === 'wind') return 20;
+  return 20;
 }
 
 function shotAngle(origin, target) {
@@ -2390,8 +2399,9 @@ function updateBoss(dt) {
     }
     if (overlaps(rect, p)) {
       if (game.nightmareHitCooldown <= 0) {
-        game.nightmareHitCooldown = .45;
-        hitByNightmare('공포가 상상력 연결을 갉아먹습니다.', shot.kind === 'memory' ? 15 : 12, false);
+        game.nightmareHitCooldown = .34;
+        const damage = bossShotDamage(shot, b);
+        hitByNightmare(`공포가 상상력 연결을 크게 갉아먹습니다. -${damage}`, damage, false);
       }
       return false;
     }
