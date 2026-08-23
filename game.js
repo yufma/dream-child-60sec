@@ -46,6 +46,14 @@ const HANEUL_BACKGROUND_PATHS = Object.freeze(
     'assets/backgrounds/haneul-stage-18.png',
   ],
 );
+const HANEUL_STAGE_MUSIC_PATHS = Object.freeze([
+  'assets/audio/haneul-wind-path-v1.wav',
+  'assets/audio/haneul-wind-path-v1.wav',
+  'assets/audio/haneul-headwind-cliff-v1.wav',
+  'assets/audio/haneul-headwind-cliff-v1.wav',
+  'assets/audio/haneul-black-kite-boss-v1.wav',
+  'assets/audio/haneul-clear-sky-v1.wav',
+]);
 const HARIN_STAGE_02_GATE_PATHS = Object.freeze({
   blocked: 'assets/backgrounds/harin-stage-02-wall-ruined-structural-side10-clean-dark-outline-alpha-v15.png',
   open: 'assets/backgrounds/harin-stage-02-wall-restored-side10-clean-dark-outline-alpha-v15.png',
@@ -97,6 +105,10 @@ const harinStage02GateSprites = Object.freeze({
 const failureArt = Object.freeze(Object.fromEntries(Object.entries(FAILURE_ART_PATHS).map(([key, source]) => [key, loadSprite(source)])));
 const bossSprites = Object.freeze({
   yunaChoir: loadSprite('assets/bosses/yuna-silent-choir-sprite-v1.png'),
+  haneulKite: loadSprite('assets/bosses/haneul-black-kite-sprite-v1.png'),
+});
+const platformSprites = Object.freeze({
+  haneulWindLedge: loadSprite('assets/platforms/haneul-wind-ledge-v1.png'),
 });
 
 const startScreen = document.querySelector('#start-screen');
@@ -690,6 +702,7 @@ function saveBgmMasterVolume() {
 function stageBgmKey(stage = currentStage()) {
   const chapter = stage?.chapter || '';
   if (chapter.includes('하린') && HARIN_STAGE_MUSIC_PATHS[game.stageIndex]) return `harin-${game.stageIndex + 1}`;
+  if (chapter.includes('하늘') && HANEUL_STAGE_MUSIC_PATHS[game.stageIndex - 12]) return `haneul-${game.stageIndex + 1}`;
   if (!chapter.includes('유나')) return null;
   if (stage.type === 'boss') return 'resonance';
   return ({ 7: 'tide', 8: 'glass', 9: 'silent', 10: 'glass', 12: 'tide' })[game.stageIndex + 1] || 'tide';
@@ -701,6 +714,11 @@ function stageBgmConfig(key) {
     const source = HARIN_STAGE_MUSIC_PATHS[stageNumber - 1];
     if (!source) return null;
     return { family: 'harin', source, volume: CHARACTER_BGM_TRIM.harin, loop: stageNumber !== 5 };
+  }
+  if (key?.startsWith('haneul-')) {
+    const stageNumber = Number(key.slice('haneul-'.length));
+    const source = HANEUL_STAGE_MUSIC_PATHS[stageNumber - 13];
+    return source ? { family: 'haneul', source, volume: CHARACTER_BGM_TRIM.haneul, loop: true } : null;
   }
   const source = YUNA_BGM_PATHS[key];
   return source ? { family: 'yuna', source, volume: CHARACTER_BGM_TRIM.yuna, loop: true } : null;
@@ -3393,6 +3411,41 @@ function drawYunaSilentKeyWall(item) {
   ctx.restore();
 }
 
+function drawHaneulWindPlatform(item) {
+  const image = platformSprites.haneulWindLedge;
+  const x = Math.round(item.x);
+  const y = Math.round(item.y);
+  const w = Math.round(item.w);
+  const h = Math.round(item.h);
+  const visualHeight = Math.max(28, Math.min(68, h + 25));
+  const sourceX = 214;
+  const sourceY = 104;
+  const sourceW = 1744;
+  const sourceH = 526;
+  const tileWidth = Math.max(72, Math.min(176, w));
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.shadowBlur = item.hidden ? 22 : 14;
+  ctx.shadowColor = '#55dfff';
+  ctx.fillStyle = '#142e5a';
+  ctx.fillRect(x, y, w, Math.max(h, 14));
+  if (image?.complete && image.naturalWidth > 0) {
+    for (let offset = 0; offset < w; offset += tileWidth) {
+      const width = Math.min(tileWidth, w - offset);
+      ctx.drawImage(image, sourceX, sourceY, sourceW, sourceH, x + offset, y - 5, width, visualHeight);
+    }
+  } else {
+    ctx.fillStyle = '#245071';
+    ctx.fillRect(x, y, w, Math.max(h, 16));
+  }
+  ctx.shadowBlur = 10;
+  ctx.fillStyle = item.hidden ? '#a4fff0' : '#9eeeff';
+  ctx.fillRect(x + 2, y, Math.max(0, w - 4), 2);
+  ctx.fillStyle = 'rgba(228, 250, 255, .32)';
+  for (let marker = x + 16; marker < x + w - 8; marker += 34) ctx.fillRect(marker, y + 6, 12, 1);
+  ctx.restore();
+}
+
 function drawPlatform(item) {
   if (item.wall) {
     if (item.persistentWall) {
@@ -3433,6 +3486,10 @@ function drawPlatform(item) {
     const theme = dreamTheme();
     if (theme.id === 'yuna') {
       drawYunaScorePlatform(item);
+      return;
+    }
+    if (theme.id === 'haneul') {
+      drawHaneulWindPlatform(item);
       return;
     }
     const platformGradient = ctx.createLinearGradient(item.x, item.y, item.x, item.y + item.h);
@@ -4275,6 +4332,36 @@ function drawYunaSilentChoirSprite(b) {
   return true;
 }
 
+function drawHaneulBlackKiteSprite(b) {
+  const image = bossSprites.haneulKite;
+  if (!image?.complete || !image.naturalWidth) return false;
+  const pulse = .5 + Math.sin(game.elapsed * 4.2) * .5;
+  const coreX = b.x + b.w / 2;
+  const spriteW = 244 + pulse * 8;
+  const spriteH = 366 + pulse * 12;
+  const eyeY = b.y + 92;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.shadowBlur = 26 + pulse * 16;
+  ctx.shadowColor = b.flash > 0 ? '#e5ffff' : '#65ddff';
+  ctx.globalAlpha = b.flash > 0 ? .9 : 1;
+  ctx.drawImage(image, coreX - spriteW / 2, b.y - 42, spriteW, spriteH);
+  // 탄막이 나오는 중심을 눈과 맞춰 플레이어가 위협의 방향을 읽을 수 있게 한다.
+  ctx.globalCompositeOperation = 'screen';
+  ctx.globalAlpha = .22 + pulse * .17;
+  ctx.strokeStyle = '#a6efff';
+  ctx.lineWidth = 2;
+  for (let ring = 0; ring < 3; ring += 1) {
+    ctx.beginPath();
+    ctx.ellipse(coreX, eyeY, 24 + ring * 14 + pulse * 4, 10 + ring * 6 + pulse * 2, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.fillStyle = '#d7fbff';
+  ctx.beginPath(); ctx.ellipse(coreX, eyeY, 6 + pulse * 2, 12 + pulse * 2, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+  return true;
+}
+
 function drawDissonantNoteShot(shot) {
   const size = Math.max(.75, shot.r / 10);
   const drift = Math.sin(game.elapsed * 12 + shot.x * .03) * .16;
@@ -4308,7 +4395,9 @@ function drawBoss() {
   const choirFear = b.visual === 'choir';
   const mirrorFear = b.visual === 'mirror';
   const choirIllustration = choirFear && drawYunaSilentChoirSprite(b);
-  if (!choirIllustration) {
+  const windIllustration = windFear && drawHaneulBlackKiteSprite(b);
+  const bossIllustration = choirIllustration || windIllustration;
+  if (!bossIllustration) {
     ctx.save(); ctx.fillStyle = 'rgba(255, 137, 176, .12)'; ctx.beginPath(); ctx.arc(b.x + 80, b.y + 102, 150, 0, Math.PI * 2); ctx.fill(); ctx.restore();
   }
   const releaseRatio = b.releaseReady ? b.releaseProgress / b.releaseDuration : 0;
@@ -4318,7 +4407,7 @@ function drawBoss() {
   const bossShadow = b.mode === 'final' ? b.releaseReady ? '#ffe27e' : '#7be9ff' : windFear ? '#9cdbff' : choirFear ? '#9effd7' : mirrorFear ? '#ffb5df' : '#ff4d7c';
   const bossBody = b.mode === 'final' ? b.releaseReady ? '#4e637c' : '#19475e' : windFear ? '#173857' : choirFear ? '#174c4c' : mirrorFear ? '#5f346b' : '#6e1745';
   const bossFace = b.mode === 'final' ? b.releaseReady ? '#fff0b5' : '#8adcf2' : windFear ? '#b4ecff' : choirFear ? '#bfffe8' : mirrorFear ? '#ffd5eb' : '#f6b2ca';
-  if (!choirIllustration) {
+  if (!bossIllustration) {
     ctx.save(); ctx.translate(b.x + b.w / 2, b.y + b.h / 2); ctx.scale(scale, scale); ctx.shadowBlur = 34; ctx.shadowColor = bossShadow; ctx.fillStyle = b.flash > 0 ? '#ffe4ef' : bossBody;
     if (windFear) { ctx.rotate(.78); ctx.fillRect(-62, -62, 124, 124); ctx.strokeStyle = '#d0f7ff'; ctx.lineWidth = 4; ctx.strokeRect(-62, -62, 124, 124); ctx.rotate(-.78); }
     else if (mirrorFear) { ctx.rotate(Math.PI / 4); ctx.fillRect(-66, -66, 132, 132); ctx.strokeStyle = '#ffe3f4'; ctx.lineWidth = 4; ctx.strokeRect(-66, -66, 132, 132); ctx.rotate(-Math.PI / 4); }
