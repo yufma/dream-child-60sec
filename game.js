@@ -25,7 +25,8 @@ const HARIN_STAGE_MUSIC_PATHS = Object.freeze([
   'assets/audio/harin-stage-themes-v11/stage-05-darkened-harin-theme-60s-v11.wav',
   'assets/audio/harin-stage-themes-v12-flute-test/stage-06-resolved-harin-theme-loop-soft-flute-v12.wav',
 ]);
-const CHARACTER_BGM_TRIM = Object.freeze({ harin: .88, yuna: 1.15, haneul: 1, daughter: .92, scientist: .96 });
+// 원본 음원의 평균 음량을 오디오 자산 단계에서 통일했으므로, 챕터별 임의 보정은 최소화한다.
+const CHARACTER_BGM_TRIM = Object.freeze({ harin: .98, yuna: .98, haneul: .98, daughter: .98, scientist: .98 });
 const YUNA_BACKGROUND_PATHS = Object.freeze(
   [
     'assets/backgrounds/yuna-stage-07.png',
@@ -56,7 +57,7 @@ const FINAL_CHAPTER_STAGE_MUSIC_PATHS = Object.freeze([
   'assets/audio/daughter-perfect-garden-v1.wav',
   'assets/audio/daughter-fractured-classroom-v1.wav',
   'assets/audio/daughter-mirror-guardian-v1.wav',
-  'assets/audio/scientist-dream-lab-final-v1.wav',
+  'assets/audio/scientist-true-imagination-final-v1.wav',
 ]);
 const HANEUL_STAGE_MUSIC_PATHS = Object.freeze([
   'assets/audio/haneul-wind-path-v1.wav',
@@ -128,6 +129,8 @@ const platformSprites = Object.freeze({
   harinCarouselPlatform: loadSprite('assets/platforms/harin-carousel-platform-v1.png'),
   haneulWindLedge: loadSprite('assets/platforms/haneul-wind-ledge-v1.png'),
   yunaResonancePad: loadSprite('assets/platforms/yuna-resonance-pad-v1.png'),
+  daughterGarden: loadSprite('assets/platforms/daughter-garden-platform-v1.png'),
+  daughterFracturedClassroom: loadSprite('assets/platforms/daughter-fractured-classroom-platform-v1.png'),
 });
 const gateSprites = Object.freeze({
   harin: loadSprite('assets/gates/harin-carousel-gate-v1.png'),
@@ -143,6 +146,28 @@ const memoryPadSprites = Object.freeze({
   haneul: loadSprite('assets/memory-pads/haneul-wind-memory-pad-v1.png'),
   daughter: loadSprite('assets/memory-pads/daughter-photo-memory-pad-v1.png'),
   scientist: loadSprite('assets/memory-pads/scientist-core-memory-pad-v1.png'),
+});
+// 배경에 섞이지 않으면서도 각 꿈의 고유 소재를 바로 읽게 하는 핵심 기믹 일러스트.
+const objectSprites = Object.freeze({
+  harinLaughCollector: loadSprite('assets/objects/harin-laugh-collector-v1.png'),
+  harinCarouselWall: loadSprite('assets/objects/harin-carousel-wall-v1.png'),
+  yunaSilentKey: loadSprite('assets/objects/yuna-silent-key-pillar-v1.png'),
+  haneulTrueSignpost: loadSprite('assets/objects/haneul-true-signpost-v1.png'),
+  haneulHeadwindPillar: loadSprite('assets/objects/haneul-headwind-pillar-v1.png'),
+  daughterTrueCrack: loadSprite('assets/objects/daughter-true-crack-v1.png'),
+});
+const finalTruthPortraits = Object.freeze({
+  harin: loadSprite('assets/portraits/harin.png'),
+  yuna: loadSprite('assets/portraits/yuna.png'),
+  haneul: loadSprite('assets/portraits/haneul.png'),
+});
+const endingCinematicSprites = Object.freeze({
+  promise: loadSprite('assets/cinematics/ending-promise-v1.png'),
+  hospital: loadSprite('assets/cinematics/ending-hospital-v1.png'),
+  machine: loadSprite('assets/cinematics/ending-machine-v1.png'),
+  cost: loadSprite('assets/cinematics/ending-cost-v1.png'),
+  choice: loadSprite('assets/cinematics/ending-choice-v1.png'),
+  morning: loadSprite('assets/cinematics/ending-morning-v2.png'),
 });
 
 const startScreen = document.querySelector('#start-screen');
@@ -379,9 +404,9 @@ const STAGES = [
         { x: 534, y: 356, w: 42, h: 42, label: '하늘의 발걸음' },
       ],
       truthTargets: [
-        { x: 234, y: 386, w: 44, h: 44, label: '하린의 진짜 웃음', color: '#ffcf88', motion: { xRange: 90, yRange: 0, speed: 1.75, phase: 0 } },
-        { x: 438, y: 112, w: 44, h: 44, label: '유나의 진짜 노래', color: '#9effd7', motion: { xRange: 0, yRange: 75, speed: 1.45, phase: 1.1 } },
-        { x: 610, y: 278, w: 44, h: 44, label: '하늘의 진짜 길', color: '#a6efff', motion: { xRange: 70, yRange: 45, speed: 1.8, phase: 2.2 } },
+        { x: 234, y: 386, w: 44, h: 44, label: '하린의 진짜 웃음', art: 'harin', color: '#ffcf88', motion: { xRange: 90, yRange: 0, speed: 1.75, phase: 0 } },
+        { x: 438, y: 112, w: 44, h: 44, label: '유나의 진짜 노래', art: 'yuna', color: '#9effd7', motion: { xRange: 0, yRange: 75, speed: 1.45, phase: 1.1 } },
+        { x: 610, y: 278, w: 44, h: 44, label: '하늘의 진짜 길', art: 'haneul', color: '#a6efff', motion: { xRange: 70, yRange: 45, speed: 1.8, phase: 2.2 } },
       ],
       voiceGate: { x: 662, y: 408, w: 58, h: 44, label: '딸의 목소리' },
     },
@@ -772,11 +797,15 @@ function stageBgmKey(stage = currentStage()) {
   const chapter = stage?.chapter || '';
   if (chapter.includes('하린') && HARIN_STAGE_MUSIC_PATHS[game.stageIndex]) return `harin-${game.stageIndex + 1}`;
   if (chapter.includes('하늘') && HANEUL_STAGE_MUSIC_PATHS[game.stageIndex - 12]) return `haneul-${game.stageIndex + 1}`;
-  if (chapter.includes('딸') && FINAL_CHAPTER_STAGE_MUSIC_PATHS[game.stageIndex - 18]) return `final-${game.stageIndex + 1}`;
-  if (chapter.includes('수면 과학자') && FINAL_CHAPTER_STAGE_MUSIC_PATHS[3]) return 'final-22';
+  // 22스테이지는 PAGE 02 챕터명이라 인물 이름이 제목에 없더라도, 최종장 음악은 스테이지 번호로 확정한다.
+  if (game.stageIndex >= 18 && FINAL_CHAPTER_STAGE_MUSIC_PATHS[game.stageIndex - 18]) return `final-${game.stageIndex + 1}`;
   if (!chapter.includes('유나')) return null;
   if (stage.type === 'boss') return 'resonance';
   return ({ 7: 'tide', 8: 'glass', 9: 'silent', 10: 'glass', 12: 'tide' })[game.stageIndex + 1] || 'tide';
+}
+
+function normalizedBgmSource(source) {
+  return source?.replace(/^assets\/audio\//, 'assets/audio/normalized/');
 }
 
 function stageBgmConfig(key) {
@@ -784,22 +813,22 @@ function stageBgmConfig(key) {
     const stageNumber = Number(key.slice('harin-'.length));
     const source = HARIN_STAGE_MUSIC_PATHS[stageNumber - 1];
     if (!source) return null;
-    return { family: 'harin', source, volume: CHARACTER_BGM_TRIM.harin, loop: stageNumber !== 5 };
+    return { family: 'harin', source: normalizedBgmSource(source), volume: CHARACTER_BGM_TRIM.harin, loop: stageNumber !== 5 };
   }
   if (key?.startsWith('haneul-')) {
     const stageNumber = Number(key.slice('haneul-'.length));
     const source = HANEUL_STAGE_MUSIC_PATHS[stageNumber - 13];
-    return source ? { family: 'haneul', source, volume: CHARACTER_BGM_TRIM.haneul, loop: true } : null;
+    return source ? { family: 'haneul', source: normalizedBgmSource(source), volume: CHARACTER_BGM_TRIM.haneul, loop: true } : null;
   }
   if (key?.startsWith('final-')) {
     const stageNumber = Number(key.slice('final-'.length));
     const source = FINAL_CHAPTER_STAGE_MUSIC_PATHS[stageNumber - 19];
     if (!source) return null;
     const family = stageNumber === 22 ? 'scientist' : 'daughter';
-    return { family, source, volume: CHARACTER_BGM_TRIM[family], loop: true };
+    return { family, source: normalizedBgmSource(source), volume: CHARACTER_BGM_TRIM[family], loop: true };
   }
   const source = YUNA_BGM_PATHS[key];
-  return source ? { family: 'yuna', source, volume: CHARACTER_BGM_TRIM.yuna, loop: true } : null;
+  return source ? { family: 'yuna', source: normalizedBgmSource(source), volume: CHARACTER_BGM_TRIM.yuna, loop: true } : null;
 }
 
 function updateBgmVolumeControl() {
@@ -3520,9 +3549,49 @@ function drawYunaScorePlatform(item) {
   ctx.restore();
 }
 
+function drawHarinLaughCollector(item) {
+  const { x, y, w, h } = item;
+  const image = objectSprites.harinLaughCollector;
+  const relayReady = activeMemoryPads(game.memoryPads || []) >= game.echoGoal;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.globalAlpha = relayReady ? .24 : 1;
+  ctx.shadowBlur = relayReady ? 10 : 30;
+  ctx.shadowColor = relayReady ? '#9effea' : '#ffb85c';
+  if (image?.complete && image.naturalWidth > 0) {
+    // 충돌 폭은 좁게 두되, 화면상 수집탑은 한눈에 알아볼 수 있게 그린다.
+    const visualH = h + 24;
+    const visualW = visualH * image.naturalWidth / image.naturalHeight;
+    ctx.drawImage(image, x + w / 2 - visualW / 2, y - 12, visualW, visualH);
+  } else {
+    ctx.fillStyle = '#202956'; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = '#6b70bf'; ctx.fillRect(x + 8, y, 4, h);
+  }
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = relayReady ? 'rgba(158,255,234,.8)' : 'rgba(255,205,112,.92)';
+  ctx.lineWidth = 2; ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+  ctx.fillStyle = relayReady ? '#baffeb' : '#fff0b1'; ctx.font = '800 8px ui-monospace, monospace'; ctx.textAlign = 'center';
+  ctx.fillText(relayReady ? 'LAUGH FLOW STOPPED' : 'LAUGH COLLECTOR', x + w / 2, y - 10);
+  ctx.restore();
+}
+
 function drawYunaSilentKeyWall(item) {
   const { x, y, w, h } = item;
+  const image = objectSprites.yunaSilentKey;
   ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  if (image?.complete && image.naturalWidth > 0) {
+    ctx.shadowBlur = 24; ctx.shadowColor = '#67ead5';
+    ctx.drawImage(image, x - 14, y - 7, w + 28, h + 14);
+    ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .2;
+    ctx.fillStyle = '#9effd7'; ctx.fillRect(x + 3, y + 2, w - 6, h - 4);
+    ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+    ctx.strokeStyle = '#9effd7'; ctx.lineWidth = 2; ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+    ctx.fillStyle = '#e8fff5'; ctx.font = '800 8px ui-monospace, monospace'; ctx.textAlign = 'center';
+    ctx.fillText('SILENT KEY', x + w / 2, y - 10);
+    ctx.restore();
+    return;
+  }
   ctx.shadowBlur = 24; ctx.shadowColor = '#67ead5';
   const body = ctx.createLinearGradient(x, y, x + w, y);
   body.addColorStop(0, '#08162a'); body.addColorStop(.52, '#1c3042'); body.addColorStop(1, '#07101e');
@@ -3538,6 +3607,45 @@ function drawYunaSilentKeyWall(item) {
   ctx.strokeStyle = '#9effd7'; ctx.lineWidth = 2; ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
   ctx.translate(x + w / 2, y + h / 2); ctx.rotate(-Math.PI / 2);
   ctx.fillStyle = '#e5fff4'; ctx.font = '900 9px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText('SILENT KEY · JUMP OVER', 0, 3);
+  ctx.restore();
+}
+
+function drawHarinCarouselWall(item) {
+  const { x, y, w, h } = item;
+  const image = objectSprites.harinCarouselWall;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.shadowBlur = 30; ctx.shadowColor = '#ffca6d';
+  if (image?.complete && image.naturalWidth > 0) {
+    const visualH = h + 30;
+    const visualW = visualH * image.naturalWidth / image.naturalHeight;
+    ctx.drawImage(image, x + w / 2 - visualW / 2, y - 15, visualW, visualH);
+  } else {
+    const fallback = ctx.createLinearGradient(x, y, x + w, y);
+    fallback.addColorStop(0, '#171a48'); fallback.addColorStop(.5, '#4b3f7c'); fallback.addColorStop(1, '#171a48');
+    ctx.fillStyle = fallback; ctx.fillRect(x, y, w, h);
+  }
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = '#ffd97c'; ctx.lineWidth = 2; ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+  ctx.fillStyle = '#fff0b7'; ctx.font = '800 8px ui-monospace, monospace'; ctx.textAlign = 'center';
+  ctx.fillText('MOONLIGHT CAROUSEL WALL', x + w / 2, y - 10);
+  ctx.restore();
+}
+
+function drawHaneulHeadwindPillar(item) {
+  const { x, y, w, h } = item;
+  const image = objectSprites.haneulHeadwindPillar;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.shadowBlur = 28; ctx.shadowColor = '#68e9ff';
+  if (image?.complete && image.naturalWidth > 0) {
+    const visualH = h + 30;
+    const visualW = visualH * image.naturalWidth / image.naturalHeight;
+    ctx.drawImage(image, x + w / 2 - visualW / 2, y - 15, visualW, visualH);
+  } else {
+    ctx.fillStyle = '#16365d'; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = '#76efff'; ctx.fillRect(x + 3, y + 3, w - 6, h - 6);
+  }
   ctx.restore();
 }
 
@@ -3601,6 +3709,14 @@ function drawHarinCarouselPlatform(item) {
   ctx.shadowBlur = 0;
   ctx.fillStyle = item.hidden ? 'rgba(157, 255, 234, .72)' : 'rgba(255, 234, 161, .78)';
   ctx.fillRect(x + 3, y, Math.max(0, w - 6), 2);
+  if (item.carouselRide) {
+    // 4스테이지의 이동 발판은 같은 회전목마 그림을 쓰되, 실제로 회전 중이라는 빛의 흐름을 겹친다.
+    const pulse = .55 + Math.sin(game.elapsed * 5) * .3;
+    ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = pulse;
+    ctx.fillStyle = '#fff1aa';
+    for (let lamp = x + 13; lamp < x + w - 8; lamp += 24) ctx.fillRect(lamp, y - 4, 4, 4);
+    ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+  }
   if (item.hidden) {
     ctx.strokeStyle = 'rgba(158, 255, 234, .84)'; ctx.lineWidth = 1;
     ctx.strokeRect(x + .5, y - 1.5, w - 1, Math.max(12, h + 2));
@@ -3608,11 +3724,64 @@ function drawHarinCarouselPlatform(item) {
   ctx.restore();
 }
 
+function drawDaughterDreamPlatform(item) {
+  const classroom = game.layout === 'classroom-fracture';
+  const image = classroom ? platformSprites.daughterFracturedClassroom : platformSprites.daughterGarden;
+  const x = Math.round(item.x);
+  const y = Math.round(item.y);
+  const w = Math.round(item.w);
+  const h = Math.round(item.h);
+  const visualHeight = h >= 28 ? Math.min(90, h + 45) : 56;
+  const glow = classroom ? '#ff87ca' : '#8eefff';
+  const edge = classroom ? '#ffb0dc' : '#b9ffe1';
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.shadowBlur = item.hidden ? 24 : 16;
+  ctx.shadowColor = glow;
+  if (image?.complete && image.naturalWidth > 0) {
+    // 양 끝 장식이 작은 발판마다 찌그러지지 않도록 중앙의 반복 가능한 ledge 부분만 이어 붙인다.
+    const sourceX = Math.round(image.naturalWidth * .14);
+    const sourceW = Math.round(image.naturalWidth * .72);
+    const tileWidth = Math.max(74, Math.min(186, w));
+    for (let offset = 0; offset < w; offset += tileWidth) {
+      const width = Math.min(tileWidth, w - offset);
+      ctx.drawImage(image, sourceX, 0, sourceW, image.naturalHeight, x + offset, y - 9, width, visualHeight);
+    }
+  } else {
+    const fallback = ctx.createLinearGradient(x, y, x, y + Math.max(h, 18));
+    fallback.addColorStop(0, classroom ? '#4b356a' : '#8b6c95');
+    fallback.addColorStop(1, classroom ? '#171d4a' : '#292448');
+    ctx.fillStyle = fallback;
+    ctx.fillRect(x, y, w, Math.max(h, 18));
+  }
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = edge;
+  ctx.globalAlpha = item.hidden ? .72 : .92;
+  ctx.fillRect(x + 3, y, Math.max(0, w - 6), 2);
+  if (classroom) {
+    ctx.fillStyle = 'rgba(255, 172, 220, .45)';
+    for (let marker = x + 16; marker < x + w - 6; marker += 33) ctx.fillRect(marker, y + 5, 14, 1);
+  }
+  ctx.restore();
+}
+
 function drawPlatform(item) {
   if (item.wall) {
+    if (item.label === 'LAUGH COLLECTOR') {
+      drawHarinLaughCollector(item);
+      return;
+    }
     if (item.persistentWall) {
       if (dreamTheme().id === 'yuna') {
         drawYunaSilentKeyWall(item);
+        return;
+      }
+      if (dreamTheme().id === 'haneul') {
+        drawHaneulHeadwindPillar(item);
+        return;
+      }
+      if (game.layout === 'carousel') {
+        drawHarinCarouselWall(item);
         return;
       }
       const carouselWall = game.layout === 'carousel';
@@ -3656,6 +3825,10 @@ function drawPlatform(item) {
     }
     if (theme.id === 'haneul') {
       drawHaneulWindPlatform(item);
+      return;
+    }
+    if (theme.id === 'daughter' && (game.layout === 'garden-roots' || game.layout === 'classroom-fracture')) {
+      drawDaughterDreamPlatform(item);
       return;
     }
     const platformGradient = ctx.createLinearGradient(item.x, item.y, item.x, item.y + item.h);
@@ -4282,6 +4455,29 @@ function drawEndingCinematic() {
   const scene = ENDING_CINEMATIC_SCENES[game.endingScene] || ENDING_CINEMATIC_SCENES[0];
   const elapsed = game.endingSceneElapsed || 0;
   const progress = cinematicEase(elapsed / scene.duration);
+  const cinematicImage = endingCinematicSprites[scene.kind];
+  const hasSceneArt = cinematicImage?.complete && cinematicImage.naturalWidth > 0;
+  if (hasSceneArt) {
+    // 16:9 원화는 미세하게만 줌인해 정지 그림도 영화 컷처럼 느껴지게 한다.
+    const imageScale = Math.max(W / cinematicImage.naturalWidth, H / cinematicImage.naturalHeight) * (1.01 + progress * .024);
+    const imageW = cinematicImage.naturalWidth * imageScale;
+    const imageH = cinematicImage.naturalHeight * imageScale;
+    const panX = Math.sin(progress * Math.PI) * 7;
+    const imageX = (W - imageW) / 2 - panX;
+    const imageY = (H - imageH) / 2;
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.globalAlpha = Math.min(1, elapsed * 1.45);
+    ctx.drawImage(cinematicImage, imageX, imageY, imageW, imageH);
+    const vignette = ctx.createLinearGradient(0, 0, 0, H);
+    vignette.addColorStop(0, 'rgba(4, 9, 26, .30)');
+    vignette.addColorStop(.42, 'rgba(4, 9, 26, .04)');
+    vignette.addColorStop(.72, 'rgba(4, 9, 26, .16)');
+    vignette.addColorStop(1, 'rgba(3, 8, 22, .72)');
+    ctx.fillStyle = vignette; ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+    drawCinematicStars(scene.kind === 'morning' ? '#fff1bf' : '#d9eaff', 24, elapsed * 6);
+  } else {
   const palettes = {
     promise: ['#221347', '#193a68', '#0b1936'], hospital: ['#10182f', '#26314a', '#11162b'],
     machine: ['#171c4c', '#133f59', '#0a1831'], cost: ['#301738', '#25234d', '#100f2b'],
@@ -4346,6 +4542,7 @@ function drawEndingCinematic() {
     drawCinematicPixelChild(660, 382, { hair: '#6aa3c9', clothes: '#608ad0', detail: '#ecf9ff', glow: '#a6efff' }, 1.05);
     drawCinematicScientist(796, 388, 1.05, true);
   }
+  }
 
   ctx.save(); ctx.globalAlpha = Math.min(1, elapsed * 1.2); ctx.fillStyle = '#d9edff'; ctx.font = '800 10px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText(scene.tag, W / 2, 48);
   ctx.fillStyle = '#fff7dc'; ctx.font = '850 32px "Segoe UI", sans-serif'; ctx.fillText(scene.title, W / 2, 86); ctx.restore();
@@ -4403,6 +4600,30 @@ function drawPuzzle() {
   drawPhaseGuide();
 }
 
+function drawHaneulSignpost(x, groundY, scale = 1, trueDirection = false) {
+  const image = objectSprites.haneulTrueSignpost;
+  if (!image?.complete || !image.naturalWidth) return;
+  const width = 108 * scale;
+  const height = 156 * scale;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.globalAlpha = trueDirection ? 1 : .38;
+  ctx.shadowBlur = trueDirection ? 22 : 7;
+  ctx.shadowColor = trueDirection ? '#67e7ff' : '#ff9b73';
+  ctx.translate(x, groundY);
+  if (!trueDirection) ctx.scale(-1, 1);
+  ctx.drawImage(image, -width / 2, -height, width, height);
+  if (!trueDirection) {
+    ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = .52;
+    ctx.fillStyle = '#9c3f4f'; ctx.fillRect(-width / 2, -height, width, height);
+  }
+  ctx.restore();
+  if (trueDirection) {
+    ctx.save(); ctx.fillStyle = '#d9fbff'; ctx.font = '800 8px ui-monospace, monospace'; ctx.textAlign = 'center';
+    ctx.fillText('TRUE WIND PATH', x, groundY - height - 8); ctx.restore();
+  }
+}
+
 function drawLayoutLandmarks() {
   const layout = game.layout;
   const t = game.elapsed || 0;
@@ -4418,7 +4639,10 @@ function drawLayoutLandmarks() {
   } else if (layout === 'wind-cliff') {
     // 여러 높이의 절벽과 역풍 기둥은 실제 픽셀 배경에 포함되어 있다.
   } else if (layout === 'signpost-maze') {
-    // 되돌아가는 표지판과 지그재그 바람길은 실제 픽셀 배경에 포함되어 있다.
+    // 같은 자산을 희미한 가짜 방향과 선명한 진짜 방향으로 나눠, 배경 장식이 아닌 판단 대상임을 보인다.
+    drawHaneulSignpost(392, 350, .84, false);
+    drawHaneulSignpost(694, 330, 1.14, true);
+    drawHaneulSignpost(814, 380, .78, false);
   } else if (layout === 'starlight-ferry') {
     // 발자국 빛과 완벽한 정원으로 이어지는 전환은 실제 픽셀 배경에 포함되어 있다.
   } else if (layout === 'garden-roots') {
@@ -4475,6 +4699,15 @@ function drawDreamGate(gate, active, cleared, kind = 'resonance', revealed = tru
       ctx.beginPath(); ctx.ellipse(0, 2, gate.w / 2 + 17 + heartbeat * 8, gate.h / 2 + 17 + heartbeat * 8, 0, 0, Math.PI * 2); ctx.stroke();
       ctx.fillStyle = '#dffff5'; ctx.fillRect(-2, -6, 4, 12);
     }
+  } else if (mirror && !fakeMirror && objectSprites.daughterTrueCrack?.complete && objectSprites.daughterTrueCrack.naturalWidth > 0) {
+    // 21스테이지의 진짜 균열은 배경의 장식과 확실히 구별되는 '통과 가능한 문'으로 보인다.
+    const crack = objectSprites.daughterTrueCrack;
+    const spriteW = Math.max(76, gate.w * 2.35);
+    const spriteH = Math.max(104, gate.h * 2.1);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(crack, -spriteW / 2, -spriteH / 2, spriteW, spriteH);
+    ctx.setLineDash([3, 4]); ctx.lineWidth = active ? 3 : 2;
+    ctx.beginPath(); ctx.ellipse(0, 3, gate.w / 2 + 10, gate.h / 2 + 14, 0, 0, Math.PI * 2); ctx.stroke();
   } else if (mirror) {
     ctx.rotate(Math.PI / 4); ctx.strokeRect(-gate.w / 2, -gate.h / 2, gate.w, gate.h);
     ctx.beginPath(); ctx.moveTo(-14, -20); ctx.lineTo(4, -3); ctx.lineTo(-8, 7); ctx.lineTo(17, 22); ctx.stroke();
@@ -4493,7 +4726,8 @@ function drawDreamGate(gate, active, cleared, kind = 'resonance', revealed = tru
   ctx.restore();
   const gateLabel = yunaResonancePad
     ? cleared ? '✓ 음 되찾음' : active ? `L · ${gate.label}` : `공명 발판 · ${gate.label}`
-    : gate.label;
+    : mirror ? fakeMirror ? 'FALSE CRACK · 가짜 균열' : active ? `TRUE CRACK · ${gate.label}` : `REAL CRACK · ${gate.label}`
+      : gate.label;
   ctx.fillStyle = cleared ? '#8bc6c1' : active ? '#f4fff9' : '#a9c8c7'; ctx.font = '800 9px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(gateLabel, gate.x + gate.w / 2, gate.y - 12);
 }
 
@@ -4518,15 +4752,23 @@ function drawYunaLoopStationMeter() {
 
 function drawFinalMemoryTarget(target, active, resolved) {
   const color = target.color || '#ffe37d';
+  const portrait = finalTruthPortraits[target.art];
   ctx.save();
   ctx.translate(target.x + target.w / 2, target.y + target.h / 2);
   ctx.globalAlpha = resolved ? .18 : active ? 1 : .42;
   ctx.shadowBlur = active ? 26 : 8; ctx.shadowColor = color;
+  ctx.fillStyle = '#111d3a'; ctx.beginPath(); ctx.arc(0, 0, target.w / 2 - 3, 0, Math.PI * 2); ctx.fill();
+  if (portrait?.complete && portrait.naturalWidth > 0) {
+    ctx.save(); ctx.beginPath(); ctx.arc(0, 0, target.w / 2 - 3, 0, Math.PI * 2); ctx.clip();
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(portrait, -target.w * .44, -target.h * .48, target.w * .88, target.h * .88);
+    ctx.restore();
+  }
   ctx.strokeStyle = color; ctx.lineWidth = active ? 4 : 2;
   ctx.beginPath(); ctx.arc(0, 0, target.w / 2, 0, Math.PI * 2); ctx.stroke();
   ctx.setLineDash(active ? [] : [3, 4]);
   ctx.beginPath(); ctx.arc(0, 0, target.w / 2 + 7, 0, Math.PI * 2); ctx.stroke();
-  ctx.fillStyle = active ? color : '#dba5ba'; ctx.font = '800 14px "Segoe UI Symbol", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(active ? '♥' : '×', 0, 5);
+  ctx.fillStyle = active ? color : '#dba5ba'; ctx.font = '800 12px "Segoe UI Symbol", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(active ? '✦' : '×', 0, 18);
   ctx.restore();
   ctx.fillStyle = resolved ? '#7896a6' : active ? '#fff4c4' : '#e1a4b8'; ctx.font = '800 8px "Segoe UI", sans-serif'; ctx.textAlign = 'center';
   ctx.fillText(active ? `TRUE · ${target.label}` : resolved ? 'MEMORY RESTORED' : 'COPY · FALSE MEMORY', target.x + target.w / 2, target.y - 11);
