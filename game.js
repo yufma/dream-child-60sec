@@ -383,6 +383,19 @@ const STAGES = [
 
 // 완료한 스테이지 번호(0부터 시작)를 키로 쓰는 대화 장면들.
 // portrait 값은 나중에 assets/portraits/<portrait>.png 를 넣으면 바로 해당 픽셀 일러스트를 표시한다.
+const PROLOGUE_STORY = Object.freeze({
+  tag: 'DREAM LINK · PROLOGUE',
+  title: '꿈을 빼앗긴 밤',
+  finishLabel: '하린의 꿈으로',
+  lines: [
+    { speaker: '하린', portrait: 'harin', text: '어제도 웃는 꿈을 꿨는데… 깨어나니까 왜 웃었는지 기억이 안 나. 요즘은 웃는 게 조금 무서워.' },
+    { speaker: '전 조수', portrait: 'assistant', text: '하린뿐만이 아니야. 누군가 아이들의 꿈과 감정을 빼앗아, 한 아이만을 위한 완벽한 꿈을 유지하고 있어.' },
+    { speaker: '주인공', portrait: 'protagonist', text: '그 아이도 우리 친구잖아요. 누군가의 행복 때문에 다른 친구가 울면 안 돼요.' },
+    { speaker: '전 조수', portrait: 'assistant', text: '내 장치로 하린의 꿈에 들어가. 꿈속에서는 네가 믿는 상상력이 규칙을 바꿀 수 있어. 부수는 게 아니라, 빼앗긴 기억을 돌려주는 거야.' },
+    { speaker: '주인공', portrait: 'protagonist', text: '그럼 하린의 웃음부터 찾아올게요. 모두가 다시 자기 꿈을 꾸게 될 때까지.' },
+  ],
+});
+
 const STORY_BEATS = {
   0: {
     tag: 'DREAM LINK · A SMALL PROMISE', title: '처음으로 닿은 꿈', artId: 'story-00-first-link',
@@ -690,7 +703,7 @@ function newGame() {
     nextAttack: 1.2, message: '', completed: [], memories: new Set(campaign.memories), learnedSkills: new Set(campaign.skills), fragments: [], echoes: [], recording: null, rewindExpressionTimer: 0, dreamTrails: [], dashTrailClock: 0, dashVisualTimer: 0, memoryPads: [], fallZones: [], transition: 'start', stageIntroTimer: null, dashCooldown: 0, dashTimer: 0, dashDirection: 1, watcherResolved: false,
     stageRealElapsed: 0, challenge: null,
   };
-  showStageIntro();
+  showStoryBeat(PROLOGUE_STORY);
 }
 
 function clearStageIntroTimer() {
@@ -1393,7 +1406,7 @@ function renderStoryLine() {
   storyProgress.textContent = `${String(game.storyLineIndex + 1).padStart(2, '0')} / ${String(lines.length).padStart(2, '0')}`;
   showStoryPortrait(line);
   const lastLine = game.storyLineIndex >= lines.length - 1;
-  const finishLabel = beat.pageBreak ? '2페이지 시작' : '다음 스테이지로';
+  const finishLabel = beat.finishLabel || (beat.pageBreak ? '2페이지 시작' : '다음 스테이지로');
   startButton.innerHTML = `${lastLine ? finishLabel : '다음 대사'} <span>↵</span>`;
 }
 
