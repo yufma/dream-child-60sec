@@ -694,16 +694,38 @@ function renderCampaignRoute() {
   }).join('');
 }
 
-function newGame() {
-  stopStageBgm();
-  gameHud.classList.remove('hidden');
-  game = {
-    phase: 'intro', stageIndex: 0, imagination: 100, elapsed: 0, bridge: false,
+function freshGameState(phase = 'intro') {
+  return {
+    phase, stageIndex: 0, imagination: 100, elapsed: 0, bridge: false,
     player: freshPlayer(), platforms: [], boss: null, dreamShots: [], nightmareShots: [], fireCooldown: 0,
     nextAttack: 1.2, message: '', completed: [], memories: new Set(campaign.memories), learnedSkills: new Set(campaign.skills), fragments: [], echoes: [], recording: null, rewindExpressionTimer: 0, dreamTrails: [], dashTrailClock: 0, dashVisualTimer: 0, memoryPads: [], fallZones: [], transition: 'start', stageIntroTimer: null, dashCooldown: 0, dashTimer: 0, dashDirection: 1, watcherResolved: false,
     stageRealElapsed: 0, challenge: null,
   };
+}
+
+function newGame() {
+  stopStageBgm();
+  gameHud.classList.remove('hidden');
+  game = freshGameState();
   showStoryBeat(PROLOGUE_STORY);
+}
+
+function showTitleScreen() {
+  stopStageBgm();
+  game = freshGameState('title');
+  gameHud.classList.add('hidden');
+  bossHud.classList.add('hidden');
+  storyDialogue.classList.add('hidden');
+  startScreen.classList.remove('story-mode');
+  startScreen.classList.add('title-mode');
+  startTag.textContent = 'DREAM LINK · 60-SECOND MEMORY LAB';
+  startTitle.innerHTML = '꿈을 되돌리는 아이<br /><span>60초 수정실</span>';
+  startCopy.textContent = '빼앗긴 친구들의 꿈을 되돌리기 위한 첫 번째 접속. 하린의 웃음이 사라지기 전에, 꿈의 문을 열어주세요.';
+  startButton.innerHTML = '게임 시작 <span>↵</span>';
+  startScreen.classList.remove('hidden');
+  stageMenu.classList.add('hidden');
+  endScreen.classList.add('hidden');
+  renderCampaignRoute();
 }
 
 function clearStageIntroTimer() {
@@ -1421,6 +1443,7 @@ function showStoryBeat(beat) {
   startCopy.textContent = '';
   storyDialogue.classList.remove('hidden');
   renderStoryLine();
+  startScreen.classList.remove('title-mode');
   startScreen.classList.add('story-mode');
   startScreen.classList.remove('hidden');
   stageMenu.classList.add('hidden');
@@ -1445,7 +1468,7 @@ function continueStoryBeat() {
 function showStageIntro() {
   const stage = currentStage();
   clearStageIntroTimer();
-  startScreen.classList.remove('story-mode');
+  startScreen.classList.remove('story-mode', 'title-mode');
   storyDialogue.classList.add('hidden');
   // 보스 스테이지는 인트로 화면이 떠 있는 동안에도 전투 장면을 준비한다.
   // 자동 전환 타이머와 렌더 루프가 엇갈려도 빈 캔버스가 보이지 않게 한다.
@@ -4750,7 +4773,8 @@ function loop(time) {
 }
 
 startButton.addEventListener('click', () => {
-  if (game.phase === 'story') continueStoryBeat();
+  if (game.phase === 'title') newGame();
+  else if (game.phase === 'story') continueStoryBeat();
   else startStage();
 });
 canvas.addEventListener('click', () => {
@@ -4799,6 +4823,7 @@ ruleCards.forEach((card) => {
 function handleConfirmInput() {
   if (game.phase === 'disconnecting') skipDreamDisconnect();
   else if (game.phase === 'ending-cinematic') advanceEndingCinematic();
+  else if (game.phase === 'title') newGame();
   else if (game.phase === 'story') continueStoryBeat();
   else if (game.phase === 'intro' || game.phase === 'failed') startStage();
   else if (game.phase === 'chapter-complete') showFinalTruth();
@@ -4839,5 +4864,5 @@ window.addEventListener('blur', () => {
 });
 
 updateBgmVolumeControl();
-newGame();
+showTitleScreen();
 requestAnimationFrame(loop);
