@@ -118,6 +118,7 @@ const harinStage02GateSprites = Object.freeze({
 });
 const failureArt = Object.freeze(Object.fromEntries(Object.entries(FAILURE_ART_PATHS).map(([key, source]) => [key, loadSprite(source)])));
 const bossSprites = Object.freeze({
+  harinClown: loadSprite('assets/bosses/harin-laugh-thief-clown-sprite-v1.png'),
   yunaChoir: loadSprite('assets/bosses/yuna-silent-choir-sprite-v1.png'),
   haneulKite: loadSprite('assets/bosses/haneul-black-kite-sprite-v1.png'),
   daughterGuardian: loadSprite('assets/bosses/daughter-perfect-guardian-sprite-v1.png'),
@@ -128,6 +129,7 @@ const platformSprites = Object.freeze({
 });
 const memoryPadSprites = Object.freeze({
   harin: loadSprite('assets/memory-pads/harin-carousel-memory-pad-v1.png'),
+  distortion: loadSprite('assets/memory-pads/harin-distorted-memory-trap-v1.png'),
   yuna: loadSprite('assets/memory-pads/yuna-piano-memory-pad-v1.png'),
   haneul: loadSprite('assets/memory-pads/haneul-wind-memory-pad-v1.png'),
   daughter: loadSprite('assets/memory-pads/daughter-photo-memory-pad-v1.png'),
@@ -3686,16 +3688,16 @@ function drawMemoryPad(pad, active, index, role = 'normal') {
     echo: { title: '기억의 나 · 발판', prompt: 'K 기록으로 과거의 나를 이곳에 남기세요', color: '#9effea' },
     present: { title: '현재의 나 · 발판', prompt: '현재의 내가 이 자리에 서세요', color: '#ffe37d' },
     truth: { title: '진실의 기억 · 발판', prompt: '진짜 기억을 이곳에서 재생하세요', color: '#ffd56d' },
-    distortion: { title: '왜곡된 기억 · 발판', prompt: 'I로 잘못 남긴 기억을 지우세요', color: '#ff88ba' },
+    distortion: { title: '✕ 가짜 기억 · 함정', prompt: '기록 금지 · 실수했으면 I로 삭제', color: '#ff537b' },
   };
   const style = roleStyles[role] || roleStyles.normal;
   const color = colors[index % colors.length];
   const radius = Math.max(pad.w, pad.h) / 2;
-  const sprite = memoryPadSprites[dreamTheme().id];
+  const sprite = role === 'distortion' ? memoryPadSprites.distortion : memoryPadSprites[dreamTheme().id];
   const hasSprite = sprite?.complete && sprite.naturalWidth > 0;
   const displayColor = style.color || color;
-  const visualWidth = Math.max(50, radius * 2.48);
-  const visualHeight = Math.max(56, radius * 2.68);
+  const visualWidth = Math.max(role === 'distortion' ? 64 : 50, radius * (role === 'distortion' ? 3.02 : 2.48));
+  const visualHeight = Math.max(role === 'distortion' ? 68 : 56, radius * (role === 'distortion' ? 3.14 : 2.68));
   const padCenterX = pad.x + pad.w / 2;
   const padCenterY = pad.y + pad.h / 2;
   const playerCenterX = game.player.x + game.player.w / 2;
@@ -3737,7 +3739,7 @@ function drawMemoryPad(pad, active, index, role = 'normal') {
   ctx.restore();
 
   ctx.save();
-  const label = active ? '✓ 기억 연결됨' : style.title;
+  const label = active ? (role === 'distortion' ? '⚠ 왜곡에 갇힘' : '✓ 기억 연결됨') : style.title;
   ctx.font = '800 8px "Segoe UI", sans-serif';
   const labelWidth = Math.max(62, ctx.measureText(label).width + 15);
   const labelHeight = 17;
@@ -4425,6 +4427,40 @@ function drawYunaSilentChoirSprite(b) {
   return true;
 }
 
+function drawHarinLaughThiefSprite(b) {
+  const image = bossSprites.harinClown;
+  if (!image?.complete || !image.naturalWidth) return false;
+  const calmRatio = b.calmProgress / Math.max(.01, b.calmDuration);
+  const pulse = .5 + Math.sin(game.elapsed * 4.5) * .5;
+  const coreX = b.x + b.w / 2;
+  const spriteW = 226 + pulse * 8;
+  const spriteH = 339 + pulse * 12;
+  const chestY = b.y + 112;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.shadowBlur = 30 + pulse * 14;
+  ctx.shadowColor = calmRatio > .7 ? '#ffe9a2' : b.flash > 0 ? '#fff3fa' : '#ff5d9b';
+  ctx.globalAlpha = .98 - calmRatio * .13;
+  ctx.drawImage(image, coreX - spriteW / 2, b.y - 34, spriteW, spriteH);
+  // 광대의 비어 있던 가슴에 별빛이 차오르면 공격 없이도 안심시키는 보스전임을 전달한다.
+  ctx.globalCompositeOperation = 'screen';
+  ctx.globalAlpha = .16 + pulse * .14 + calmRatio * .28;
+  ctx.strokeStyle = calmRatio > .55 ? '#ffe8a5' : '#ff9ac2';
+  ctx.lineWidth = 2;
+  for (let ring = 0; ring < 3; ring += 1) {
+    ctx.beginPath(); ctx.arc(coreX, chestY, 26 + ring * 17 + pulse * 4, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.fillStyle = '#ffe990';
+  for (let star = 0; star < 3; star += 1) {
+    const angle = game.elapsed * .9 + star * 2.1;
+    const x = coreX + Math.cos(angle) * (14 + star * 5);
+    const y = chestY + Math.sin(angle) * (11 + star * 4);
+    ctx.fillRect(Math.round(x - 2), Math.round(y - 2), 4, 4);
+  }
+  ctx.restore();
+  return true;
+}
+
 function drawHaneulBlackKiteSprite(b) {
   const image = bossSprites.haneulKite;
   if (!image?.complete || !image.naturalWidth) return false;
@@ -4536,11 +4572,12 @@ function drawBoss() {
   const windFear = b.visual === 'wind';
   const choirFear = b.visual === 'choir';
   const mirrorFear = b.visual === 'mirror';
+  const harinIllustration = b.mode === 'calm' && drawHarinLaughThiefSprite(b);
   const choirIllustration = choirFear && drawYunaSilentChoirSprite(b);
   const windIllustration = windFear && drawHaneulBlackKiteSprite(b);
   const mirrorIllustration = mirrorFear && drawDaughterPerfectGuardianSprite(b);
   const scientistIllustration = b.mode === 'final' && drawScientistDreamGuardianSprite(b);
-  const bossIllustration = choirIllustration || windIllustration || mirrorIllustration || scientistIllustration;
+  const bossIllustration = harinIllustration || choirIllustration || windIllustration || mirrorIllustration || scientistIllustration;
   if (!bossIllustration) {
     ctx.save(); ctx.fillStyle = 'rgba(255, 137, 176, .12)'; ctx.beginPath(); ctx.arc(b.x + 80, b.y + 102, 150, 0, Math.PI * 2); ctx.fill(); ctx.restore();
   }
