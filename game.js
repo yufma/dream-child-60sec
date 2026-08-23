@@ -125,8 +125,16 @@ const bossSprites = Object.freeze({
   scientistGuardian: loadSprite('assets/bosses/scientist-dream-guardian-sprite-v1.png'),
 });
 const platformSprites = Object.freeze({
+  harinCarouselPlatform: loadSprite('assets/platforms/harin-carousel-platform-v1.png'),
   haneulWindLedge: loadSprite('assets/platforms/haneul-wind-ledge-v1.png'),
   yunaResonancePad: loadSprite('assets/platforms/yuna-resonance-pad-v1.png'),
+});
+const gateSprites = Object.freeze({
+  harin: loadSprite('assets/gates/harin-carousel-gate-v1.png'),
+  yuna: loadSprite('assets/gates/yuna-piano-gate-v1.png'),
+  haneul: loadSprite('assets/gates/haneul-wind-gate-v1.png'),
+  daughter: loadSprite('assets/gates/daughter-mirror-gate-v1.png'),
+  scientist: loadSprite('assets/gates/scientist-core-gate-v1.png'),
 });
 const memoryPadSprites = Object.freeze({
   harin: loadSprite('assets/memory-pads/harin-carousel-memory-pad-v1.png'),
@@ -3568,6 +3576,38 @@ function drawHaneulWindPlatform(item) {
   ctx.restore();
 }
 
+function drawHarinCarouselPlatform(item) {
+  const image = platformSprites.harinCarouselPlatform;
+  const x = Math.round(item.x);
+  const y = Math.round(item.y);
+  const w = Math.round(item.w);
+  const h = Math.round(item.h);
+  const floating = h < 28;
+  const visualHeight = floating ? 48 : 88;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.shadowBlur = item.hidden ? 22 : 13;
+  ctx.shadowColor = item.hidden ? '#9effea' : '#ffcc6b';
+  if (image?.complete && image.naturalWidth > 0) {
+    // 원본의 투명 여백을 제외한 무대 부분만 사용해, 길이에 따라 자연스럽게 늘어난다.
+    const sourceY = Math.round(image.naturalHeight * .19);
+    const sourceH = Math.round(image.naturalHeight * .61);
+    ctx.drawImage(image, 0, sourceY, image.naturalWidth, sourceH, x, y - 8, w, visualHeight);
+  } else {
+    const fallback = ctx.createLinearGradient(x, y, x, y + h);
+    fallback.addColorStop(0, '#69578c'); fallback.addColorStop(1, '#211c48');
+    ctx.fillStyle = fallback; ctx.fillRect(x, y, w, Math.max(h, 16));
+  }
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = item.hidden ? 'rgba(157, 255, 234, .72)' : 'rgba(255, 234, 161, .78)';
+  ctx.fillRect(x + 3, y, Math.max(0, w - 6), 2);
+  if (item.hidden) {
+    ctx.strokeStyle = 'rgba(158, 255, 234, .84)'; ctx.lineWidth = 1;
+    ctx.strokeRect(x + .5, y - 1.5, w - 1, Math.max(12, h + 2));
+  }
+  ctx.restore();
+}
+
 function drawPlatform(item) {
   if (item.wall) {
     if (item.persistentWall) {
@@ -3606,6 +3646,10 @@ function drawPlatform(item) {
     ctx.save(); ctx.translate(item.x + 47, item.y + 190); ctx.rotate(-Math.PI / 2); ctx.fillStyle = '#a2afe1'; ctx.font = '700 10px ui-monospace, monospace'; ctx.fillText('DREAM EXTRACTOR', -52, 0); ctx.restore();
   } else {
     const theme = dreamTheme();
+    if (theme.id === 'harin') {
+      drawHarinCarouselPlatform(item);
+      return;
+    }
     if (theme.id === 'yuna') {
       drawYunaScorePlatform(item);
       return;
@@ -3703,8 +3747,30 @@ function drawWatcher(watcher, frozen, resolved = false) {
 }
 
 function drawExit() {
-  const x = game.exit.x, y = game.exit.y;
-  ctx.save(); ctx.shadowBlur = 27; ctx.shadowColor = '#55f6ff'; ctx.fillStyle = '#153d57'; ctx.fillRect(x, y, 36, 82); ctx.fillStyle = '#4af3fb'; ctx.fillRect(x + 4, y + 5, 28, 73); ctx.fillStyle = '#0d2045'; ctx.fillRect(x + 8, y + 10, 20, 63); ctx.fillStyle = '#ffe88c'; ctx.beginPath(); ctx.arc(x + 18, y + 37, 7, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#d7ffff'; ctx.font = '800 8px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText(game.exit.label, x + 18, y - 10); ctx.restore();
+  const { x, y, w, h, label } = game.exit;
+  const theme = dreamTheme();
+  const sprite = gateSprites[theme.id];
+  const exitColors = {
+    harin: '#ffe27e', yuna: '#9effd7', haneul: '#9eeeff', daughter: '#ffb5df', scientist: '#8ceeff',
+  };
+  const glow = exitColors[theme.id] || '#55f6ff';
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.shadowBlur = 24; ctx.shadowColor = glow;
+  if (sprite?.complete && sprite.naturalWidth > 0) {
+    const visualHeight = Math.max(118, h * 1.5);
+    const visualWidth = Math.max(70, Math.round(visualHeight * (sprite.naturalWidth / sprite.naturalHeight)));
+    ctx.drawImage(sprite, x + w / 2 - visualWidth / 2, y + h - visualHeight, visualWidth, visualHeight);
+  } else {
+    ctx.fillStyle = '#153d57'; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = '#4af3fb'; ctx.fillRect(x + 4, y + 5, w - 8, h - 9);
+    ctx.fillStyle = '#0d2045'; ctx.fillRect(x + 8, y + 10, w - 16, h - 19);
+    ctx.fillStyle = '#ffe88c'; ctx.beginPath(); ctx.arc(x + w / 2, y + h * .45, 7, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = 'rgba(5, 12, 31, .72)'; ctx.fillRect(x + w / 2 - 43, y - 17, 86, 11);
+  ctx.fillStyle = glow; ctx.font = '800 8px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText(label, x + w / 2, y - 9);
+  ctx.restore();
 }
 
 function drawFallZone(zone) {
