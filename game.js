@@ -3682,72 +3682,91 @@ function drawMemoryFragment(fragment) {
 function drawMemoryPad(pad, active, index, role = 'normal') {
   const colors = ['#ffe37d', '#9effea', '#ffb5d7'];
   const roleStyles = {
-    normal: { fill: 'rgba(21, 26, 59, .8)', icon: '○' },
-    echo: { label: '기억', badge: '기억', badgeFill: 'rgba(30, 74, 88, .9)', badgeStroke: '#9effea', fill: 'rgba(18, 57, 72, .9)', icon: '✦' },
-    present: { label: '현재', badge: '현재', badgeFill: 'rgba(102, 73, 38, .95)', badgeStroke: '#ffe37d', fill: 'rgba(76, 56, 18, .9)', icon: '◆' },
-    truth: { label: '공명', badge: '진실', badgeFill: 'rgba(106, 67, 20, .96)', badgeStroke: '#ffd56d', fill: 'rgba(95, 55, 9, .92)', icon: '✦' },
-    distortion: { label: '왜곡', badge: '가짜', badgeFill: 'rgba(91, 22, 61, .96)', badgeStroke: '#ff88ba', fill: 'rgba(74, 20, 54, .92)', icon: '×' },
+    normal: { title: 'K · 기억 발판', prompt: '기록 루프가 이곳을 지나가게 하세요' },
+    echo: { title: '기억의 나 · 발판', prompt: 'K 기록으로 과거의 나를 이곳에 남기세요', color: '#9effea' },
+    present: { title: '현재의 나 · 발판', prompt: '현재의 내가 이 자리에 서세요', color: '#ffe37d' },
+    truth: { title: '진실의 기억 · 발판', prompt: '진짜 기억을 이곳에서 재생하세요', color: '#ffd56d' },
+    distortion: { title: '왜곡된 기억 · 발판', prompt: 'I로 잘못 남긴 기억을 지우세요', color: '#ff88ba' },
   };
   const style = roleStyles[role] || roleStyles.normal;
   const color = colors[index % colors.length];
   const radius = Math.max(pad.w, pad.h) / 2;
   const sprite = memoryPadSprites[dreamTheme().id];
   const hasSprite = sprite?.complete && sprite.naturalWidth > 0;
+  const displayColor = style.color || color;
+  const visualWidth = Math.max(50, radius * 2.48);
+  const visualHeight = Math.max(56, radius * 2.68);
+  const padCenterX = pad.x + pad.w / 2;
+  const padCenterY = pad.y + pad.h / 2;
+  const playerCenterX = game.player.x + game.player.w / 2;
+  const playerCenterY = game.player.y + game.player.h / 2;
+  const playerNear = Math.hypot(playerCenterX - padCenterX, playerCenterY - padCenterY) < 116;
+
+  // 예전 데모의 원형 아이콘·하트·테두리는 완전히 제거한다.
+  // 발판 그 자체가 챕터별 일러스트이고, 상단 명찰이 상호작용 지점임을 알려 준다.
   ctx.save();
-  ctx.translate(pad.x + pad.w / 2, pad.y + pad.h / 2);
+  ctx.translate(padCenterX, padCenterY);
   if (hasSprite) {
-    // 충돌 범위는 그대로 두고, 기억 발판만 꿈의 주제에 맞는 작은 픽셀 오브젝트로 바꾼다.
-    const visualWidth = Math.max(50, radius * 2.48);
-    const visualHeight = Math.max(56, radius * 2.68);
     ctx.imageSmoothingEnabled = false;
     ctx.globalAlpha = active ? 1 : .86;
     ctx.drawImage(sprite, -visualWidth / 2, -visualHeight / 2 - 3, visualWidth, visualHeight);
     ctx.globalAlpha = 1;
+  } else {
+    // 이미지 로딩 중에도 발판이 배경으로 오인되지 않도록, 원이 아닌 사각 받침으로만 표시한다.
+    ctx.fillStyle = '#13254b';
+    ctx.fillRect(-radius, -radius * .62, radius * 2, radius * 1.24);
+    ctx.fillStyle = displayColor;
+    ctx.fillRect(-radius + 3, -radius * .62 + 3, radius * 2 - 6, 3);
   }
   ctx.shadowBlur = active ? 27 : 9;
-  ctx.shadowColor = role === 'present' ? '#ffe37d' : color;
-  ctx.fillStyle = active ? 'rgba(255, 244, 181, .24)' : hasSprite ? 'rgba(8, 14, 35, .12)' : style.fill;
-  ctx.beginPath(); ctx.arc(0, 0, radius, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = role === 'present' ? '#ffe37d' : color;
-  ctx.lineWidth = active ? 3 : role === 'present' ? 2.2 : 1.5;
-  ctx.beginPath(); ctx.arc(0, 0, radius - 2, 0, Math.PI * 2); ctx.stroke();
-  if (role === 'present') {
-    ctx.strokeStyle = 'rgba(255, 231, 140, .34)';
+  ctx.shadowColor = displayColor;
+  ctx.strokeStyle = displayColor;
+  ctx.lineWidth = active ? 2.6 : 1.6;
+  const bracket = Math.max(17, radius - 2);
+  const corner = 8;
+  [[-bracket, -bracket, corner, 0, 0, corner], [bracket, -bracket, -corner, 0, 0, corner], [-bracket, bracket, corner, 0, 0, -corner], [bracket, bracket, -corner, 0, 0, -corner]].forEach(([x, y, dx1, dy1, dx2, dy2]) => {
+    ctx.beginPath(); ctx.moveTo(x, y + dy1); ctx.lineTo(x + dx1, y + dy1); ctx.moveTo(x + dx2, y); ctx.lineTo(x + dx2, y + dy2); ctx.stroke();
+  });
+  if (active) {
+    const pulse = 25 + Math.sin((game.elapsed || 0) * 7 + index) * 4;
+    ctx.globalAlpha = .55;
     ctx.lineWidth = 1.2;
-    ctx.beginPath(); ctx.arc(0, 0, radius + 6, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0, 0, pulse, 0, Math.PI * 2); ctx.stroke();
+    ctx.globalAlpha = 1;
   }
-  ctx.fillStyle = role === 'present' ? '#fff4c4' : color;
-  ctx.font = '800 16px "Segoe UI Symbol", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(active ? '♥' : style.icon, 0, 6);
   ctx.restore();
-  if (role !== 'normal') {
-    ctx.save();
-    ctx.fillStyle = style.badgeFill;
-    ctx.strokeStyle = style.badgeStroke;
-    ctx.lineWidth = 1;
-    const badgeWidth = 34;
-    const badgeHeight = 15;
-    const badgeX = pad.x + pad.w / 2 - badgeWidth / 2;
-    const badgeY = pad.y - 25;
-    ctx.beginPath();
-    ctx.moveTo(badgeX + 5, badgeY);
-    ctx.lineTo(badgeX + badgeWidth - 5, badgeY);
-    ctx.quadraticCurveTo(badgeX + badgeWidth, badgeY, badgeX + badgeWidth, badgeY + 5);
-    ctx.lineTo(badgeX + badgeWidth, badgeY + badgeHeight - 5);
-    ctx.quadraticCurveTo(badgeX + badgeWidth, badgeY + badgeHeight, badgeX + badgeWidth - 5, badgeY + badgeHeight);
-    ctx.lineTo(badgeX + 5, badgeY + badgeHeight);
-    ctx.quadraticCurveTo(badgeX, badgeY + badgeHeight, badgeX, badgeY + badgeHeight - 5);
-    ctx.lineTo(badgeX, badgeY + 5);
-    ctx.quadraticCurveTo(badgeX, badgeY, badgeX + 5, badgeY);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = role === 'present' ? '#fff4c4' : role === 'truth' ? '#ffe48b' : role === 'distortion' ? '#ffb2cf' : '#b9ffef';
-    ctx.font = '700 8px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(style.badge, pad.x + pad.w / 2, badgeY + badgeHeight / 2 + 0.5);
-    ctx.restore();
-  } else {
-    ctx.fillStyle = active ? color : '#a9b6d4'; ctx.font = '700 9px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(pad.label, pad.x + pad.w / 2, pad.y - 10);
+
+  ctx.save();
+  const label = active ? '✓ 기억 연결됨' : style.title;
+  ctx.font = '800 8px "Segoe UI", sans-serif';
+  const labelWidth = Math.max(62, ctx.measureText(label).width + 15);
+  const labelHeight = 17;
+  const labelX = padCenterX - labelWidth / 2;
+  const labelY = padCenterY - visualHeight / 2 - 18;
+  ctx.fillStyle = active ? 'rgba(23, 72, 76, .94)' : 'rgba(9, 17, 42, .92)';
+  ctx.strokeStyle = displayColor;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(labelX, labelY, labelWidth, labelHeight, 5);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = active ? '#e8fff5' : displayColor;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(label, padCenterX, labelY + labelHeight / 2 + .5);
+  ctx.globalAlpha = .72;
+  ctx.strokeStyle = displayColor;
+  ctx.beginPath(); ctx.moveTo(padCenterX, labelY + labelHeight); ctx.lineTo(padCenterX, padCenterY - visualHeight / 2 - 4); ctx.stroke();
+  if (playerNear && !active) {
+    const prompt = style.prompt;
+    const promptWidth = Math.min(166, Math.max(106, ctx.measureText(prompt).width + 16));
+    const promptX = Math.max(6, Math.min(W - promptWidth - 6, padCenterX - promptWidth / 2));
+    const promptY = Math.min(H - 23, padCenterY + visualHeight / 2 + 5);
+    ctx.globalAlpha = .96;
+    ctx.fillStyle = 'rgba(5, 11, 31, .94)';
+    ctx.strokeStyle = displayColor;
+    ctx.beginPath(); ctx.roundRect(promptX, promptY, promptWidth, 18, 5); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#f5fbff'; ctx.font = '700 8px "Segoe UI", sans-serif'; ctx.fillText(prompt, padCenterX, promptY + 9.5);
   }
+  ctx.restore();
 }
 
 function drawEcho(echo, index) {
