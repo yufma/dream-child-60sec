@@ -25,7 +25,7 @@ const HARIN_STAGE_MUSIC_PATHS = Object.freeze([
   'assets/audio/harin-stage-themes-v11/stage-05-darkened-harin-theme-60s-v11.wav',
   'assets/audio/harin-stage-themes-v12-flute-test/stage-06-resolved-harin-theme-loop-soft-flute-v12.wav',
 ]);
-const CHARACTER_BGM_TRIM = Object.freeze({ harin: .88, yuna: 1.15, haneul: 1 });
+const CHARACTER_BGM_TRIM = Object.freeze({ harin: .88, yuna: 1.15, haneul: 1, daughter: .92, scientist: .96 });
 const YUNA_BACKGROUND_PATHS = Object.freeze(
   [
     'assets/backgrounds/yuna-stage-07.png',
@@ -52,6 +52,12 @@ const DAUGHTER_BACKGROUND_PATHS = Object.freeze([
   'assets/backgrounds/daughter-stage-21-mirror-court-v1.png',
 ]);
 const SCIENTIST_BACKGROUND_PATH = 'assets/backgrounds/scientist-stage-22-dream-lab-v1.png';
+const FINAL_CHAPTER_STAGE_MUSIC_PATHS = Object.freeze([
+  'assets/audio/daughter-perfect-garden-v1.wav',
+  'assets/audio/daughter-fractured-classroom-v1.wav',
+  'assets/audio/daughter-mirror-guardian-v1.wav',
+  'assets/audio/scientist-dream-lab-final-v1.wav',
+]);
 const HANEUL_STAGE_MUSIC_PATHS = Object.freeze([
   'assets/audio/haneul-wind-path-v1.wav',
   'assets/audio/haneul-wind-path-v1.wav',
@@ -119,6 +125,13 @@ const bossSprites = Object.freeze({
 });
 const platformSprites = Object.freeze({
   haneulWindLedge: loadSprite('assets/platforms/haneul-wind-ledge-v1.png'),
+});
+const memoryPadSprites = Object.freeze({
+  harin: loadSprite('assets/memory-pads/harin-carousel-memory-pad-v1.png'),
+  yuna: loadSprite('assets/memory-pads/yuna-piano-memory-pad-v1.png'),
+  haneul: loadSprite('assets/memory-pads/haneul-wind-memory-pad-v1.png'),
+  daughter: loadSprite('assets/memory-pads/daughter-photo-memory-pad-v1.png'),
+  scientist: loadSprite('assets/memory-pads/scientist-core-memory-pad-v1.png'),
 });
 
 const startScreen = document.querySelector('#start-screen');
@@ -713,6 +726,8 @@ function stageBgmKey(stage = currentStage()) {
   const chapter = stage?.chapter || '';
   if (chapter.includes('하린') && HARIN_STAGE_MUSIC_PATHS[game.stageIndex]) return `harin-${game.stageIndex + 1}`;
   if (chapter.includes('하늘') && HANEUL_STAGE_MUSIC_PATHS[game.stageIndex - 12]) return `haneul-${game.stageIndex + 1}`;
+  if (chapter.includes('딸') && FINAL_CHAPTER_STAGE_MUSIC_PATHS[game.stageIndex - 18]) return `final-${game.stageIndex + 1}`;
+  if (chapter.includes('수면 과학자') && FINAL_CHAPTER_STAGE_MUSIC_PATHS[3]) return 'final-22';
   if (!chapter.includes('유나')) return null;
   if (stage.type === 'boss') return 'resonance';
   return ({ 7: 'tide', 8: 'glass', 9: 'silent', 10: 'glass', 12: 'tide' })[game.stageIndex + 1] || 'tide';
@@ -729,6 +744,13 @@ function stageBgmConfig(key) {
     const stageNumber = Number(key.slice('haneul-'.length));
     const source = HANEUL_STAGE_MUSIC_PATHS[stageNumber - 13];
     return source ? { family: 'haneul', source, volume: CHARACTER_BGM_TRIM.haneul, loop: true } : null;
+  }
+  if (key?.startsWith('final-')) {
+    const stageNumber = Number(key.slice('final-'.length));
+    const source = FINAL_CHAPTER_STAGE_MUSIC_PATHS[stageNumber - 19];
+    if (!source) return null;
+    const family = stageNumber === 22 ? 'scientist' : 'daughter';
+    return { family, source, volume: CHARACTER_BGM_TRIM[family], loop: true };
   }
   const source = YUNA_BGM_PATHS[key];
   return source ? { family: 'yuna', source, volume: CHARACTER_BGM_TRIM.yuna, loop: true } : null;
@@ -3669,11 +3691,22 @@ function drawMemoryPad(pad, active, index, role = 'normal') {
   const style = roleStyles[role] || roleStyles.normal;
   const color = colors[index % colors.length];
   const radius = Math.max(pad.w, pad.h) / 2;
+  const sprite = memoryPadSprites[dreamTheme().id];
+  const hasSprite = sprite?.complete && sprite.naturalWidth > 0;
   ctx.save();
   ctx.translate(pad.x + pad.w / 2, pad.y + pad.h / 2);
+  if (hasSprite) {
+    // 충돌 범위는 그대로 두고, 기억 발판만 꿈의 주제에 맞는 작은 픽셀 오브젝트로 바꾼다.
+    const visualWidth = Math.max(50, radius * 2.48);
+    const visualHeight = Math.max(56, radius * 2.68);
+    ctx.imageSmoothingEnabled = false;
+    ctx.globalAlpha = active ? 1 : .86;
+    ctx.drawImage(sprite, -visualWidth / 2, -visualHeight / 2 - 3, visualWidth, visualHeight);
+    ctx.globalAlpha = 1;
+  }
   ctx.shadowBlur = active ? 27 : 9;
   ctx.shadowColor = role === 'present' ? '#ffe37d' : color;
-  ctx.fillStyle = active ? 'rgba(255, 244, 181, .28)' : style.fill;
+  ctx.fillStyle = active ? 'rgba(255, 244, 181, .24)' : hasSprite ? 'rgba(8, 14, 35, .12)' : style.fill;
   ctx.beginPath(); ctx.arc(0, 0, radius, 0, Math.PI * 2); ctx.fill();
   ctx.strokeStyle = role === 'present' ? '#ffe37d' : color;
   ctx.lineWidth = active ? 3 : role === 'present' ? 2.2 : 1.5;
