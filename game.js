@@ -126,6 +126,7 @@ const bossSprites = Object.freeze({
 });
 const platformSprites = Object.freeze({
   haneulWindLedge: loadSprite('assets/platforms/haneul-wind-ledge-v1.png'),
+  yunaResonancePad: loadSprite('assets/platforms/yuna-resonance-pad-v1.png'),
 });
 const memoryPadSprites = Object.freeze({
   harin: loadSprite('assets/memory-pads/harin-carousel-memory-pad-v1.png'),
@@ -4328,6 +4329,8 @@ function drawWindGate(gate, index, active, cleared, unlocked) {
 function drawDreamGate(gate, active, cleared, kind = 'resonance', revealed = true, heartbeat = 0) {
   const fakeMirror = kind === 'false-mirror';
   const mirror = kind === 'mirror' || fakeMirror;
+  const yunaResonancePad = kind === 'resonance' && game.boss?.mode === 'resonance';
+  const resonanceImage = platformSprites.yunaResonancePad;
   const color = fakeMirror ? '#ff789f' : mirror ? '#ffb5df' : '#9effea';
   ctx.save();
   ctx.translate(gate.x + gate.w / 2, gate.y + gate.h / 2);
@@ -4335,7 +4338,22 @@ function drawDreamGate(gate, active, cleared, kind = 'resonance', revealed = tru
   ctx.globalAlpha = cleared ? .2 : revealed ? active ? 1 : .5 : .08;
   ctx.shadowBlur = active ? 26 + heartbeat * 24 : 8; ctx.shadowColor = color;
   ctx.strokeStyle = color; ctx.lineWidth = active ? 4 : 2;
-  if (mirror) {
+  if (yunaResonancePad && resonanceImage?.complete && resonanceImage.naturalWidth > 0) {
+    // 유나 보스전의 음은 일반 원형 게이트가 아니라 실제로 올라서는 공명 악기 발판이다.
+    const spriteW = gate.w * 1.62;
+    const spriteH = gate.h * 1.78;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(resonanceImage, -spriteW / 2, -spriteH * .62, spriteW, spriteH);
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.ellipse(0, 4, gate.w / 2 + 8, gate.h / 2 + 8, 0, 0, Math.PI * 2); ctx.stroke();
+    if (heartbeat > 0) {
+      ctx.setLineDash([]);
+      ctx.globalAlpha = .46 + heartbeat * .5;
+      ctx.lineWidth = 2 + heartbeat * 3;
+      ctx.beginPath(); ctx.ellipse(0, 2, gate.w / 2 + 17 + heartbeat * 8, gate.h / 2 + 17 + heartbeat * 8, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = '#dffff5'; ctx.fillRect(-2, -6, 4, 12);
+    }
+  } else if (mirror) {
     ctx.rotate(Math.PI / 4); ctx.strokeRect(-gate.w / 2, -gate.h / 2, gate.w, gate.h);
     ctx.beginPath(); ctx.moveTo(-14, -20); ctx.lineTo(4, -3); ctx.lineTo(-8, 7); ctx.lineTo(17, 22); ctx.stroke();
     if (fakeMirror) { ctx.beginPath(); ctx.moveTo(-18, 18); ctx.lineTo(18, -18); ctx.stroke(); }
@@ -4351,7 +4369,10 @@ function drawDreamGate(gate, active, cleared, kind = 'resonance', revealed = tru
     }
   }
   ctx.restore();
-  ctx.fillStyle = cleared ? '#8bc6c1' : active ? '#f4fff9' : '#a9c8c7'; ctx.font = '800 9px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(gate.label, gate.x + gate.w / 2, gate.y - 12);
+  const gateLabel = yunaResonancePad
+    ? cleared ? '✓ 음 되찾음' : active ? `L · ${gate.label}` : `공명 발판 · ${gate.label}`
+    : gate.label;
+  ctx.fillStyle = cleared ? '#8bc6c1' : active ? '#f4fff9' : '#a9c8c7'; ctx.font = '800 9px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(gateLabel, gate.x + gate.w / 2, gate.y - 12);
 }
 
 function drawYunaLoopStationMeter() {
