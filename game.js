@@ -809,7 +809,7 @@ function setBgmMasterVolume(value, persist = false) {
   if (config) stageBgm.targetVolume = Math.min(1, config.volume * stageBgm.masterVolume);
   if (stageBgm.audio) {
     cancelStageBgmFade();
-    stageBgm.audio.volume = stageBgm.enabled ? stageBgm.targetVolume : 0;
+    stageBgm.audio.volume = stageBgm.enabled ? (game.phase === 'story' ? storyBgmVolume() : stageBgm.targetVolume) : 0;
     if (stageBgm.enabled && stageBgm.audio.paused && !stageBgm.frozen && game.phase === 'playing') playStageBgm();
   }
   updateBgmVolumeControl();
@@ -851,7 +851,7 @@ function fadeStageBgm(targetVolume, duration = 260, onComplete = null) {
   stageBgm.fadeFrame = requestAnimationFrame(tick);
 }
 
-function playStageBgm() {
+function playStageBgm(volume = stageBgm.targetVolume) {
   if (!stageBgm.enabled || !stageBgm.audio || stageBgm.frozen) return;
   const audio = stageBgm.audio;
   audio.muted = false;
@@ -860,7 +860,7 @@ function playStageBgm() {
     if (stageBgm.audio !== audio) return;
     stageBgm.playBlocked = false;
     updateBgmToggle(stageBgm.key);
-    fadeStageBgm(stageBgm.targetVolume, 260);
+    fadeStageBgm(volume, 260);
   };
   const markBlocked = () => {
     if (stageBgm.audio !== audio) return;
@@ -946,7 +946,7 @@ function createStageBgmAudio(key, config = stageBgmConfig(key)) {
   return audio;
 }
 
-function startStageBgm(stage = currentStage()) {
+function startStageBgm(stage = currentStage(), { storyMode = false } = {}) {
   const key = stageBgmKey(stage);
   const config = stageBgmConfig(key);
   if (!key || !config) {
@@ -976,7 +976,24 @@ function startStageBgm(stage = currentStage()) {
     if (key !== 'resonance') setupYunaLoopMix();
     startYunaLoopStation(stage);
   } else stopYunaLoopStation();
-  playStageBgm();
+  playStageBgm(storyMode ? storyBgmVolume(key) : stageBgm.targetVolume);
+}
+
+function storyBgmVolume(key = stageBgm.key) {
+  return stageBgm.enabled ? bgmVolume(key) * .48 : 0;
+}
+
+function continueStoryBgm() {
+  if (!stageBgm.enabled) return;
+  if (!stageBgm.audio) {
+    // 첫 프롤로그에는 아직 이전 스테이지가 없으므로, 첫 꿈의 음악을 잔잔하게 연다.
+    startStageBgm(currentStage(), { storyMode: true });
+    return;
+  }
+  if (stageBgm.frozen) return;
+  if (stageBgm.audio.ended) stageBgm.audio.currentTime = 0;
+  if (stageBgm.audio.paused) playStageBgm(storyBgmVolume());
+  else fadeStageBgm(storyBgmVolume(), 420);
 }
 
 function pauseStageBgm() {
@@ -990,7 +1007,8 @@ function pauseStageBgm() {
 }
 
 function resumeStageBgm() {
-  if (stageBgmKey()) playStageBgm();
+  if (game.phase === 'story') continueStoryBgm();
+  else if (stageBgmKey()) playStageBgm();
 }
 
 function stopStageBgm() {
@@ -1434,8 +1452,8 @@ function renderStoryLine() {
 
 function showStoryBeat(beat) {
   clearStageIntroTimer();
-  pauseStageBgm();
   game.phase = 'story';
+  continueStoryBgm();
   game.storyBeat = beat;
   game.storyLineIndex = 0;
   startTag.textContent = beat.tag;
@@ -2875,7 +2893,11 @@ function updateBoss(dt) {
 
 function completeStage() {
   if (game.phase !== 'playing') return;
-  stopStageBgm();
+  const completedStageIndex = game.stageIndex;
+  const storyBeat = STORY_BEATS[completedStageIndex];
+  // 스토리가 이어지는 구간은 방금 지나온 꿈의 음악을 낮은 볼륨으로 남긴다.
+  // 다음 스테이지를 시작할 때만 새 꿈의 BGM으로 자연스럽게 교체된다.
+  if (!storyBeat) stopStageBgm();
   game.completed.push(game.stageIndex);
   const stage = currentStage();
   const memoryRecord = saveBossMemoryRecord();
@@ -2893,9 +2915,7 @@ function completeStage() {
   saveCampaignProgress();
   game.challenge = null;
   if (game.stageIndex < STAGES.length - 1) {
-    const completedStageIndex = game.stageIndex;
     game.stageIndex += 1;
-    const storyBeat = STORY_BEATS[completedStageIndex];
     if (storyBeat) showStoryBeat(storyBeat);
     else showStageIntro();
   } else showChapterEnd();
