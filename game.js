@@ -46,6 +46,12 @@ const HANEUL_BACKGROUND_PATHS = Object.freeze(
     'assets/backgrounds/haneul-stage-18.png',
   ],
 );
+const DAUGHTER_BACKGROUND_PATHS = Object.freeze([
+  'assets/backgrounds/daughter-stage-19-perfect-garden-v1.png',
+  'assets/backgrounds/daughter-stage-20-fractured-classroom-v1.png',
+  'assets/backgrounds/daughter-stage-21-mirror-court-v1.png',
+]);
+const SCIENTIST_BACKGROUND_PATH = 'assets/backgrounds/scientist-stage-22-dream-lab-v1.png';
 const HANEUL_STAGE_MUSIC_PATHS = Object.freeze([
   'assets/audio/haneul-wind-path-v1.wav',
   'assets/audio/haneul-wind-path-v1.wav',
@@ -98,6 +104,8 @@ const playerSprites = Object.freeze({
 const harinBackgrounds = Object.freeze(HARIN_BACKGROUND_PATHS.map(loadSprite));
 const yunaBackgrounds = Object.freeze(YUNA_BACKGROUND_PATHS.map(loadSprite));
 const haneulBackgrounds = Object.freeze(HANEUL_BACKGROUND_PATHS.map(loadSprite));
+const daughterBackgrounds = Object.freeze(DAUGHTER_BACKGROUND_PATHS.map(loadSprite));
+const scientistBackground = loadSprite(SCIENTIST_BACKGROUND_PATH);
 const harinStage02GateSprites = Object.freeze({
   blocked: loadSprite(HARIN_STAGE_02_GATE_PATHS.blocked),
   open: loadSprite(HARIN_STAGE_02_GATE_PATHS.open),
@@ -106,6 +114,8 @@ const failureArt = Object.freeze(Object.fromEntries(Object.entries(FAILURE_ART_P
 const bossSprites = Object.freeze({
   yunaChoir: loadSprite('assets/bosses/yuna-silent-choir-sprite-v1.png'),
   haneulKite: loadSprite('assets/bosses/haneul-black-kite-sprite-v1.png'),
+  daughterGuardian: loadSprite('assets/bosses/daughter-perfect-guardian-sprite-v1.png'),
+  scientistGuardian: loadSprite('assets/bosses/scientist-dream-guardian-sprite-v1.png'),
 });
 const platformSprites = Object.freeze({
   haneulWindLedge: loadSprite('assets/platforms/haneul-wind-ledge-v1.png'),
@@ -3238,6 +3248,35 @@ function drawHaneulPixelBackground(stageIndex, boss) {
   return true;
 }
 
+function drawDaughterPixelBackground(stageIndex, boss) {
+  const daughterStageIndex = stageIndex - 18;
+  const image = daughterBackgrounds[daughterStageIndex];
+  if (!image?.complete || image.naturalWidth === 0) return false;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#251b43';
+  ctx.fillRect(0, 0, W, H);
+  drawCoverImage(image);
+  const shade = boss ? .1 : daughterStageIndex === 1 ? .06 : .04;
+  ctx.fillStyle = `rgba(21, 14, 47, ${shade})`;
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+  return true;
+}
+
+function drawScientistPixelBackground(boss) {
+  if (!scientistBackground?.complete || scientistBackground.naturalWidth === 0) return false;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#0a142c';
+  ctx.fillRect(0, 0, W, H);
+  drawCoverImage(scientistBackground);
+  ctx.fillStyle = `rgba(4, 9, 26, ${boss ? .1 : .04})`;
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+  return true;
+}
+
 function getHarinStage02GateSprite(gateOpen) {
   const state = gateOpen ? 'open' : 'blocked';
   const image = harinStage02GateSprites[state];
@@ -3270,7 +3309,9 @@ function drawBackground(boss = false, bossLabel = '') {
   const theme = dreamTheme();
   const bitmapDrawn = (theme.id === 'harin' && drawHarinPixelBackground(game.stageIndex, boss))
     || (theme.id === 'yuna' && drawYunaPixelBackground(game.stageIndex, boss))
-    || (theme.id === 'haneul' && drawHaneulPixelBackground(game.stageIndex, boss));
+    || (theme.id === 'haneul' && drawHaneulPixelBackground(game.stageIndex, boss))
+    || (theme.id === 'daughter' && drawDaughterPixelBackground(game.stageIndex, boss))
+    || (theme.id === 'scientist' && drawScientistPixelBackground(boss));
   if (!bitmapDrawn) {
     const g = ctx.createLinearGradient(0, 0, W, H);
     g.addColorStop(0, theme.top);
@@ -4362,6 +4403,55 @@ function drawHaneulBlackKiteSprite(b) {
   return true;
 }
 
+function drawDaughterPerfectGuardianSprite(b) {
+  const image = bossSprites.daughterGuardian;
+  if (!image?.complete || !image.naturalWidth) return false;
+  const pulse = .5 + Math.sin(game.elapsed * 4.8) * .5;
+  const coreX = b.x + b.w / 2;
+  const spriteW = 218 + pulse * 8;
+  const spriteH = 327 + pulse * 12;
+  const mirrorY = b.y + 106;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.shadowBlur = 24 + pulse * 14;
+  ctx.shadowColor = b.flash > 0 ? '#fff5ff' : '#ffacd9';
+  ctx.globalAlpha = b.flash > 0 ? .92 : 1;
+  ctx.drawImage(image, coreX - spriteW / 2, b.y - 34, spriteW, spriteH);
+  ctx.globalCompositeOperation = 'screen';
+  ctx.globalAlpha = .18 + pulse * .16;
+  ctx.strokeStyle = '#cffff0'; ctx.lineWidth = 2;
+  for (let ring = 0; ring < 3; ring += 1) {
+    ctx.beginPath(); ctx.ellipse(coreX, mirrorY, 26 + ring * 15, 38 + ring * 13, 0, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.restore();
+  return true;
+}
+
+function drawScientistDreamGuardianSprite(b) {
+  const image = bossSprites.scientistGuardian;
+  if (!image?.complete || !image.naturalWidth) return false;
+  const releaseRatio = b.releaseReady ? b.releaseProgress / Math.max(.01, b.releaseDuration) : 0;
+  const pulse = .5 + Math.sin(game.elapsed * 3.7) * .5;
+  const coreX = b.x + b.w / 2;
+  const spriteW = (352 + pulse * 12) * (1 - releaseRatio * .18);
+  const spriteH = (235 + pulse * 8) * (1 - releaseRatio * .18);
+  const coreY = b.y + 112;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.shadowBlur = 30 + pulse * 16;
+  ctx.shadowColor = b.releaseReady ? '#ffe8ad' : '#73ddff';
+  ctx.globalAlpha = b.releaseReady ? Math.max(.25, .92 - releaseRatio * .58) : 1;
+  ctx.drawImage(image, coreX - spriteW / 2, b.y - 22, spriteW, spriteH);
+  ctx.globalCompositeOperation = 'screen';
+  ctx.globalAlpha = .18 + pulse * .2;
+  ctx.strokeStyle = b.releaseReady ? '#ffe6a7' : '#83efff'; ctx.lineWidth = 2;
+  for (let ring = 0; ring < 3; ring += 1) {
+    ctx.beginPath(); ctx.arc(coreX, coreY, 30 + ring * 19 + pulse * 5, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.restore();
+  return true;
+}
+
 function drawDissonantNoteShot(shot) {
   const size = Math.max(.75, shot.r / 10);
   const drift = Math.sin(game.elapsed * 12 + shot.x * .03) * .16;
@@ -4396,7 +4486,9 @@ function drawBoss() {
   const mirrorFear = b.visual === 'mirror';
   const choirIllustration = choirFear && drawYunaSilentChoirSprite(b);
   const windIllustration = windFear && drawHaneulBlackKiteSprite(b);
-  const bossIllustration = choirIllustration || windIllustration;
+  const mirrorIllustration = mirrorFear && drawDaughterPerfectGuardianSprite(b);
+  const scientistIllustration = b.mode === 'final' && drawScientistDreamGuardianSprite(b);
+  const bossIllustration = choirIllustration || windIllustration || mirrorIllustration || scientistIllustration;
   if (!bossIllustration) {
     ctx.save(); ctx.fillStyle = 'rgba(255, 137, 176, .12)'; ctx.beginPath(); ctx.arc(b.x + 80, b.y + 102, 150, 0, Math.PI * 2); ctx.fill(); ctx.restore();
   }
