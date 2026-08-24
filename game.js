@@ -2394,8 +2394,8 @@ function setupPuzzle(layout, echoGoal) {
       { x: 560, y: 350, w: 100, h: 18, dropThrough: false, carouselArtCollider: true, carouselSurface: 'anchor', carouselControlAnchor: 'core-turn', label: 'CORE ROTATION BAY' },
 
       // 기억길의 구조물은 항상 존재한다. 북서쪽 구멍이 맞아야 원형벽을 실제로 통과할 수 있다.
-      { x: 390, y: 190, w: 100, h: 18, carouselArtCollider: true, label: 'INNER MEMORY APPROACH' },
-      { x: 260, y: 190, w: 150, h: 18, carouselArtCollider: true, label: 'NORTHWEST MEMORY BRIDGE' },
+      { x: 390, y: 200, w: 100, h: 18, carouselArtCollider: true, label: 'INNER MEMORY APPROACH' },
+      { x: 260, y: 200, w: 150, h: 18, carouselArtCollider: true, label: 'NORTHWEST MEMORY BRIDGE' },
       { x: 120, y: 120, w: 180, h: 18, dropThrough: false, carouselArtCollider: true, carouselSurface: 'anchor', label: 'UPPER LEFT MEMORY SHELF' },
 
       // 북동쪽 별빛 잠금 방. 구조물은 항상 존재하고 star 구멍으로만 왕복한다.
@@ -5103,7 +5103,7 @@ function drawCarouselRingOpenings(rotation, color, alpha = 1) {
 
 function drawCarouselMazeConnectors() {
   const routes = [
-    { pose: 'memory', color: '#c6a5ff', points: [[545, 350], [500, 290], [455, 235], [400, 190], [280, 190], [210, 120]] },
+    { pose: 'memory', color: '#c6a5ff', points: [[545, 350], [500, 290], [455, 235], [400, 200], [280, 200], [210, 120]] },
     { pose: 'star', color: '#8ff5e8', points: [[545, 350], [530, 290], [535, 235], [600, 190], [700, 190], [770, 120]] },
     { pose: 'exit', color: '#fff0a8', points: [[545, 350], [680, 320], [780, 390], [900, 390]] },
     { pose: 'ribbon', color: '#ff9fcf', points: [[500, 455], [575, 475], [700, 475], [770, 500]] },
