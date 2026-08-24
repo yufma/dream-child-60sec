@@ -1754,7 +1754,7 @@ function guideKeyHints() {
   }
   if (!boss) return [{ key: '← →', label: '이동' }, { key: '↑ ↓', label: '회피' }];
   if (boss.mode === 'calm') {
-    if (boss.calmReflectionActive) return [{ key: 'J', label: '가면 직선 발사' }, { key: 'Shift', label: '움직임 보조 정지' }];
+    if (boss.calmReflectionActive) return [{ key: 'J', label: '가면 직선 발사' }, { key: 'Shift', label: '가면만 정지' }];
     const state = calmMemoryState(boss);
     if (activeCalmFakeMemories(boss).length) return [{ key: 'J', label: '도주 기억 공격' }, { key: 'K', label: '새 기억 기록' }];
     if (state.trueMemoryCount < state.memoryTargetCount) return [{ key: 'K', label: '기억 확인' }, { key: 'I', label: '최근 잔상 삭제' }];
@@ -1872,7 +1872,7 @@ function phaseGuide() {
       const required = boss.calmReflectionRequired || 3;
       return {
         step: 'FINAL FREE AIM',
-        text: '가면 가까이에서 조준선을 정하고 J를 누르세요. 가면은 표시된 방향으로만 직선 비행하므로 움직이는 광대의 다음 위치를 예상해야 합니다.',
+        text: '가면 가까이에서 조준선을 정하고 J를 누르세요. 가면은 표시된 방향으로만 직선 비행하며, Shift 중에도 광대는 계속 움직이고 가면만 멈춥니다.',
         compact: `자유 조준 명중 ${broken} / ${required}`,
       };
     }
@@ -2804,8 +2804,8 @@ function beginCalmReflectionPhase(boss) {
   boss.calmReflectionMasks = maskStarts.map((start, index) => {
     const mask = {
       ...start,
-      w: 44,
-      h: 50,
+      w: 36,
+      h: 42,
       index,
       broken: false,
       launched: false,
@@ -2894,14 +2894,16 @@ function updateLaunchedCalmReflectionMask(boss, mask, dt) {
   say('가면이 광대의 동선을 빗나갔습니다. 이동 방향을 다시 예상해 발사 각도를 조정하세요.');
 }
 
-function updateCalmReflectionMotion(boss, dt) {
+function updateCalmReflectionMotion(boss, dt, freezeMasks = false) {
   updateCalmReflectionRoamer(boss, boss.calmReflectionBounds, dt);
-  boss.calmReflectionMasks
-    .filter((mask) => !mask.broken)
-    .forEach((mask) => {
-      if (mask.launched) updateLaunchedCalmReflectionMask(boss, mask, dt);
-      else updateCalmReflectionRoamer(mask, mask.roamBounds, dt);
-    });
+  if (!freezeMasks) {
+    boss.calmReflectionMasks
+      .filter((mask) => !mask.broken)
+      .forEach((mask) => {
+        if (mask.launched) updateLaunchedCalmReflectionMask(boss, mask, dt);
+        else updateCalmReflectionRoamer(mask, mask.roamBounds, dt);
+      });
+  }
   boss.calmMaskImpactPulse = Math.max(0, (boss.calmMaskImpactPulse || 0) - dt);
 }
 
@@ -4086,11 +4088,13 @@ function updateBoss(dt) {
   }
   const techniques = activeTechniques();
   const frozen = techniques.time;
+  const calmReflectionBattle = b.mode === 'calm' && b.calmReflectionActive;
+  const freezeBoss = frozen && !calmReflectionBattle;
   updateDash(dt);
   imaginationRegen(dt, techniques);
   if (game.phase !== 'playing') return;
   game.elapsed += dt;
-  if (!frozen) b.threatElapsed = (b.threatElapsed || 0) + dt;
+  if (!freezeBoss) b.threatElapsed = (b.threatElapsed || 0) + dt;
   if (game.fireCooldown > 0) game.fireCooldown = Math.max(0, game.fireCooldown - dt);
   game.nightmareHitCooldown = Math.max(0, (game.nightmareHitCooldown || 0) - dt);
   b.flash = Math.max(0, (b.flash || 0) - dt);
@@ -4115,9 +4119,8 @@ function updateBoss(dt) {
   p.y = Math.max(bounds.yMin, Math.min(bounds.yMax, nextY));
   if (p.y !== nextY) p.vy = 0;
   if (horizontal) p.facing = horizontal;
-  const calmReflectionBattle = b.mode === 'calm' && b.calmReflectionActive;
-  if (!frozen) {
-    if (calmReflectionBattle) updateCalmReflectionMotion(b, dt);
+  if (!freezeBoss) {
+    if (calmReflectionBattle) updateCalmReflectionMotion(b, dt, frozen);
     else {
       b.y = b.mode === 'calm'
         ? 166 + Math.sin(b.threatElapsed * 1.1) * 18
@@ -4706,7 +4709,10 @@ function updateHud() {
     }
   }
   const techniques = activeTechniques();
-  ruleStates.time.textContent = techniques.time ? 'HOLDING · DRAIN 28 / SEC' : 'HOLD SHIFT · DRAIN 28 / SEC';
+  const calmMaskAim = game.boss?.mode === 'calm' && game.boss.calmReflectionActive;
+  ruleStates.time.textContent = calmMaskAim
+    ? techniques.time ? 'MASKS FROZEN · CLOWN MOVING' : 'SHIFT · FREEZE MASKS ONLY'
+    : techniques.time ? 'HOLDING · DRAIN 28 / SEC' : 'HOLD SHIFT · DRAIN 28 / SEC';
   if (ruleStates.resonance) {
     const drain = resonanceDrainPerSecond();
     ruleStates.resonance.textContent = techniques.resonance ? `HOLDING · DRAIN ${drain} / SEC` : `HOLD L · DRAIN ${drain} / SEC`;
@@ -4745,7 +4751,7 @@ function updateMemoryLoopUI() {
       const fakeProgress = calmFakeProgress(boss);
       const state = calmMemoryState(boss);
       memoryStatus.textContent = boss.calmReflectionActive
-        ? `가면 명중 ${boss.calmReflectionBroken} / ${boss.calmReflectionRequired} · 가면 가까이에서 조준선을 정하고 광대의 다음 동선을 예상해 J로 직선 발사하세요. Shift는 움직임 정지 보조이며 K 기록은 비활성화됩니다.`
+        ? `가면 명중 ${boss.calmReflectionBroken} / ${boss.calmReflectionRequired} · 가면 가까이에서 조준선을 정하고 광대의 다음 동선을 예상해 J로 직선 발사하세요. Shift는 가면만 멈추며 광대는 계속 움직입니다. K 기록은 비활성화됩니다.`
         : fakeProgress.active.length
         ? `잔상 슬롯 ${countedEchoes.length} / 3 · 가짜 기억 피격 ${fakeProgress.hitCount} / ${fakeProgress.requiredHits} · 훔친 잔상은 슬롯을 차지하며 I와 선입선출 교체로 사라지지 않습니다.`
         : state.trueMemoryCount < state.memoryTargetCount
@@ -7514,7 +7520,7 @@ function drawHarinLaughThiefSprite(b) {
   if (b.calmReflectionActive) {
     ctx.save();
     ctx.imageSmoothingEnabled = false;
-    ctx.globalAlpha = frozenTime() ? .68 : 1;
+    ctx.globalAlpha = 1;
     ctx.shadowBlur = b.flash > 0 ? 18 : 10;
     ctx.shadowColor = b.flash > 0 ? '#fff4bd' : '#ff5d9b';
     ctx.drawImage(image, Math.round(b.x), Math.round(b.y), 72, 108);
@@ -7573,12 +7579,12 @@ function drawCalmReflectionMask(mask) {
   const centerY = Math.round(mask.y + mask.h / 2 + bob);
   if (mask.launched) {
     const speed = Math.max(1, Math.hypot(mask.vx || 0, mask.vy || 0));
-    const tailX = centerX - (mask.vx || 0) / speed * 46;
-    const tailY = centerY - (mask.vy || 0) / speed * 46;
+    const tailX = centerX - (mask.vx || 0) / speed * 38;
+    const tailY = centerY - (mask.vy || 0) / speed * 38;
     ctx.save();
     ctx.globalAlpha = frozenTime() ? .28 : .62;
     ctx.strokeStyle = '#ffe37e';
-    ctx.lineWidth = 7;
+    ctx.lineWidth = 5;
     ctx.shadowBlur = 14;
     ctx.shadowColor = palette.edge;
     ctx.beginPath(); ctx.moveTo(tailX, tailY); ctx.lineTo(centerX, centerY); ctx.stroke();
@@ -7587,6 +7593,7 @@ function drawCalmReflectionMask(mask) {
   ctx.save();
   ctx.translate(centerX, centerY);
   if (mask.launched) ctx.rotate(mask.launchSpin || 0);
+  ctx.scale(.84, .84);
   ctx.globalAlpha = frozenTime() ? .66 : 1;
   ctx.shadowBlur = 13;
   ctx.shadowColor = mask.hitFlash > 0 ? '#fff6c8' : palette.edge;
@@ -7637,11 +7644,11 @@ function drawCalmReflectionAim(boss) {
   ctx.stroke();
   ctx.setLineDash([]);
   ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.arc(maskCenter.x, maskCenter.y, 31 + pulse * 4, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(maskCenter.x, maskCenter.y, 26 + pulse * 3, 0, Math.PI * 2); ctx.stroke();
   ctx.fillStyle = '#fff4bd';
-  ctx.font = '900 10px ui-monospace, monospace';
+  ctx.font = '900 9px ui-monospace, monospace';
   ctx.textAlign = 'center';
-  ctx.fillText('J · STRAIGHT SHOT', maskCenter.x, maskCenter.y - 36);
+  ctx.fillText('J · STRAIGHT SHOT', maskCenter.x, maskCenter.y - 31);
   ctx.restore();
 }
 
