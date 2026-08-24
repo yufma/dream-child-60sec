@@ -15,7 +15,7 @@ const HARIN_BACKGROUND_PATHS = Object.freeze(
     'assets/backgrounds/harin-stage-01-v2.png',
     'assets/backgrounds/harin-stage-02-side-base-v3.png',
     'assets/backgrounds/harin-stage-03-memory-relays-v4.png',
-    'assets/backgrounds/harin-stage-04-ring-maze-v4.png',
+    'assets/backgrounds/harin-stage-04-topdown-carousel-v5.png',
     'assets/backgrounds/harin-stage-05.png',
     'assets/backgrounds/harin-stage-06.png',
   ],
@@ -196,6 +196,7 @@ const bossSprites = Object.freeze({
 });
 const platformSprites = Object.freeze({
   harinCarouselPlatform: loadSprite('assets/platforms/harin-carousel-platform-v1.png'),
+  harinCarouselRingTile: loadSprite('assets/structures/harin-stage-04-topdown-ring-tile-v1.png'),
   harinEchoBridge: loadSprite('assets/platforms/harin-echo-bridge-v1.png'),
   haneulWindLedge: loadSprite('assets/platforms/haneul-wind-ledge-v1.png'),
   yunaResonancePad: loadSprite('assets/platforms/yuna-resonance-pad-v1.png'),
@@ -329,7 +330,7 @@ const STAGES = [
   },
   {
     chapter: '하린 · 잃어버린 웃음', name: '무너지는 회전목마', type: 'puzzle', skills: [], blockedSkills: ['bridge', 'dash'], objective: '세 기억 장치를 자유로운 순서로 복구하고 출구 구멍을 맞춰라',
-    intro: '회전목마 한가운데의 둥근 벽이 통째로 돌아가며 다섯 구역의 연결을 바꾸고 있어. 모든 발판과 구조물은 계속 같은 자리에 남아 있지만, 원형벽에 난 단 하나의 구멍을 길과 정확히 맞춰야 통과할 수 있어. K 기록은 언제나 원 중앙의 보랏빛 발판에서 시작해. 북서쪽에는 K로 고정할 하린의 기억, 북동쪽과 남동쪽에는 직접 밟아 켜는 별빛·리본 잠금 장치가 있어. 세 장치는 어떤 순서로 찾아도 돼. 모두 복구한 뒤 동쪽 구멍을 출구길과 맞추면 다음 꿈의 문이 열린다.',
+    intro: '위에서 내려다본 회전목마 바닥이 다섯 개의 기억 구역으로 갈라져 있어. 중앙 회전축을 둘러싼 원형벽에는 단 하나의 구멍만 있고, P/Y로 구멍을 각 방사형 통로와 맞춰야 바깥 원주로 건너갈 수 있어. K 기록은 언제나 중앙 보랏빛 허브에서 시작해. 북서쪽에는 K로 고정할 하린의 기억, 북동쪽과 남동쪽에는 직접 밟아 켜는 별빛·리본 잠금 장치가 있어. 세 장치는 어떤 순서로 찾아도 돼. 모두 복구한 뒤 동쪽 구멍을 출구 통로와 맞추면 다음 꿈의 문이 열린다.',
     layout: 'carousel', echoGoal: 1, blockedHint: '이 회전목마에서는 O와 Space 대신 빛나는 조작대에서 P/Y로 원형벽의 구멍을 양방향 회전할 수 있습니다.', hint: 'K는 항상 원 중앙 보랏빛 발판에서 시작합니다. P/Y로 북서 기억·북동 별빛·남동 리본 구역을 원하는 순서로 방문하고, 세 장치를 복구한 뒤 동쪽 출구 구멍을 맞추세요.',
   },
   {
@@ -639,7 +640,7 @@ function stageSpriteSet(stageIndex = game?.stageIndex || 0) {
     sprites.push(harinBackgrounds[stageIndex], gateSprites.harin, memoryPadSprites.harin);
     if (stageIndex === 1) sprites.push(harinStage02GateSprites.blocked, harinStage02GateSprites.open);
     if (stageIndex === 2) sprites.push(objectSprites.harinLaughCollector, memoryPadSprites.harinRelay, platformSprites.harinEchoBridge);
-    if (stageIndex === 3) sprites.push(objectSprites.harinCarouselWall, platformSprites.harinCarouselPlatform);
+    if (stageIndex === 3) sprites.push(objectSprites.harinCarouselWall, platformSprites.harinCarouselPlatform, platformSprites.harinCarouselRingTile);
     if (stage.type === 'boss') sprites.push(bossSprites.harinClown, memoryPadSprites.distortion);
   } else if (stageIndex < 12) {
     sprites.push(yunaBackgrounds[stageIndex - 6], gateSprites.yuna, memoryPadSprites.yuna, platformSprites.yunaResonancePad);
@@ -953,8 +954,8 @@ const CAROUSEL_PHASES = Object.freeze([
   Object.freeze({ id: 'exit', label: '동쪽 · 출구', color: '#fff0a8' }),
   Object.freeze({ id: 'ribbon', label: '남동쪽 · 리본 잠금', color: '#ff9fcf' }),
 ]);
-const CAROUSEL_RING_CENTER = Object.freeze({ x: 500, y: 310 });
-const CAROUSEL_RING_RADIUS = 180;
+const CAROUSEL_RING_CENTER = Object.freeze({ x: 480, y: 270 });
+const CAROUSEL_RING_RADIUS = 170;
 const CAROUSEL_RING_SEGMENT_SIZE = 20;
 const CAROUSEL_RING_SEGMENT_COUNT = 72;
 const CAROUSEL_RING_GAP_HALF_ANGLE = Math.PI * 21 / 180;
@@ -2069,7 +2070,7 @@ function fallOffStage(message = '낙사! 기억이 시작점으로 되돌아갔�
   if (game.phase !== 'playing') return;
   game.player = freshPlayer();
   if (game.layout === 'carousel') {
-    Object.assign(game.player, { x: 480, y: 421, grounded: true });
+    Object.assign(game.player, { x: 468, y: 316, grounded: true });
   }
   game.player.vx = 0;
   game.player.vy = 0;
@@ -2380,49 +2381,51 @@ function setupPuzzle(layout, echoGoal) {
     game.fallZones = [{ x: 205, y: 500, w: 701, h: 40 }];
   } else if (layout === 'carousel') {
     game.platforms = [
-      // 원 안의 고정 미로와 두 회전 조작대.
-      { x: 340, y: 310, w: 85, h: 18, carouselArtCollider: true, label: 'INNER WEST LEDGE' },
-      { x: 360, y: 385, w: 105, h: 16, carouselArtCollider: true, label: 'INNER LOWER STEP' },
-      { x: 430, y: 455, w: 140, h: 18, dropThrough: false, carouselArtCollider: true, carouselSurface: 'anchor', carouselControlAnchor: 'inner-turn', label: 'INNER ROTATION BAY' },
-      { x: 545, y: 455, w: 50, h: 18, carouselArtCollider: true, label: 'INNER SOUTHEAST LEDGE' },
+      // 중앙 허브. K와 P/Y가 같은 회전축 위에서 항상 시작된다.
+      { x: 360, y: 350, w: 60, h: 18, dropThrough: false, carouselArtCollider: true, carouselSurface: 'anchor', carouselControlAnchor: 'hub-west', label: 'HUB CONTROL WEST' },
+      { x: 420, y: 350, w: 120, h: 18, dropThrough: false, carouselMemoryStart: true, carouselArtCollider: true, carouselSurface: 'anchor', carouselControlAnchor: 'hub-memory', label: 'CENTRAL K HUB' },
+      { x: 540, y: 350, w: 60, h: 18, dropThrough: false, carouselArtCollider: true, carouselSurface: 'anchor', carouselControlAnchor: 'hub-east', label: 'HUB CONTROL EAST' },
 
-      // 원 안의 나선은 모든 각도에서 남아 있으며, 회전 조작대와 두 전용 통로를 연결한다.
-      { x: 510, y: 190, w: 100, h: 18, carouselArtCollider: true, label: 'INNER NORTHEAST LANDING' },
-      { x: 430, y: 235, w: 105, h: 16, carouselArtCollider: true, label: 'INNER SPIRAL · 01' },
-      { x: 495, y: 290, w: 100, h: 16, carouselArtCollider: true, label: 'INNER SPIRAL · 02' },
-      { x: 430, y: 350, w: 130, h: 18, dropThrough: false, carouselMemoryStart: true, carouselArtCollider: true, carouselSurface: 'anchor', carouselControlAnchor: 'memory-turn', label: 'CENTRAL MEMORY START DECK' },
-      { x: 560, y: 350, w: 100, h: 18, dropThrough: false, carouselArtCollider: true, carouselSurface: 'anchor', carouselControlAnchor: 'core-turn', label: 'CORE ROTATION BAY' },
+      // 북서 기억 방사로. passage만 원형벽의 기억 구멍을 관통한다.
+      { x: 335, y: 290, w: 110, h: 16, carouselArtCollider: true, label: 'NORTHWEST INNER SPOKE' },
+      { x: 340, y: 235, w: 85, h: 16, carouselArtCollider: true, label: 'NORTHWEST MID SPOKE' },
+      { x: 285, y: 170, w: 140, h: 18, carouselArtCollider: true, label: 'NORTHWEST MEMORY PASSAGE' },
+      { x: 100, y: 100, w: 220, h: 18, dropThrough: false, carouselArtCollider: true, carouselSurface: 'anchor', label: 'MEMORY OUTER SHELF' },
 
-      // 기억길의 구조물은 항상 존재한다. 북서쪽 구멍이 맞아야 원형벽을 실제로 통과할 수 있다.
-      { x: 390, y: 200, w: 100, h: 18, carouselArtCollider: true, label: 'INNER MEMORY APPROACH' },
-      { x: 260, y: 200, w: 150, h: 18, carouselArtCollider: true, label: 'NORTHWEST MEMORY BRIDGE' },
-      { x: 120, y: 120, w: 180, h: 18, dropThrough: false, carouselArtCollider: true, carouselSurface: 'anchor', label: 'UPPER LEFT MEMORY SHELF' },
+      // 북동 별빛 방사로.
+      { x: 515, y: 290, w: 110, h: 16, carouselArtCollider: true, label: 'NORTHEAST INNER SPOKE' },
+      { x: 535, y: 235, w: 85, h: 16, carouselArtCollider: true, label: 'NORTHEAST MID SPOKE' },
+      { x: 535, y: 170, w: 140, h: 18, carouselArtCollider: true, label: 'NORTHEAST STAR PASSAGE' },
+      { x: 640, y: 100, w: 220, h: 18, dropThrough: false, carouselArtCollider: true, carouselSurface: 'anchor', label: 'STAR OUTER SHELF' },
 
-      // 북동쪽 별빛 잠금 방. 구조물은 항상 존재하고 star 구멍으로만 왕복한다.
-      { x: 590, y: 190, w: 125, h: 18, carouselArtCollider: true, label: 'NORTHEAST STAR BRIDGE' },
-      { x: 680, y: 120, w: 180, h: 18, dropThrough: false, carouselArtCollider: true, carouselSurface: 'anchor', label: 'STAR RELAY SHELF' },
+      // 서쪽 달빛 전실은 다섯 회전 자세의 기준점이며 별도 목표는 없다.
+      { x: 215, y: 290, w: 160, h: 18, carouselArtCollider: true, label: 'WEST MOON PASSAGE' },
+      { x: 80, y: 350, w: 155, h: 18, dropThrough: false, carouselArtCollider: true, carouselSurface: 'anchor', label: 'MOON OUTER PORCH' },
 
-      // 남동쪽 리본 잠금 방. ribbon 구멍 아래의 고정 발판으로만 들어간다.
-      { x: 545, y: 475, w: 170, h: 18, carouselArtCollider: true, label: 'SOUTHEAST RIBBON BRIDGE' },
-      { x: 680, y: 500, w: 180, h: 40, carouselArtCollider: true, carouselSurface: 'ground', label: 'RIBBON RELAY FLOOR' },
+      // 남동 리본 방사로. 중앙 허브에서 아래로 내려간 뒤 되돌아올 수 있다.
+      { x: 420, y: 430, w: 120, h: 18, carouselArtCollider: true, label: 'SOUTH RETURN STEP' },
+      { x: 530, y: 435, w: 140, h: 18, carouselArtCollider: true, label: 'SOUTHEAST RIBBON PASSAGE' },
+      { x: 640, y: 470, w: 220, h: 40, dropThrough: false, carouselArtCollider: true, carouselSurface: 'ground', label: 'RIBBON OUTER FLOOR' },
 
-      // 원 외부의 네 구역은 영구 분리벽으로 나뉘며, 화면 바깥으로 돌아갈 수 없다.
-      { x: 520, y: 0, w: 24, h: 142, wall: true, persistentWall: true, carouselArtCollider: true, carouselSurface: 'wall', label: 'OUTER SKY DIVIDER' },
-      { x: 520, y: 478, w: 24, h: 62, wall: true, persistentWall: true, carouselArtCollider: true, carouselSurface: 'wall', label: 'OUTER VOID DIVIDER' },
-      { x: 640, y: 220, w: 320, h: 24, wall: true, persistentWall: true, carouselArtCollider: true, carouselSurface: 'wall', label: 'STAR EXIT DIVIDER' },
-      { x: 635, y: 410, w: 325, h: 24, wall: true, persistentWall: true, carouselArtCollider: true, carouselSurface: 'wall', label: 'EXIT RIBBON DIVIDER' },
+      // 원주 구역 사이의 영구 방사형 레일. 회전벽 바깥 우회를 막는다.
+      { x: 0, y: 205, w: 310, h: 24, wall: true, persistentWall: true, carouselArtCollider: true, carouselSurface: 'wall', label: 'MEMORY MOON DIVIDER' },
+      { x: 650, y: 205, w: 310, h: 24, wall: true, persistentWall: true, carouselArtCollider: true, carouselSurface: 'wall', label: 'STAR EXIT DIVIDER' },
+      { x: 650, y: 370, w: 310, h: 24, wall: true, persistentWall: true, carouselArtCollider: true, carouselSurface: 'wall', label: 'EXIT RIBBON DIVIDER' },
+      { x: 468, y: 0, w: 24, h: 100, wall: true, persistentWall: true, carouselArtCollider: true, carouselSurface: 'wall', label: 'TOP AXIS DIVIDER' },
+      { x: 468, y: 470, w: 24, h: 70, wall: true, persistentWall: true, carouselArtCollider: true, carouselSurface: 'wall', label: 'BOTTOM AXIS DIVIDER' },
 
-      // 출구길도 항상 존재하지만, 동쪽 구멍이 맞아야 원 안쪽 데크에서 건널 수 있다.
-      { x: 650, y: 320, w: 105, h: 18, carouselArtCollider: true, label: 'FINAL EAST LANDING' },
-      { x: 760, y: 390, w: 200, h: 18, dropThrough: false, carouselArtCollider: true, carouselSurface: 'ground', label: 'EAST EXIT FLOOR' },
+      // 동쪽 출구 방사로.
+      { x: 530, y: 290, w: 220, h: 18, carouselArtCollider: true, label: 'EAST EXIT PASSAGE' },
+      { x: 730, y: 350, w: 90, h: 18, carouselArtCollider: true, label: 'EAST EXIT LANDING' },
+      { x: 800, y: 350, w: 160, h: 18, dropThrough: false, carouselArtCollider: true, carouselSurface: 'ground', label: 'EAST EXIT FLOOR' },
     ];
-    Object.assign(game.player, { x: 480, y: 421, vx: 0, vy: 0, grounded: true });
+    Object.assign(game.player, { x: 468, y: 316, vx: 0, vy: 0, grounded: true });
     game.carouselSwitches = [
-      { id: 'star', x: 752, y: 82, w: 38, h: 38, label: '별빛 잠금 장치', color: '#8ff5e8' },
-      { id: 'ribbon', x: 752, y: 462, w: 38, h: 38, label: '리본 잠금 장치', color: '#ff9fcf' },
+      { id: 'star', x: 752, y: 62, w: 38, h: 38, label: '별빛 잠금 장치', color: '#8ff5e8' },
+      { id: 'ribbon', x: 752, y: 432, w: 38, h: 38, label: '리본 잠금 장치', color: '#ff9fcf' },
     ];
-    game.exit = { x: 884, y: 308, w: 36, h: 82, label: 'NEXT DREAM GATE' };
-    game.fallZones = [{ x: 0, y: 500, w: 680, h: 40 }, { x: 860, y: 500, w: 100, h: 40 }];
+    game.exit = { x: 884, y: 268, w: 36, h: 82, label: 'NEXT DREAM GATE' };
+    game.fallZones = [{ x: 0, y: 500, w: 960, h: 40 }];
   } else {
     game.platforms = [
       { x: 0, y: 500, w: 960, h: 40, label: 'MEMORY SHORE' },
@@ -2471,7 +2474,7 @@ function setupPuzzle(layout, echoGoal) {
       { x: 266, y: 392, w: 30, h: 28, label: '낮은 친구 자리' },
       { x: 532, y: 238, w: 30, h: 28, label: '높은 친구 자리' },
     ],
-    carousel: [{ x: 176, y: 82, w: 38, h: 38, label: '왼쪽 위 하린의 기억 코어' }],
+    carousel: [{ x: 176, y: 62, w: 38, h: 38, label: '왼쪽 위 하린의 기억 코어' }],
     watcher: [
       { x: 500, y: 462, w: 16, h: 28, label: '회전목마' },
       { x: 550, y: 462, w: 16, h: 28, label: '함께 웃기' },
@@ -2868,7 +2871,7 @@ function getCarouselExitShutter() {
   if (game.carouselExitBridgeDeployed) return null;
   return {
     // 별빛 방과 출구 바닥 사이의 천장부터 출구 바닥까지 닫아 조기 문 접근을 막는다.
-    x: 850, y: 244, w: 24, h: 146,
+    x: 850, y: 229, w: 24, h: 121,
     wall: true, persistentWall: true, carouselExitShutter: true,
     label: 'CAROUSEL EXIT SHUTTER',
   };
@@ -4655,7 +4658,48 @@ function drawHaneulWindPlatform(item) {
   ctx.restore();
 }
 
+function drawHarinTopdownCarouselPlatform(item) {
+  const x = Math.round(item.x);
+  const y = Math.round(item.y);
+  const w = Math.round(item.w);
+  const h = Math.round(item.h);
+  const visualHeight = item.carouselSurface === 'ground' ? Math.min(32, h) : 18;
+  const top = y - 5;
+  const accent = carouselStructureColor(item);
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.shadowBlur = item.carouselSurface === 'anchor' ? 8 : 3;
+  ctx.shadowColor = accent;
+  ctx.fillStyle = '#11152f';
+  ctx.fillRect(x, top, w, visualHeight);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#312957';
+  ctx.fillRect(x + 3, top + 4, Math.max(1, w - 6), Math.max(4, visualHeight - 8));
+  ctx.fillStyle = '#8f6e43';
+  ctx.fillRect(x, top, w, 2);
+  ctx.fillRect(x, top + visualHeight - 2, w, 2);
+  ctx.fillStyle = '#e7bb63';
+  ctx.fillRect(x + 2, y - 1, Math.max(1, w - 4), 2);
+  ctx.fillStyle = '#fff0a6';
+  for (let lamp = x + 9; lamp < x + w - 5; lamp += 22) {
+    ctx.fillRect(lamp, top + 2, 2, 2);
+    if (visualHeight >= 22) ctx.fillRect(lamp, top + visualHeight - 4, 2, 2);
+  }
+  if (item.carouselSurface === 'anchor') {
+    const cx = Math.round(x + w / 2);
+    ctx.fillStyle = item.carouselMemoryStart ? '#7e61a7' : '#5a466f';
+    ctx.fillRect(cx - 9, top + 4, 18, Math.max(8, visualHeight - 8));
+    ctx.fillStyle = accent;
+    ctx.fillRect(cx - 2, top + 7, 4, 4);
+  }
+  ctx.restore();
+}
+
 function drawHarinCarouselPlatform(item) {
+  if (game.layout === 'carousel') {
+    drawHarinTopdownCarouselPlatform(item);
+    return;
+  }
   const image = platformSprites.harinCarouselPlatform;
   const x = Math.round(item.x);
   const y = Math.round(item.y);
@@ -5031,7 +5075,14 @@ function drawExit() {
 
 function drawCarouselStageDimming() {
   ctx.save();
-  ctx.fillStyle = 'rgba(2, 5, 18, .28)';
+  const shade = ctx.createRadialGradient(
+    CAROUSEL_RING_CENTER.x, CAROUSEL_RING_CENTER.y, 85,
+    CAROUSEL_RING_CENTER.x, CAROUSEL_RING_CENTER.y, 430,
+  );
+  shade.addColorStop(0, 'rgba(2, 5, 18, .08)');
+  shade.addColorStop(.56, 'rgba(2, 5, 18, .13)');
+  shade.addColorStop(1, 'rgba(2, 5, 18, .34)');
+  ctx.fillStyle = shade;
   ctx.fillRect(0, 0, W, H);
   ctx.restore();
 }
@@ -5054,24 +5105,41 @@ function carouselRingColor() {
   return carouselPhaseInfo(game.carouselPhase || 0).color;
 }
 
+function drawCarouselTopdownTile(x, y, w, h, alpha = 1) {
+  const image = platformSprites.harinCarouselRingTile;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.globalAlpha *= alpha;
+  if (image?.complete && image.naturalWidth > 0) {
+    ctx.drawImage(image, x, y, w, h);
+  } else {
+    ctx.fillStyle = '#171633';
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = '#bd8a43';
+    ctx.strokeRect(x + .5, y + .5, w - 1, h - 1);
+  }
+  ctx.restore();
+}
+
 function drawCarouselRingAtRotation(rotation, color, alpha = 1, ghost = false) {
   ctx.save();
   ctx.imageSmoothingEnabled = false;
-  ctx.globalAlpha = alpha;
+  ctx.globalAlpha = alpha * (ghost ? .42 : 1);
   for (let index = 0; index < CAROUSEL_RING_SEGMENT_COUNT; index += 1) {
     const baseAngle = index / CAROUSEL_RING_SEGMENT_COUNT * Math.PI * 2;
     if (carouselAngleDistance(baseAngle, Math.PI) <= CAROUSEL_RING_GAP_HALF_ANGLE) continue;
     const angle = baseAngle + rotation;
     const x = Math.round(CAROUSEL_RING_CENTER.x + Math.cos(angle) * CAROUSEL_RING_RADIUS - CAROUSEL_RING_SEGMENT_SIZE / 2);
     const y = Math.round(CAROUSEL_RING_CENTER.y + Math.sin(angle) * CAROUSEL_RING_RADIUS - CAROUSEL_RING_SEGMENT_SIZE / 2);
-    ctx.fillStyle = ghost ? '#332b4b' : '#10162f';
-    ctx.fillRect(x, y, CAROUSEL_RING_SEGMENT_SIZE, CAROUSEL_RING_SEGMENT_SIZE);
+    drawCarouselTopdownTile(x, y, CAROUSEL_RING_SEGMENT_SIZE, CAROUSEL_RING_SEGMENT_SIZE, ghost ? .55 : 1);
     ctx.fillStyle = color;
-    ctx.fillRect(x + 2, y + 2, CAROUSEL_RING_SEGMENT_SIZE - 4, 3);
-    ctx.fillRect(x + 2, y + 5, 3, CAROUSEL_RING_SEGMENT_SIZE - 8);
+    ctx.globalAlpha = alpha * (ghost ? .24 : .72);
+    ctx.fillRect(x + 2, y + 2, CAROUSEL_RING_SEGMENT_SIZE - 4, 2);
+    ctx.fillRect(x + 2, y + 4, 2, CAROUSEL_RING_SEGMENT_SIZE - 6);
     if (!ghost && index % 3 === 0) {
       ctx.fillStyle = '#fff4bf';
-      ctx.fillRect(x + 8, y + 8, 4, 4);
+      ctx.globalAlpha = alpha;
+      ctx.fillRect(x + 9, y + 9, 3, 3);
     }
   }
   ctx.restore();
@@ -5103,16 +5171,25 @@ function drawCarouselRingOpenings(rotation, color, alpha = 1) {
 
 function drawCarouselMazeConnectors() {
   const routes = [
-    { pose: 'memory', color: '#c6a5ff', points: [[545, 350], [500, 290], [455, 235], [400, 200], [280, 200], [210, 120]] },
-    { pose: 'star', color: '#8ff5e8', points: [[545, 350], [530, 290], [535, 235], [600, 190], [700, 190], [770, 120]] },
-    { pose: 'exit', color: '#fff0a8', points: [[545, 350], [680, 320], [780, 390], [900, 390]] },
-    { pose: 'ribbon', color: '#ff9fcf', points: [[500, 455], [575, 475], [700, 475], [770, 500]] },
+    { pose: 'moon', color: '#ffe37d', points: [[480, 341], [310, 290], [158, 350]] },
+    { pose: 'memory', color: '#c6a5ff', points: [[480, 341], [390, 290], [382, 235], [357, 170], [210, 100]] },
+    { pose: 'star', color: '#8ff5e8', points: [[480, 341], [570, 290], [578, 235], [603, 170], [750, 100]] },
+    { pose: 'exit', color: '#fff0a8', points: [[480, 341], [640, 290], [775, 350], [884, 350]] },
+    { pose: 'ribbon', color: '#ff9fcf', points: [[480, 341], [480, 430], [565, 435], [750, 470]] },
   ];
   const currentPose = carouselPhaseInfo(game.carouselRotationTimer > 0 ? game.carouselTargetPhase : game.carouselPhase).id;
   ctx.save();
   ctx.imageSmoothingEnabled = false;
+  const innerOctagon = [[480, 190], [572, 235], [600, 333], [572, 430], [480, 446], [388, 430], [360, 333], [388, 235]];
+  ctx.globalAlpha = .18;
+  ctx.strokeStyle = '#b08d58';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  innerOctagon.forEach(([x, y], index) => index ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
+  ctx.closePath();
+  ctx.stroke();
   routes.forEach((route) => {
-    ctx.globalAlpha = route.pose === currentPose ? .46 : .11;
+    ctx.globalAlpha = route.pose === currentPose ? .62 : .12;
     ctx.fillStyle = route.color;
     for (let pointIndex = 0; pointIndex < route.points.length - 1; pointIndex += 1) {
       const [x1, y1] = route.points[pointIndex];
@@ -5149,14 +5226,7 @@ function drawCarouselOrbitSystem() {
 
   const shutter = getCarouselExitShutter();
   if (shutter) {
-    ctx.globalAlpha = .9;
-    ctx.fillStyle = '#11172f';
-    ctx.fillRect(shutter.x, shutter.y, shutter.w, shutter.h);
-    ctx.strokeStyle = '#7b6f92';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(shutter.x + .5, shutter.y + .5, shutter.w - 1, shutter.h - 1);
-    ctx.fillStyle = '#8b7a9e';
-    for (let y = shutter.y + 9; y < shutter.y + shutter.h - 5; y += 18) ctx.fillRect(shutter.x + 4, y, shutter.w - 8, 3);
+    drawCarouselTopdownWall(shutter, '#8e7aa9', true, false);
   }
 
   ctx.globalAlpha = 1;
@@ -5220,6 +5290,30 @@ function drawCarouselAnchorBadge(platform) {
   ctx.restore();
 }
 
+function drawCarouselTopdownWall(platform, color, active, targetPreview) {
+  const x = Math.round(platform.x);
+  const y = Math.round(platform.y);
+  const w = Math.round(platform.w);
+  const h = Math.round(platform.h);
+  const vertical = h > w;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
+  ctx.clip();
+  if (vertical) {
+    for (let tileY = y; tileY < y + h; tileY += 18) drawCarouselTopdownTile(x + Math.max(0, (w - 20) / 2), tileY, 20, 20, active ? .9 : .42);
+  } else {
+    for (let tileX = x; tileX < x + w; tileX += 18) drawCarouselTopdownTile(tileX, y + Math.max(0, (h - 20) / 2), 20, 20, active ? .9 : .42);
+  }
+  ctx.restore();
+  ctx.save();
+  ctx.globalAlpha = active ? .9 : targetPreview ? .58 : .32;
+  ctx.strokeStyle = active || targetPreview ? color : '#514b65';
+  ctx.lineWidth = active ? 2 : 1;
+  ctx.strokeRect(x + .5, y + .5, w - 1, h - 1);
+  ctx.restore();
+}
+
 function drawCarouselStructureGuide(platform) {
   const active = carouselPlatformEnabled(platform);
   const platformPoseId = carouselPlatformPoseId(platform);
@@ -5229,6 +5323,10 @@ function drawCarouselStructureGuide(platform) {
   const x = Math.round(platform.x);
   const y = Math.round(platform.y);
   const w = Math.round(platform.w);
+  if (platform.carouselSurface === 'wall') {
+    drawCarouselTopdownWall(platform, color, active, targetPreview);
+    return;
+  }
   ctx.save();
   const activeAlpha = platform.carouselSurface === 'ground' ? .5 : platform.carouselSurface === 'anchor' ? .88 : .72;
   ctx.globalAlpha = active ? activeAlpha : targetPreview ? .34 : .14;
@@ -5236,26 +5334,6 @@ function drawCarouselStructureGuide(platform) {
   ctx.restore();
   ctx.save();
   ctx.imageSmoothingEnabled = false;
-
-  if (platform.carouselSurface === 'wall') {
-    ctx.globalAlpha = active ? .82 : targetPreview ? .5 : .28;
-    ctx.fillStyle = active ? '#13172f' : '#080b1c';
-    ctx.fillRect(x, y, w, platform.h);
-    ctx.strokeStyle = active || targetPreview ? color : '#514b65';
-    ctx.lineWidth = active ? 2 : 1;
-    ctx.setLineDash(active ? [] : [4, 5]);
-    ctx.strokeRect(x + .5, y + .5, w - 1, platform.h - 1);
-    ctx.setLineDash([]);
-    if (active) {
-      ctx.fillStyle = color;
-      for (let rivetY = y + 9; rivetY < y + platform.h - 4; rivetY += 24) {
-        ctx.fillRect(x + 4, rivetY, 3, 3);
-        if (w > 12) ctx.fillRect(x + w - 7, rivetY, 3, 3);
-      }
-    }
-    ctx.restore();
-    return;
-  }
 
   if (!active) {
     ctx.fillStyle = 'rgba(2, 4, 15, .78)';
@@ -5290,9 +5368,9 @@ function drawCarouselPhaseHud() {
   const rotating = game.carouselRotationTimer > 0;
   const phaseIndex = rotating ? game.carouselTargetPhase : game.carouselPhase || 0;
   const phase = carouselPhaseInfo(phaseIndex);
-  const x = 318;
+  const x = 8;
   const y = 505;
-  const w = 324;
+  const w = 310;
   ctx.save();
   ctx.fillStyle = 'rgba(4, 8, 25, .9)';
   ctx.fillRect(x, y, w, 25);
