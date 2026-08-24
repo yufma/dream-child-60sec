@@ -19,7 +19,7 @@
   <body>
     <main class="game-shell" aria-label="꿈을 되돌리는 아이 게임">
       <div class="game-heading">
-        <p class="eyebrow">DREAM LINK PROTOTYPE · 22-STAGE CAMPAIGN</p>
+        <p class="eyebrow">꿈의 연결 · 22개의 기억</p>
         <h1>꿈을 되돌리는 아이 <span>:</span> 60초 수정실</h1>
         <p class="subtitle">세 친구와 딸의 꿈을 지나, 빼앗긴 행복을 모두 되돌리세요.</p>
       </div>
@@ -29,7 +29,7 @@
 
         <div class="loading-splash hidden" id="loading-splash" role="status" aria-live="polite">
           <div class="loading-splash-card">
-            <p>DREAM LINK · ESTABLISHING</p>
+            <p>꿈의 연결 중</p>
             <strong id="loading-title">첫 번째 꿈을 불러오는 중</strong>
             <div class="loading-meter"><i id="loading-fill"></i></div>
             <small id="loading-copy">하린의 기억과 연결하고 있어요. 잠시만 기다려 주세요.</small>
@@ -38,26 +38,26 @@
 
         <div class="hud" aria-hidden="true">
           <div class="stage-card">
-            <span id="stage-index">STAGE 01 / 05</span>
+            <span id="stage-index">스테이지 01 / 22</span>
             <strong id="stage-name">꿈 접속 준비</strong>
           </div>
           <div class="challenge-card hidden" id="challenge-card">
-            <span>MEMORY COLLAPSE</span>
+            <span>기억 붕괴</span>
             <strong id="challenge-value">60.0</strong>
             <small id="challenge-status">60초 안에 공포를 풀어내세요.</small>
           </div>
           <div class="imagination-card">
-            <div><span>IMAGINATION</span><strong id="imagination-value">100</strong></div>
+            <div><span>상상력</span><strong id="imagination-value">100</strong></div>
             <div class="meter"><i id="imagination-fill"></i></div>
             <small id="imagination-status">상상력은 사용하지 않으면 회복됩니다.</small>
           </div>
           <div class="objective-card">
-            <span>OBJECTIVE</span>
+            <span>지금 할 일</span>
             <strong id="objective">하린의 꿈으로 접속하라</strong>
           </div>
         </div>
         <div class="boss-hud hidden" id="boss-hud" aria-hidden="true">
-          <span id="boss-name">NIGHTMARE</span>
+          <span id="boss-name">악몽</span>
           <div><i id="boss-fill"></i></div>
           <strong id="boss-health">100%</strong>
         </div>
@@ -69,7 +69,7 @@
 
         <div class="overlay" id="start-screen">
           <div class="overlay-card intro-card">
-            <p class="tag">DREAM LINK · PROLOGUE</p>
+            <p class="tag">꿈의 연결 · 프롤로그</p>
             <h2>꿈을 빼앗긴<br />친구들이 있어.</h2>
             <p id="start-copy">
               친구들은 잠들 때마다 악몽을 꾸고, 웃는 법을 잊어가고 있습니다.<br />
@@ -82,7 +82,7 @@
               <div class="story-portrait portrait-assistant" id="story-portrait" data-portrait="assistant">
                 <img id="story-portrait-image" alt="" />
                 <div class="portrait-placeholder" id="story-portrait-placeholder">
-                  <span>PIXEL PORTRAIT SLOT</span>
+                  <span>인물 초상화</span>
                   <strong id="story-portrait-label">전 조수</strong>
                   <small id="story-portrait-path">assets/portraits/assistant.png</small>
                 </div>
@@ -100,15 +100,15 @@
 
         <div class="overlay hidden" id="stage-menu">
           <div class="overlay-card menu-card">
-            <p class="tag">DREAM ROUTE · ESC TO RESUME</p>
+            <p class="tag">꿈의 경로 · ESC로 돌아가기</p>
             <h2>꿈의 경로</h2>
             <p id="stage-menu-copy">개발 점검 모드입니다. 모든 스테이지를 바로 선택할 수 있으며, 클리어한 스테이지는 언제든 다시 도전할 수 있습니다. 11스테이지 이후는 아래로 스크롤해 선택하세요.</p>
-            <button class="route-mode-button" id="route-mode-button" type="button">MODE · DEVELOPMENT</button>
+            <button class="route-mode-button" id="route-mode-button" type="button">개발 점검 모드</button>
             <section class="bgm-controls hidden" id="bgm-controls" aria-label="배경음악 설정">
-              <span class="bgm-settings-label">BGM SETTINGS</span>
-              <button class="bgm-toggle" id="bgm-toggle" type="button" aria-label="배경음악 끄기">BGM <span>ON</span></button>
+              <span class="bgm-settings-label">배경음</span>
+              <button class="bgm-toggle" id="bgm-toggle" type="button" aria-label="배경음악 끄기">음악 <span>켜짐</span></button>
               <label class="bgm-volume-control" for="bgm-volume">
-                <span>VOL</span>
+                <span>음량</span>
                 <input class="bgm-volume-slider" id="bgm-volume" type="range" min="0" max="100" step="1" value="65" aria-label="배경음악 음량" />
                 <output class="bgm-volume-value" id="bgm-volume-value" for="bgm-volume">65%</output>
               </label>
@@ -128,8 +128,16 @@
               <div class="disconnect-child"><i></i><i></i><b></b></div>
               <p id="disconnect-illustration-label">악몽 신호가 연결을 밀어냈어.</p>
             </div>
-            <p class="tag" id="end-tag">SYSTEM STATUS</p>
+            <div class="epilogue-illustration" aria-hidden="true">
+              <img src="assets/cinematics/ending-morning-v3-sleeping.png" alt="" />
+              <div class="epilogue-sunlight"></div>
+              <div class="epilogue-motes"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+              <div class="epilogue-art-caption"><span>되돌아온 꿈</span><b>꿈은 사라졌지만, 사랑은 남았다</b></div>
+            </div>
+            <p class="tag" id="end-tag">꿈의 기록</p>
             <h2 id="end-title">수정 완료</h2>
+            <p class="epilogue-quote">“아빠, 친구들의 행복을 돌려줘.”</p>
+            <div class="epilogue-theme-line" aria-hidden="true"><i></i><span>엔딩 테마 · 새로운 아침</span><i></i></div>
             <p id="end-copy"></p>
             <button class="primary-button" id="restart-button">다시 수정하기 <span>↻</span></button>
           </div>
@@ -141,56 +149,56 @@
 
       <section class="rules-panel" aria-label="상상으로 바꿀 수 있는 꿈의 규칙">
         <div class="rules-intro">
-          <p class="eyebrow">IMAGINATION TECHNIQUES</p>
+          <p class="eyebrow">상상력의 규칙</p>
           <h2>상상력 기술</h2>
           <p>기술을 쓸수록 연결이 약해집니다. 멈추면 상상력은 다시 차오릅니다.</p>
         </div>
         <div class="rule-grid">
           <button class="rule-card" data-rule="time">
             <span class="keycap">⇧</span>
-            <span class="rule-number">RULE 01</span>
+            <span class="rule-number">상상 규칙 01</span>
             <strong>멈춘 순간</strong>
             <small>60초는 계속 흐르고, 누르는 동안 스테이지마다 지정된 대상만 멈춥니다.</small>
-            <span class="rule-state" id="time-state">HOLD SHIFT · DRAIN 28 / SEC</span>
+            <span class="rule-state" id="time-state">SHIFT 유지 · 초당 28 소모</span>
           </button>
           <button class="rule-card" data-rule="resonance">
             <span class="keycap">L</span>
-            <span class="rule-number">RULE 02</span>
+            <span class="rule-number">상상 규칙 02</span>
             <strong>공명 파장</strong>
             <small>숨은 공명 길과 봉인을 드러내고, 공명의 핵을 깨울 수 있습니다.</small>
-            <span class="rule-state" id="resonance-state">HOLD L · DRAIN 14 / SEC</span>
+            <span class="rule-state" id="resonance-state">L 유지 · 초당 14 소모</span>
           </button>
           <button class="rule-card" data-rule="dash">
             <span class="keycap">␣</span>
-            <span class="rule-number">RULE 03</span>
+            <span class="rule-number">상상 규칙 03</span>
             <strong>질주</strong>
             <small>짧게 앞으로 돌진해 넓은 간격과 탄막 사이를 가릅니다.</small>
-            <span class="rule-state" id="dash-state">PRESS SPACE · DASH FORWARD</span>
+            <span class="rule-state" id="dash-state">Space · 앞으로 질주</span>
           </button>
         </div>
       </section>
 
       <section class="memory-panel" aria-label="과거의 나와 협력하는 기억 루프">
         <div class="memory-heading">
-          <p class="eyebrow">MEMORY LOOP</p>
+          <p class="eyebrow">기억의 되감기</p>
           <h2>과거의 나와 협력하기</h2>
           <p id="memory-status">K로 길을 기록해 과거의 나에게 맡기고, 되감긴 현재의 나는 다음 자리를 준비하세요.</p>
         </div>
         <div class="memory-fragments" aria-label="기억의 나">
-          <div class="memory-fragment" data-echo-slot="0"><span>①</span><strong>첫 번째 기억</strong><small>EMPTY</small></div>
-          <div class="memory-fragment" data-echo-slot="1"><span>②</span><strong>두 번째 기억</strong><small>EMPTY</small></div>
-          <div class="memory-fragment" data-echo-slot="2"><span>③</span><strong>세 번째 기억</strong><small>EMPTY</small></div>
+          <div class="memory-fragment" data-echo-slot="0"><span>①</span><strong>첫 번째 기억</strong><small>비어 있음</small></div>
+          <div class="memory-fragment" data-echo-slot="1"><span>②</span><strong>두 번째 기억</strong><small>비어 있음</small></div>
+          <div class="memory-fragment" data-echo-slot="2"><span>③</span><strong>세 번째 기억</strong><small>비어 있음</small></div>
         </div>
         <div class="sentence-grid" aria-label="기억 루프 사용법">
-          <div class="sentence-card echo-guide"><span>01 · K START</span><strong>발판까지의 길을 기록</strong><small>K를 누른 뒤 목표 발판까지 이동하세요. 이동·점프·회피가 그대로 저장됩니다.</small></div>
-          <div class="sentence-card echo-guide"><span>02 · K REWIND</span><strong>과거의 나에게 자리를 맡김</strong><small>다시 K를 누르면 현재의 나는 시작점으로 되감기고, 기억의 나는 방금 걸은 길을 재생한 뒤 마지막 발판에 멈춥니다.</small></div>
-          <div class="sentence-card echo-guide"><span>03 · COOPERATE</span><strong>기억의 나를 발판으로 쓴다</strong><small>기억의 나 위로 점프해 한 칸 더 높이 오를 수 있습니다. 보스전에서는 기억의 나 둘이 발판을 지키는 동안, 현재의 내가 마지막 자리를 맡습니다.</small></div>
+          <div class="sentence-card echo-guide"><span>01 · 기록</span><strong>발판까지의 길을 기록</strong><small>K를 누른 뒤 목표 발판까지 이동하세요. 이동·점프·회피가 그대로 저장됩니다.</small></div>
+          <div class="sentence-card echo-guide"><span>02 · 되감기</span><strong>과거의 나에게 자리를 맡김</strong><small>다시 K를 누르면 현재의 나는 시작점으로 되감기고, 기억의 나는 방금 걸은 길을 재생한 뒤 마지막 발판에 멈충니다.</small></div>
+          <div class="sentence-card echo-guide"><span>03 · 함께하기</span><strong>기억의 나를 발판으로 쓴다</strong><small>기억의 나 위로 점프해 한 칸 더 높이 오를 수 있습니다. 보스전에서는 기억의 나 둘이 발판을 지키는 동안, 현재의 내가 마지막 자리를 맡습니다.</small></div>
         </div>
       </section>
 
       <section class="story-panel" aria-label="데모 이야기">
         <div>
-          <p class="eyebrow">DEMO STORY · FRIEND 01</p>
+          <p class="eyebrow">첫 번째 친구의 이야기</p>
           <h2>하린의 잃어버린 웃음</h2>
         </div>
         <p>
@@ -206,7 +214,7 @@
 
       <section class="campaign-panel" aria-label="전체 캠페인 흐름">
         <div>
-          <p class="eyebrow">CAMPAIGN ROUTE</p>
+          <p class="eyebrow">꿈의 여정</p>
           <h2>친구들의 꿈을 지나, 딸의 꿈까지</h2>
         </div>
         <ol class="campaign-route" id="campaign-route">
@@ -223,6 +231,6 @@
 
       <p class="footer-note">A tiny browser game made for OpenAI Game Builders Seoul · Chapter 01 of a dream action adventure.</p>
     </main>
-  <script src="game.js?v=20260824-stage17-curved-barrage-65"></script>
+  <script src="game.js?v=20260824-stage17-main-c959730-66"></script>
   </body>
 </html>
