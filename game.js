@@ -2521,6 +2521,9 @@ function setupPuzzle(layout, echoGoal) {
 }
 
 function setupBoss(name, config = {}) {
+  // 직전 퍼즐의 레이아웃 전용 입력 조건이 보스전에 남지 않게 한다.
+  // 특히 4스테이지 뒤에는 carousel K 시작 발판 검사가 5스테이지 K 기록을 막을 수 있다.
+  game.layout = 'boss';
   game.platforms = [];
   game.exit = null;
   game.memoryPads = [];
