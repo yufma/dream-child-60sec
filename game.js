@@ -5290,9 +5290,8 @@ function drawExit() {
     ctx.fillStyle = '#0d2045'; ctx.fillRect(x + 8, y + 10, w - 16, h - 19);
     ctx.fillStyle = '#ffe88c'; ctx.beginPath(); ctx.arc(x + w / 2, y + h * .45, 7, 0, Math.PI * 2); ctx.fill();
   }
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = 'rgba(5, 12, 31, .72)'; ctx.fillRect(x + w / 2 - 43, y - 17, 86, 11);
-  ctx.fillStyle = glow; ctx.font = '800 8px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText(label, x + w / 2, y - 9);
+  ctx.shadowBlur = 9; ctx.shadowColor = '#02040e';
+  ctx.fillStyle = glow; ctx.font = '800 8px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText(`✦ ${label}`, x + w / 2, y - 9);
   ctx.restore();
 }
 
@@ -5473,9 +5472,8 @@ function drawCarouselOrbitSystem() {
   ctx.font = '850 8px "Segoe UI", sans-serif';
   ctx.textAlign = 'center';
   const tag = game.carouselExitBridgeDeployed ? '문 잠금 해제 · P/Y 회전' : 'P/Y · 자유 회전';
-  const tagWidth = Math.ceil(ctx.measureText(tag).width) + 12;
-  ctx.fillStyle = 'rgba(5, 9, 28, .88)';
-  ctx.fillRect(CAROUSEL_RING_CENTER.x - tagWidth / 2, CAROUSEL_RING_CENTER.y - 28, tagWidth, 14);
+  ctx.shadowBlur = 9;
+  ctx.shadowColor = '#02040e';
   ctx.fillStyle = game.carouselCoreLatched ? '#9effea' : '#fff2bd';
   ctx.fillText(tag, CAROUSEL_RING_CENTER.x, CAROUSEL_RING_CENTER.y - 18);
   ctx.restore();
@@ -5515,9 +5513,8 @@ function drawCarouselAnchorBadge(platform) {
   ctx.save();
   ctx.font = '800 9px "Segoe UI", sans-serif';
   ctx.textAlign = 'center';
-  const width = Math.ceil(ctx.measureText(text).width) + 14;
-  ctx.fillStyle = 'rgba(5, 9, 28, .88)';
-  ctx.fillRect(Math.round(cx - width / 2), platform.y - 22, width, 15);
+  ctx.shadowBlur = 9;
+  ctx.shadowColor = '#02040e';
   ctx.fillStyle = '#fff2bd';
   ctx.fillText(text, cx, platform.y - 11);
   ctx.restore();
@@ -5648,8 +5645,10 @@ function drawCarouselRelaySwitch(relay) {
   const image = carouselLockSprites[relay.id];
   const spriteReady = image?.complete && image.naturalWidth > 0;
   const visualSize = 48;
-  const drawX = Math.round(relay.x + relay.w / 2 - visualSize / 2);
-  const drawY = Math.round(relay.y + relay.h / 2 - visualSize / 2);
+  const centerX = relay.x + relay.w / 2;
+  const centerY = relay.y + relay.h / 2;
+  const drawX = Math.round(centerX - visualSize / 2);
+  const drawY = Math.round(centerY - visualSize / 2);
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   ctx.globalAlpha = active ? 1 : .82;
@@ -5657,47 +5656,35 @@ function drawCarouselRelaySwitch(relay) {
   ctx.shadowColor = color;
   if (spriteReady) {
     ctx.drawImage(image, drawX, drawY, visualSize, visualSize);
-    if (active) {
-      ctx.shadowBlur = 0;
-      ctx.globalAlpha = .82;
-      ctx.strokeStyle = '#9effd7';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(drawX + 3.5, drawY + 3.5, visualSize - 7, visualSize - 7);
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = '#9effd7';
-      ctx.fillRect(drawX + visualSize - 13, drawY + 4, 9, 9);
-      ctx.fillStyle = '#12313a';
-      ctx.font = '900 8px ui-monospace, monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText('✓', drawX + visualSize - 8.5, drawY + 12);
-    }
   } else {
-    ctx.fillStyle = '#10162f';
-    ctx.fillRect(relay.x, relay.y, relay.w, relay.h);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(relay.x + .5, relay.y + .5, relay.w - 1, relay.h - 1);
+    ctx.save();
+    ctx.translate(centerX, centerY);
+    ctx.rotate(Math.PI / 4);
     ctx.fillStyle = color;
     const coreSize = active ? 16 : Math.round(12 + pulse * 3);
-    ctx.fillRect(
-      Math.round(relay.x + relay.w / 2 - coreSize / 2),
-      Math.round(relay.y + relay.h / 2 - coreSize / 2),
-      coreSize,
-      coreSize,
-    );
+    ctx.fillRect(Math.round(-coreSize / 2), Math.round(-coreSize / 2), coreSize, coreSize);
     ctx.fillStyle = '#10162f';
-    ctx.fillRect(relay.x + relay.w / 2 - 3, relay.y + relay.h / 2 - 3, 6, 6);
+    ctx.fillRect(-3, -3, 6, 6);
+    ctx.restore();
   }
-  ctx.shadowBlur = 0;
-  ctx.font = '800 8px "Segoe UI", sans-serif';
-  ctx.textAlign = 'center';
-  const text = active ? `✓ ${relay.label}` : relay.label;
-  const width = Math.ceil(ctx.measureText(text).width) + 12;
-  ctx.fillStyle = 'rgba(5, 9, 28, .88)';
-  ctx.fillRect(relay.x + relay.w / 2 - width / 2, relay.y - 18, width, 13);
-  ctx.fillStyle = color;
-  ctx.fillText(text, relay.x + relay.w / 2, relay.y - 8);
+  // 팀의 자물쇠 일러스트를 살리되, 카드형 외곽선 대신 작은 빛 조각으로 상호작용을 표시한다.
+  ctx.globalCompositeOperation = 'screen';
+  for (let mote = 0; mote < 5; mote += 1) {
+    const angle = (game.elapsed || 0) * 1.8 + mote * Math.PI * 2 / 5;
+    const radius = 14 + (mote % 2) * 4 + pulse * 3;
+    ctx.globalAlpha = active ? .76 : .48;
+    ctx.fillStyle = color;
+    ctx.fillRect(Math.round(centerX + Math.cos(angle) * radius - 1), Math.round(centerY + Math.sin(angle) * radius - 1), mote % 2 ? 2 : 3, mote % 2 ? 2 : 3);
+  }
   ctx.restore();
+  drawInteractionBeacon({
+    x: centerX,
+    y: relay.y - 12,
+    color,
+    symbol: active ? '✓' : '✦',
+    detail: active ? '잠금 복구' : '밟아 켜기',
+    active,
+  });
 }
 
 function drawCarouselMazeExit() {
@@ -5750,14 +5737,64 @@ function drawMemoryFragment(fragment) {
   ctx.fillStyle = style.color; ctx.font = '700 9px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(style.label, fragment.x + fragment.w / 2, fragment.y - 11);
 }
 
+function drawInteractionBeacon({ x, y, color, symbol = 'K', detail = '', active = false, danger = false, scale = 1 }) {
+  const time = game.elapsed || 0;
+  const pulse = .56 + Math.sin(time * 5.2 + x * .037 + y * .021) * .22;
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (let mote = 0; mote < 3; mote += 1) {
+    const angle = time * (1.7 + mote * .11) + mote * Math.PI * 2 / 3;
+    const radius = (9 + mote * 2 + pulse * 3) * scale;
+    const moteX = x + Math.cos(angle) * radius;
+    const moteY = y - 2 + Math.sin(angle * 1.3) * radius * .46;
+    ctx.globalAlpha = active ? .92 : .58;
+    ctx.fillStyle = danger ? '#ff7996' : color;
+    const size = mote === 0 ? 3 : 2;
+    ctx.fillRect(Math.round(moteX - size / 2), Math.round(moteY - size / 2), size, size);
+  }
+  ctx.globalAlpha = 1;
+  ctx.shadowBlur = 12 + pulse * 8;
+  ctx.shadowColor = danger ? '#ff4f78' : color;
+  ctx.fillStyle = danger ? '#ffb0c1' : color;
+  ctx.font = `900 ${Math.round(14 * scale)}px ui-monospace, monospace`;
+  ctx.fillText(symbol, x, y);
+  if (detail) {
+    ctx.shadowBlur = 8;
+    ctx.font = `800 ${Math.round(7 * scale)}px "Segoe UI", sans-serif`;
+    ctx.fillStyle = active ? '#effff8' : danger ? '#ffd7df' : '#f7f0c9';
+    ctx.fillText(detail, x, y + 11 * scale);
+  }
+  ctx.restore();
+}
+
+function drawInteractionPrompt(x, y, color, text, danger = false) {
+  ctx.save();
+  ctx.globalAlpha = .96;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowBlur = 8;
+  ctx.shadowColor = '#02040e';
+  ctx.fillStyle = danger ? '#ffd5df' : '#f5fbff';
+  ctx.font = '800 8px "Segoe UI", sans-serif';
+  ctx.fillText(`⌄  ${text}  ⌄`, x, y);
+  ctx.shadowBlur = 14;
+  ctx.shadowColor = danger ? '#ff5a82' : color;
+  ctx.globalAlpha = .48;
+  ctx.fillStyle = danger ? '#ff7897' : color;
+  ctx.fillText('✦', x, y - 10);
+  ctx.restore();
+}
+
 function drawMemoryPad(pad, active, index, role = 'normal') {
   const colors = ['#ffe37d', '#9effea', '#ffb5d7'];
   const roleStyles = {
-    normal: { title: 'K · 기억 발판', prompt: '기록 루프가 이곳을 지나가게 하세요' },
-    echo: { title: '기억의 나 · 발판', prompt: 'K 기록으로 과거의 나를 이곳에 남기세요', color: '#9effea' },
-    present: { title: '현재의 나 · 발판', prompt: '현재의 내가 이 자리에 서세요', color: '#ffe37d' },
-    truth: { title: '진실의 기억 · 발판', prompt: '진짜 기억을 이곳에서 재생하세요', color: '#ffd56d' },
-    distortion: { title: '✕ 가짜 기억 · 함정', prompt: '기록 금지 · 실수했으면 I로 삭제', color: '#ff537b' },
+    normal: { cue: '기억 기록', prompt: 'K로 기억을 남기세요' },
+    echo: { cue: '기억의 나', prompt: 'K로 기억의 나를 남기세요', color: '#9effea' },
+    present: { cue: '현재의 나', prompt: '이 자리에 직접 서세요', color: '#ffe37d' },
+    truth: { cue: '진실의 기억', prompt: 'K로 진짜 기억을 재생하세요', color: '#ffd56d' },
+    distortion: { cue: '가짜 기억', prompt: '기록 금지 · I로 지우기', color: '#ff537b' },
   };
   const style = roleStyles[role] || roleStyles.normal;
   const color = colors[index % colors.length];
@@ -5773,92 +5810,76 @@ function drawMemoryPad(pad, active, index, role = 'normal') {
   const playerCenterX = game.player.x + game.player.w / 2;
   const playerCenterY = game.player.y + game.player.h / 2;
   const playerNear = Math.hypot(playerCenterX - padCenterX, playerCenterY - padCenterY) < 116;
+  const echo = pad.roleDirection || pad.roleTechnique ? echoHoldingPad(pad) : null;
+  const directionReady = pad.roleDirection
+    ? Boolean(echo && echo.holding && echo.facing === pad.roleDirection)
+    : Boolean(echo && echo.holding && echo.frames?.some((frame) => frame.techniques?.[pad.roleTechnique]));
+  const symbol = role === 'distortion'
+    ? '✕'
+    : active
+      ? '✓'
+      : pad.roleTechnique
+        ? '≈'
+        : pad.roleDirection
+          ? pad.roleDirection > 0 ? '→' : '←'
+          : 'K';
+  const cue = active
+    ? role === 'distortion' ? '왜곡됨' : '기억 연결'
+    : directionReady ? '역할 완성' : style.cue;
 
-  // 예전 데모의 원형 아이콘·하트·테두리는 완전히 제거한다.
-  // 발판 그 자체가 챕터별 일러스트이고, 상단 명찰이 상호작용 지점임을 알려 준다.
+  // 프레임이나 사각 명찰 대신 오브젝트 자체에서 튀어나오는 빛·먼지로 상호작용 지점을 표시한다.
   ctx.save();
   ctx.translate(padCenterX, padCenterY);
+  ctx.globalCompositeOperation = 'screen';
+  const time = game.elapsed || 0;
+  for (let mote = 0; mote < (active ? 8 : 5); mote += 1) {
+    const angle = time * (1.25 + (mote % 3) * .16) + mote * 2.39;
+    const distance = radius + 8 + (mote % 3) * 5;
+    const x = Math.cos(angle) * distance;
+    const y = Math.sin(angle * 1.24) * distance * .42 - 3;
+    ctx.globalAlpha = active ? .68 : .34;
+    ctx.fillStyle = displayColor;
+    ctx.fillRect(Math.round(x), Math.round(y), mote % 3 === 0 ? 3 : 2, mote % 3 === 0 ? 3 : 2);
+  }
+  // 빛 입자만 screen 합성으로 띄우고, 원화는 원래 색감으로 남긴다.
+  ctx.globalCompositeOperation = 'source-over';
   if (hasSprite) {
     ctx.imageSmoothingEnabled = false;
-    ctx.globalAlpha = active ? 1 : .86;
+    ctx.globalAlpha = active ? 1 : .9;
     ctx.drawImage(sprite, -visualWidth / 2, -visualHeight / 2 - 3, visualWidth, visualHeight);
-    ctx.globalAlpha = 1;
   } else {
-    // 이미지 로딩 중에도 발판이 배경으로 오인되지 않도록, 원이 아닌 사각 받침으로만 표시한다.
+    ctx.globalAlpha = .88;
     ctx.fillStyle = '#13254b';
     ctx.fillRect(-radius, -radius * .62, radius * 2, radius * 1.24);
     ctx.fillStyle = displayColor;
     ctx.fillRect(-radius + 3, -radius * .62 + 3, radius * 2 - 6, 3);
   }
-  ctx.shadowBlur = active ? 27 : 9;
-  ctx.shadowColor = displayColor;
-  ctx.strokeStyle = displayColor;
-  ctx.lineWidth = active ? 2.6 : 1.6;
-  const bracket = Math.max(17, radius - 2);
-  const corner = 8;
-  [[-bracket, -bracket, corner, 0, 0, corner], [bracket, -bracket, -corner, 0, 0, corner], [-bracket, bracket, corner, 0, 0, -corner], [bracket, bracket, -corner, 0, 0, -corner]].forEach(([x, y, dx1, dy1, dx2, dy2]) => {
-    ctx.beginPath(); ctx.moveTo(x, y + dy1); ctx.lineTo(x + dx1, y + dy1); ctx.moveTo(x + dx2, y); ctx.lineTo(x + dx2, y + dy2); ctx.stroke();
-  });
   if (active) {
-    const pulse = 25 + Math.sin((game.elapsed || 0) * 7 + index) * 4;
-    ctx.globalAlpha = .55;
-    ctx.lineWidth = 1.2;
-    ctx.beginPath(); ctx.arc(0, 0, pulse, 0, Math.PI * 2); ctx.stroke();
-    ctx.globalAlpha = 1;
-  }
-  if (pad.roleDirection || pad.roleTechnique) {
-    const echo = echoHoldingPad(pad);
-    const directionReady = pad.roleDirection
-      ? Boolean(echo && echo.holding && echo.facing === pad.roleDirection)
-      : Boolean(echo && echo.holding && echo.frames?.some((frame) => frame.techniques?.[pad.roleTechnique]));
-    const arrow = pad.roleTechnique ? '≈' : pad.roleDirection > 0 ? '→' : '←';
-    ctx.save();
-    ctx.translate(padCenterX, pad.y - 23);
-    ctx.fillStyle = directionReady ? 'rgba(107, 255, 215, .92)' : 'rgba(18, 31, 60, .9)';
-    ctx.strokeStyle = directionReady ? '#d7fff0' : displayColor;
-    ctx.lineWidth = 1;
-    ctx.fillRect(-19, -8, 38, 16); ctx.strokeRect(-18.5, -7.5, 37, 15);
-    ctx.fillStyle = directionReady ? '#083b38' : '#fff1b3';
-    ctx.font = '900 11px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(arrow, 0, 1);
-    ctx.restore();
+    const wave = 15 + Math.sin(time * 6 + index) * 3;
+    ctx.globalAlpha = .32;
+    ctx.fillStyle = displayColor;
+    ctx.beginPath(); ctx.ellipse(0, 7, wave * 1.35, wave * .38, 0, 0, Math.PI * 2); ctx.fill();
   }
   ctx.restore();
 
-  ctx.save();
-  const windBaitPad = role === 'echo' && game.boss?.mode === 'chase';
-  const label = windBaitPad
-    ? (active ? '✓ 바람 미끼 대기' : 'K · 바람 미끼')
-    : active ? (role === 'distortion' ? '⚠ 왜곡에 갇힘' : '✓ 기억 연결됨') : style.title;
-  ctx.font = '800 8px "Segoe UI", sans-serif';
-  const labelWidth = Math.max(62, ctx.measureText(label).width + 15);
-  const labelHeight = 17;
-  const labelX = padCenterX - labelWidth / 2;
-  const labelY = padCenterY - visualHeight / 2 - 18;
-  ctx.fillStyle = active ? 'rgba(23, 72, 76, .94)' : 'rgba(9, 17, 42, .92)';
-  ctx.strokeStyle = displayColor;
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.roundRect(labelX, labelY, labelWidth, labelHeight, 5);
-  ctx.fill(); ctx.stroke();
-  ctx.fillStyle = active ? '#e8fff5' : displayColor;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText(label, padCenterX, labelY + labelHeight / 2 + .5);
-  ctx.globalAlpha = .72;
-  ctx.strokeStyle = displayColor;
-  ctx.beginPath(); ctx.moveTo(padCenterX, labelY + labelHeight); ctx.lineTo(padCenterX, padCenterY - visualHeight / 2 - 4); ctx.stroke();
+  drawInteractionBeacon({
+    x: padCenterX,
+    y: Math.max(15, padCenterY - visualHeight / 2 - 12),
+    color: displayColor,
+    symbol,
+    detail: cue,
+    active,
+    danger: role === 'distortion',
+  });
   if (playerNear && !active) {
-    const prompt = style.prompt;
-    const promptWidth = Math.min(166, Math.max(106, ctx.measureText(prompt).width + 16));
-    const promptX = Math.max(6, Math.min(W - promptWidth - 6, padCenterX - promptWidth / 2));
-    const promptY = Math.min(H - 23, padCenterY + visualHeight / 2 + 5);
-    ctx.globalAlpha = .96;
-    ctx.fillStyle = 'rgba(5, 11, 31, .94)';
-    ctx.strokeStyle = displayColor;
-    ctx.beginPath(); ctx.roundRect(promptX, promptY, promptWidth, 18, 5); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#f5fbff'; ctx.font = '700 8px "Segoe UI", sans-serif'; ctx.fillText(prompt, padCenterX, promptY + 9.5);
+    drawInteractionPrompt(
+      padCenterX,
+      Math.min(H - 10, padCenterY + visualHeight / 2 + 12),
+      displayColor,
+      style.prompt,
+      role === 'distortion',
+    );
   }
-  ctx.restore();
 }
 
 function drawEcho(echo, index) {
@@ -6689,23 +6710,50 @@ function drawLayoutLandmarks() {
 function drawWindGate(gate, index, active, cleared, unlocked) {
   const locked = !unlocked && !cleared;
   const riftSprite = objectSprites.haneulDashRiftGate;
+  const riftReady = riftSprite?.complete && riftSprite.naturalWidth > 0;
+  const color = locked ? '#687487' : cleared ? '#8bc6c1' : active ? '#d7fbff' : '#7391ad';
   ctx.save();
   ctx.translate(gate.x + gate.w / 2, gate.y + gate.h / 2);
   ctx.globalAlpha = locked ? .12 : cleared ? .22 : active ? 1 : .32;
-  ctx.strokeStyle = locked ? '#566478' : cleared ? '#9effea' : active ? '#f4fdff' : '#6a95b4';
+  ctx.strokeStyle = color;
   ctx.shadowBlur = active ? 24 : 0;
   ctx.shadowColor = '#a9f6ff';
   ctx.lineWidth = active ? 4 : 2;
-  if (riftSprite?.complete && riftSprite.naturalWidth > 0) {
+  if (riftReady) {
     ctx.imageSmoothingEnabled = false;
     const visualHeight = Math.max(152, gate.h * 1.84);
     const visualWidth = visualHeight * riftSprite.naturalWidth / riftSprite.naturalHeight;
     ctx.drawImage(riftSprite, -visualWidth / 2, -visualHeight / 2, visualWidth, visualHeight);
+  } else {
+    // 원화가 아직 준비되지 않았을 때만 최소한의 균열 실루엣을 남긴다.
+    ctx.fillStyle = '#122a4d';
+    ctx.beginPath(); ctx.ellipse(0, 0, gate.w / 2, gate.h / 2, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(0, 0, gate.w / 2, gate.h / 2, 0, 0, Math.PI * 2); ctx.stroke();
   }
-  ctx.beginPath(); ctx.ellipse(0, 0, gate.w / 2, gate.h / 2, 0, 0, Math.PI * 2); ctx.stroke();
-  ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.ellipse(0, 0, gate.w / 2 + WIND_GATE_OUTER_PADDING, gate.h / 2 + WIND_GATE_OUTER_PADDING, 0, 0, Math.PI * 2); ctx.stroke();
+  // 테두리 고리 대신 바람 조각이 문 주위를 순환한다. 문 자체의 일러스트가 먼저 읽히게 한다.
+  ctx.globalCompositeOperation = 'screen';
+  const time = game.elapsed || 0;
+  const moteCount = locked ? 2 : cleared ? 3 : active ? 9 : 5;
+  for (let mote = 0; mote < moteCount; mote += 1) {
+    const angle = time * (1.85 + mote * .04) + mote * Math.PI * 2 / moteCount;
+    const rx = gate.w / 2 + 7 + (mote % 2) * 5;
+    const ry = gate.h / 2 + 7 + (mote % 3) * 3;
+    const moteX = Math.cos(angle) * rx;
+    const moteY = Math.sin(angle) * ry;
+    ctx.globalAlpha = locked ? .16 : cleared ? .32 : active ? .86 : .46;
+    ctx.fillStyle = color;
+    const size = mote % 3 === 0 ? 3 : 2;
+    ctx.fillRect(Math.round(moteX - size / 2), Math.round(moteY - size / 2), size, size);
+  }
   ctx.restore();
-  ctx.fillStyle = locked ? '#687487' : cleared ? '#8bc6c1' : active ? '#d7fbff' : '#7391ad'; ctx.font = '800 9px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(locked ? `LOCKED · ${gate.label}` : gate.label, gate.x + gate.w / 2, gate.y - 12);
+  drawInteractionBeacon({
+    x: gate.x + gate.w / 2,
+    y: Math.max(17, gate.y - 17),
+    color,
+    symbol: locked ? '×' : cleared ? '✓' : '⇢',
+    detail: locked ? '잠긴 바람문' : cleared ? '바람길 통과' : 'Space 질주',
+    active: active || cleared,
+  });
 }
 
 function drawFinalVoiceAltar(gate, active, progress = 0) {
@@ -6739,22 +6787,28 @@ function drawFinalVoiceAltar(gate, active, progress = 0) {
   }
   ctx.restore();
   const percent = Math.round(Math.max(0, Math.min(1, progress)) * 100);
-  const label = active ? `딸의 목소리 전달 · ${percent}%` : 'L · 딸의 목소리';
-  ctx.save();
-  ctx.font = '900 9px "Segoe UI", sans-serif';
-  const labelWidth = Math.max(108, ctx.measureText(label).width + 18);
-  const labelY = gate.y - 22;
-  ctx.fillStyle = 'rgba(10, 24, 54, .94)';
-  ctx.strokeStyle = active ? '#fff0b6' : '#a6efff';
-  ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.roundRect(centerX - labelWidth / 2, labelY, labelWidth, 18, 5); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = active ? '#fff7d2' : '#d9f8ff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText(label, centerX, labelY + 9.5);
+  drawInteractionBeacon({
+    x: centerX,
+    y: gate.y - 18,
+    color: active ? '#fff0b6' : '#a6efff',
+    symbol: active ? '✓' : 'L',
+    detail: active ? `목소리 ${percent}%` : '딸의 목소리',
+    active,
+    scale: 1.05,
+  });
   if (active || progress > 0) {
-    ctx.fillStyle = 'rgba(5, 16, 39, .86)'; ctx.fillRect(centerX - 44, labelY + 23, 88, 5);
-    ctx.fillStyle = '#ffe5a2'; ctx.fillRect(centerX - 43, labelY + 24, 86 * Math.max(0, Math.min(1, progress)), 3);
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    for (let dot = 0; dot < 8; dot += 1) {
+      const lit = dot / 7 <= progress;
+      ctx.globalAlpha = lit ? .96 : .2;
+      ctx.fillStyle = lit ? '#ffe5a2' : '#8ad7ef';
+      ctx.shadowBlur = lit ? 9 : 0;
+      ctx.shadowColor = '#ffe5a2';
+      ctx.fillRect(centerX - 35 + dot * 10, gate.y + 2, lit ? 5 : 3, lit ? 3 : 2);
+    }
+    ctx.restore();
   }
-  ctx.restore();
 }
 
 function drawDreamGate(gate, active, cleared, kind = 'resonance', revealed = true, heartbeat = 0) {
@@ -6809,11 +6863,24 @@ function drawDreamGate(gate, active, cleared, kind = 'resonance', revealed = tru
     }
   }
   ctx.restore();
-  const gateLabel = yunaResonancePad
-    ? cleared ? '✓ 음 되찾음' : active ? `L · ${gate.label}` : `공명 발판 · ${gate.label}`
-    : mirror ? fakeMirror ? 'FALSE CRACK · 가짜 균열' : active ? `TRUE CRACK · ${gate.label}` : `REAL CRACK · ${gate.label}`
-      : gate.label;
-  ctx.fillStyle = cleared ? '#8bc6c1' : active ? '#f4fff9' : '#a9c8c7'; ctx.font = '800 9px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(gateLabel, gate.x + gate.w / 2, gate.y - 12);
+  if (revealed || cleared) {
+    const symbol = cleared ? '✓' : fakeMirror ? '✕' : mirror ? '⇢' : 'L';
+    const detail = cleared
+      ? yunaResonancePad ? '음 되찾음' : mirror ? '기억 복원' : '공명 완성'
+      : yunaResonancePad ? `${gate.label} 공명`
+        : fakeMirror ? '가짜 균열'
+          : mirror ? '진짜 균열 · Space'
+            : gate.label;
+    drawInteractionBeacon({
+      x: gate.x + gate.w / 2,
+      y: Math.max(17, gate.y - 17),
+      color,
+      symbol,
+      detail,
+      active: active || cleared,
+      danger: fakeMirror,
+    });
+  }
 }
 
 function drawYunaLoopStationMeter() {
@@ -7140,12 +7207,11 @@ function drawWindBaitProgress(b) {
     ctx.moveTo(b.x + 22, b.y + 92);
     ctx.bezierCurveTo(b.x - 82, b.y + 74, x + 90, y - 58, x, y);
     ctx.stroke();
-    const tagW = 96;
     const tagY = Math.min(H - 15, targetPad.y + targetPad.h + 17);
-    ctx.globalAlpha = .96; ctx.fillStyle = 'rgba(6, 28, 57, .92)'; ctx.strokeStyle = '#aef5ff';
-    ctx.beginPath(); ctx.roundRect(x - tagW / 2, tagY - 8, tagW, 16, 5); ctx.fill(); ctx.stroke();
+    // 표적 위에도 카드형 툴팁을 씌우지 않고, 빛나는 짧은 문장만 남긴다.
+    ctx.globalAlpha = .96; ctx.shadowBlur = 9; ctx.shadowColor = '#06213d';
     ctx.fillStyle = '#e5ffff'; ctx.font = '800 7px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('유인될 기억 · 바람 탄환', x, tagY + .5);
+    ctx.fillText('✦ 바람 탄환을 이 기억으로', x, tagY + .5);
     ctx.restore();
   }
 
