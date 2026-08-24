@@ -159,7 +159,8 @@ const bossSprites = Object.freeze({
 });
 const platformSprites = Object.freeze({
   harinCarouselPlatform: loadSprite('assets/platforms/harin-carousel-platform-v1.png'),
-  harinCarouselRingTile: loadSprite('assets/structures/harin-stage-04-topdown-ring-tile-v1.png'),
+  harinCarouselWalkway: loadSprite('assets/structures/harin-stage-04-carousel-walkway-v3.png'),
+  harinCarouselRingTile: loadSprite('assets/structures/harin-stage-04-carousel-ring-tile-v3.png'),
   harinEchoBridge: loadSprite('assets/platforms/harin-echo-bridge-v1.png'),
   haneulWindLedge: loadSprite('assets/platforms/haneul-wind-ledge-v1.png'),
   yunaResonancePad: loadSprite('assets/platforms/yuna-resonance-pad-v1.png'),
@@ -612,7 +613,7 @@ function stageSpriteSet(stageIndex = game?.stageIndex || 0) {
     sprites.push(harinBackgrounds[stageIndex], gateSprites.harin, memoryPadSprites.harin, platformSprites.harinCarouselPlatform);
     if (stageIndex === 1) sprites.push(harinStage02GateSprites.blocked, harinStage02GateSprites.open, harinStage02MagicFrames.awakening, harinStage02MagicFrames.restoring);
     if (stageIndex === 2) sprites.push(objectSprites.harinLaughCollector, objectSprites.harinRelayBulb, memoryPadSprites.harinRelay, platformSprites.harinEchoBridge);
-    if (stageIndex === 3) sprites.push(objectSprites.harinCarouselWall, platformSprites.harinCarouselRingTile);
+    if (stageIndex === 3) sprites.push(objectSprites.harinCarouselWall, platformSprites.harinCarouselWalkway, platformSprites.harinCarouselRingTile);
     if (stage.type === 'boss') sprites.push(bossSprites.harinClown, memoryPadSprites.distortion);
   } else if (stageIndex < 12) {
     sprites.push(yunaBackgrounds[stageIndex - 6], gateSprites.yuna, memoryPadSprites.yuna, platformSprites.yunaResonancePad);
@@ -4962,38 +4963,39 @@ function drawHaneulWindPlatform(item) {
 }
 
 function drawHarinTopdownCarouselPlatform(item) {
+  const image = platformSprites.harinCarouselWalkway;
   const x = Math.round(item.x);
   const y = Math.round(item.y);
   const w = Math.round(item.w);
   const h = Math.round(item.h);
-  const visualHeight = item.carouselSurface === 'ground' ? Math.min(32, h) : 18;
-  const top = y - 5;
+  const visualHeight = item.carouselSurface === 'ground' ? 44 : item.carouselSurface === 'anchor' ? 36 : 32;
+  const top = y - 9;
   const accent = carouselStructureColor(item);
   ctx.save();
   ctx.imageSmoothingEnabled = false;
-  ctx.shadowBlur = item.carouselSurface === 'anchor' ? 8 : 3;
+  ctx.shadowBlur = item.carouselSurface === 'anchor' ? 9 : 4;
   ctx.shadowColor = accent;
-  ctx.fillStyle = '#11152f';
-  ctx.fillRect(x, top, w, visualHeight);
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = '#312957';
-  ctx.fillRect(x + 3, top + 4, Math.max(1, w - 6), Math.max(4, visualHeight - 8));
-  ctx.fillStyle = '#8f6e43';
-  ctx.fillRect(x, top, w, 2);
-  ctx.fillRect(x, top + visualHeight - 2, w, 2);
-  ctx.fillStyle = '#e7bb63';
-  ctx.fillRect(x + 2, y - 1, Math.max(1, w - 4), 2);
-  ctx.fillStyle = '#fff0a6';
-  for (let lamp = x + 9; lamp < x + w - 5; lamp += 22) {
-    ctx.fillRect(lamp, top + 2, 2, 2);
-    if (visualHeight >= 22) ctx.fillRect(lamp, top + visualHeight - 4, 2, 2);
+  ctx.beginPath();
+  ctx.rect(x, top, w, visualHeight);
+  ctx.clip();
+  if (image?.complete && image.naturalWidth > 0) {
+    ctx.drawImage(image, x, top, w, visualHeight);
+  } else {
+    ctx.fillStyle = '#17152f';
+    ctx.fillRect(x, top, w, visualHeight);
+    ctx.fillStyle = '#4a3156';
+    for (let stripe = x + 12; stripe < x + w; stripe += 30) ctx.fillRect(stripe, top + 4, 8, visualHeight - 8);
   }
+  ctx.shadowBlur = 0;
+  ctx.globalCompositeOperation = 'screen';
+  ctx.globalAlpha = .62;
+  ctx.fillStyle = accent;
+  ctx.fillRect(x + 2, y - 1, Math.max(1, w - 4), 2);
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.globalAlpha = 1;
   if (item.carouselSurface === 'anchor') {
     const cx = Math.round(x + w / 2);
-    ctx.fillStyle = item.carouselMemoryStart ? '#7e61a7' : '#5a466f';
-    ctx.fillRect(cx - 9, top + 4, 18, Math.max(8, visualHeight - 8));
-    ctx.fillStyle = accent;
-    ctx.fillRect(cx - 2, top + 7, 4, 4);
+    drawCarouselTopdownTile(cx - 12, top + Math.round((visualHeight - 24) / 2), 24, 24, item.carouselMemoryStart ? 1 : .78);
   }
   ctx.restore();
 }
@@ -5346,7 +5348,14 @@ function drawCarouselRingAtRotation(rotation, color, alpha = 1, ghost = false) {
     const angle = baseAngle + rotation;
     const x = Math.round(CAROUSEL_RING_CENTER.x + Math.cos(angle) * CAROUSEL_RING_RADIUS - CAROUSEL_RING_SEGMENT_SIZE / 2);
     const y = Math.round(CAROUSEL_RING_CENTER.y + Math.sin(angle) * CAROUSEL_RING_RADIUS - CAROUSEL_RING_SEGMENT_SIZE / 2);
-    drawCarouselTopdownTile(x, y, CAROUSEL_RING_SEGMENT_SIZE, CAROUSEL_RING_SEGMENT_SIZE, ghost ? .55 : 1);
+    if (!ghost && index % 4 === 0) {
+      drawCarouselTopdownTile(x, y, CAROUSEL_RING_SEGMENT_SIZE, CAROUSEL_RING_SEGMENT_SIZE, .96);
+    } else {
+      ctx.fillStyle = ghost ? '#29213e' : index % 2 ? '#332342' : '#201b39';
+      ctx.fillRect(x, y, CAROUSEL_RING_SEGMENT_SIZE, CAROUSEL_RING_SEGMENT_SIZE);
+      ctx.strokeStyle = ghost ? '#5b4c66' : '#b78643';
+      ctx.strokeRect(x + .5, y + .5, CAROUSEL_RING_SEGMENT_SIZE - 1, CAROUSEL_RING_SEGMENT_SIZE - 1);
+    }
     ctx.fillStyle = color;
     ctx.globalAlpha = alpha * (ghost ? .24 : .72);
     ctx.fillRect(x + 2, y + 2, CAROUSEL_RING_SEGMENT_SIZE - 4, 2);
@@ -5515,10 +5524,24 @@ function drawCarouselTopdownWall(platform, color, active, targetPreview) {
   ctx.beginPath();
   ctx.rect(x, y, w, h);
   ctx.clip();
+  ctx.fillStyle = active ? '#241a39' : '#141125';
+  ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = '#a8773c';
   if (vertical) {
-    for (let tileY = y; tileY < y + h; tileY += 18) drawCarouselTopdownTile(x + Math.max(0, (w - 20) / 2), tileY, 20, 20, active ? .9 : .42);
+    ctx.fillRect(x, y, 2, h);
+    ctx.fillRect(x + w - 2, y, 2, h);
   } else {
-    for (let tileX = x; tileX < x + w; tileX += 18) drawCarouselTopdownTile(tileX, y + Math.max(0, (h - 20) / 2), 20, 20, active ? .9 : .42);
+    ctx.fillRect(x, y, w, 2);
+    ctx.fillRect(x, y + h - 2, w, 2);
+  }
+  if (vertical) {
+    for (let tileY = y + 5; tileY < y + h; tileY += 54) drawCarouselTopdownTile(x + Math.max(0, (w - 20) / 2), tileY, 20, 20, active ? .9 : .42);
+    ctx.fillStyle = '#ffe072';
+    for (let bulbY = y + 34; bulbY < y + h - 4; bulbY += 54) ctx.fillRect(x + Math.round(w / 2) - 2, bulbY, 4, 4);
+  } else {
+    for (let tileX = x + 5; tileX < x + w; tileX += 54) drawCarouselTopdownTile(tileX, y + Math.max(0, (h - 20) / 2), 20, 20, active ? .9 : .42);
+    ctx.fillStyle = '#ffe072';
+    for (let bulbX = x + 34; bulbX < x + w - 4; bulbX += 54) ctx.fillRect(bulbX, y + Math.round(h / 2) - 2, 4, 4);
   }
   ctx.restore();
   ctx.save();
