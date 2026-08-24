@@ -172,6 +172,7 @@ const objectSprites = Object.freeze({
   yunaSilentKey: loadSprite('assets/objects/yuna-silent-key-pillar-v1.png'),
   haneulTrueSignpost: loadSprite('assets/objects/haneul-true-signpost-v1.png'),
   haneulHeadwindPillar: loadSprite('assets/objects/haneul-headwind-pillar-v1.png'),
+  haneulHeadwindRubble: loadSprite('assets/objects/haneul-headwind-pillar-rubble-v1.png'),
   haneulDashRiftGate: loadSprite('assets/objects/haneul-dash-rift-gate-v1.png'),
   daughterTrueCrack: loadSprite('assets/objects/daughter-true-crack-v1.png'),
 });
@@ -355,9 +356,9 @@ const STAGES = [
     layout: 'wind-tunnel', echoGoal: 1, hint: '출발 신호에 기억을 남긴 뒤, Space로 터널 틈을 넘고 L로 위쪽 바람길을 드러내세요.',
   },
   {
-    chapter: '하늘 · 멈춰 버린 발걸음', name: '역풍의 높은 벽', type: 'puzzle', skills: ['bridge', 'dash'], objective: '절벽의 낮은 길과 높은 길을 이어 역풍을 통과하라',
-    intro: '하늘의 길은 이제 벽 하나가 아니라 여러 높이로 갈라진 절벽이 되었어. 기억의 나가 붙잡은 잔상 발판으로 첫 틈을 넘고, 점프로 높은 바람 선반을 따라가 거대한 역풍 기둥을 피해 가자. 출발 약속에 남긴 기억의 나는 도망치지 않고 역풍을 바라봐야 길이 흔들리지 않아. 마지막 좁은 틈은 Space 질주로 가른다.',
-    layout: 'wind-cliff', echoGoal: 1, hint: '① 출발 약속 위에서 왼쪽을 바라본 채 K로 기억 남기기 ② O로 첫 틈 건너기 ③ 점프로 높은 바람 선반 오르기 ④ Space로 마지막 틈 돌파.',
+    chapter: '하늘 · 멈춰 버린 발걸음', name: '역풍의 높은 벽', type: 'puzzle', skills: ['bridge', 'dash'], objective: '출발 약속의 기억으로 거대한 바람 기둥을 무너뜨려라',
+    intro: '하늘의 길은 이제 벽 하나가 아니라 여러 높이로 갈라진 절벽이 되었어. 기억의 나가 붙잡은 잔상 발판으로 첫 틈을 넘고, 점프로 높은 바람 선반을 따라가자. 출발 약속에 기억의 나를 남기면, 길을 막던 거대한 기둥이 더는 버티지 못하고 무너질 거야. 마지막 좁은 틈은 Space 질주로 가른다.',
+    layout: 'wind-cliff', echoGoal: 1, hint: '① 출발 약속 위에서 K로 기억 남기기 ② 기억이 재생되면 역풍 기둥이 무너짐 ③ 점프로 높은 바람 선반 오르기 ④ Space로 마지막 틈 돌파.',
   },
   {
     chapter: '하늘 · 멈춰 버린 발걸음', name: '되돌아오는 표지판', type: 'puzzle', skills: ['resonance', 'dash'], objective: '층마다 다른 표지판을 지나 진짜 출발점에 닿아라',
@@ -462,12 +463,6 @@ const PUZZLE_ROLE_RULES = Object.freeze({
     prompt: '두 기억이 검은 침묵 기둥을 향하게 하세요',
     directions: Object.freeze([1, -1]),
     readyText: '두 화음이 침묵을 마주 봅니다. 기둥 너머의 선율이 돌아왔어요.',
-  }),
-  'wind-cliff': Object.freeze({
-    title: '역풍을 바라보는 약속',
-    prompt: '기억의 내가 역풍 쪽을 바라보게 하세요',
-    directions: Object.freeze([-1]),
-    readyText: '과거의 네가 역풍을 바라봅니다. 현재의 길이 흔들리지 않아요.',
   }),
   'classroom-fracture': Object.freeze({
     title: '서로를 부르는 두 자리',
@@ -593,7 +588,7 @@ function stageSpriteSet(stageIndex = game?.stageIndex || 0) {
     if (stage.type === 'boss') sprites.push(bossSprites.yunaChoir);
   } else if (stageIndex < 18) {
     sprites.push(haneulBackgrounds[stageIndex - 12], gateSprites.haneul, memoryPadSprites.haneul, platformSprites.haneulWindLedge);
-    if (stageIndex === 14) sprites.push(objectSprites.haneulHeadwindPillar);
+    if (stageIndex === 14) sprites.push(objectSprites.haneulHeadwindPillar, objectSprites.haneulHeadwindRubble);
     if (stageIndex === 15) sprites.push(objectSprites.haneulTrueSignpost);
     if (stage.type === 'boss') sprites.push(bossSprites.haneulKite, objectSprites.haneulDashRiftGate);
   } else if (stageIndex < 21) {
@@ -979,6 +974,7 @@ function freshGameState(phase = 'intro') {
     player: freshPlayer(), platforms: [], boss: null, dreamShots: [], nightmareShots: [], fireCooldown: 0,
     nextAttack: 1.2, message: '', completed: [], memories: new Set(campaign.memories), learnedSkills: new Set(campaign.skills), fragments: [], echoes: [], recording: null, memoryRecordsUsed: 0, reactionSeen: new Set(), rewindExpressionTimer: 0, dreamTrails: [], dashTrailClock: 0, dashVisualTimer: 0, memoryPads: [], fallZones: [], transition: 'start', stageIntroTimer: null, dashCooldown: 0, dashTimer: 0, dashDirection: 1, watcherResolved: false,
     stageRealElapsed: 0, challenge: null, bossGuideKey: '', bossGuideUntil: 0, bossGuideStarted: 0,
+    windPillarCollapse: 0, windPillarReleased: false, windPillarCollapseAnnounced: false, headwindHintShown: false,
   };
 }
 
@@ -1718,6 +1714,9 @@ function phaseGuide() {
     if (stage.layout === 'carousel') {
       return { step: 'STEP 2 / 3', text: '움직이는 달빛 발판에 올라타세요. 발판이 벽 위까지 실어 주면 점프로 반대편 선반으로 건너세요.', compact: '달빛 발판을 타고 벽 위로 건너라' };
     }
+    if (stage.layout === 'wind-cliff' && game.windPillarReleased) {
+      return { step: 'HEADWIND BROKEN', text: '역풍 기둥이 무너져 절벽길이 열렸습니다. 높은 바람 선반을 따라가고, 마지막 틈은 Space 질주로 건너세요.', compact: '무너진 역풍 너머로 질주하라' };
+    }
     if (stage.layout === 'wall') {
       if (goal > active) return { step: `MEMORY RELAY · ${active} / ${goal}`, text: '중앙 기억 교차로에서 K 기록을 시작해 낮은 길·높은 길·오른쪽 길의 웃음 중계기에 기억의 나를 하나씩 남기세요.', compact: `진짜 웃음 중계기 ${active} / ${goal}` };
       return { step: 'RELAY COMPLETE', text: '세 갈래 기억이 수집탑의 흡입을 멈췄습니다. 열린 셔터 너머의 꿈의 문으로 가세요.', compact: '멈춘 수집탑을 통과하라' };
@@ -2006,6 +2005,11 @@ function startStage() {
   game.watcherHitCooldown = 0;
   game.carouselGateOpened = false;
   game.carouselRideProgress = 0;
+  // 15스테이지를 다시 선택해도 이전 도전의 붕괴 상태가 남지 않도록, 역풍 규칙을 매번 초기화한다.
+  game.windPillarCollapse = 0;
+  game.windPillarReleased = false;
+  game.windPillarCollapseAnnounced = false;
+  game.headwindHintShown = false;
   game.stageRealElapsed = 0;
   game.bossGuideKey = '';
   game.bossGuideUntil = stage.type === 'boss' ? 4.8 : 0;
@@ -2169,8 +2173,8 @@ function setupPuzzle(layout, echoGoal) {
       { x: 0, y: 500, w: 212, h: 40, label: 'CLIFF START' },
       { x: 430, y: 432, w: 106, h: 18, label: 'LOW WIND SHELF' },
       { x: 556, y: 360, w: 92, h: 18, label: 'HIGH WIND SHELF' },
-      // 충돌 범위는 넘을 수 있게 좁게 유지하지만, 시각적으로는 배경의 거대한 역풍 기둥과 이어진다.
-      { x: 670, y: 360, w: 52, h: 140, wall: true, persistentWall: true, label: 'HEADWIND PILLAR' },
+      // 기억의 나가 약속을 지키면 충돌도 함께 사라지는, 배경과 이어진 거대한 역풍 기둥.
+      { x: 670, y: 360, w: 52, h: 140, wall: true, persistentWall: true, collapseWithMemory: true, label: 'HEADWIND PILLAR' },
       { x: 802, y: 420, w: 158, h: 18, label: 'CLIFF END' },
     ];
     // 문 하단이 절벽 발판의 윗면(420)에 정확히 닿도록 배치한다.
@@ -2661,6 +2665,26 @@ function resolveWallVertical(player, wall, oldY) {
   else { player.y = wall.y + wall.h; player.vy = 0; }
 }
 
+function updateWindCliffPillar(dt, stage = currentStage()) {
+  if (stage?.layout !== 'wind-cliff') return;
+  // 약속을 지키는 기억이 한 번 재생되면 역풍은 다시 플레이어를 가두지 않는다.
+  if (puzzleObjectiveReady() && !game.windPillarReleased) {
+    game.windPillarReleased = true;
+    if (!game.windPillarCollapseAnnounced) {
+      game.windPillarCollapseAnnounced = true;
+      say('출발 약속을 지킨 기억이 바람을 붙잡았습니다. 거대한 바람 기둥이 무너지며 절벽길이 열립니다.');
+    }
+  }
+  // 균열 → 기울어짐 → 충돌 → 잔해 정착까지 읽히도록 충분한 시간을 둔다.
+  if (game.windPillarReleased) game.windPillarCollapse = Math.min(1, (game.windPillarCollapse || 0) + dt / 1.25);
+}
+
+function windCliffHeadwindStrength(stage = currentStage()) {
+  // 탑이 서 있을 때만 공중 이동을 되밀어 내는 역풍이 존재한다. 무너지기 시작하면 즉시 잦아든다.
+  if (stage?.layout !== 'wind-cliff' || game.windPillarReleased) return 0;
+  return 1;
+}
+
 function updatePuzzle(dt) {
   const stage = currentStage();
   const techniques = activeTechniques();
@@ -2684,25 +2708,47 @@ function updatePuzzle(dt) {
     }
   }
   game.bridge = techniques.bridge;
+  updateWindCliffPillar(dt, stage);
   if (!frozen) game.elapsed += dt;
   const axis = horizontalInput();
   const movementControl = p.grounded ? 1 : MOVEMENT_TUNING.puzzle.airControl;
   p.vx = acceleratedVelocity(p.vx, axis, MOVEMENT_TUNING.puzzle, dt, movementControl);
   if (axis) p.facing = axis;
+  const headwind = windCliffHeadwindStrength(stage);
   const jump = pressed.has('ArrowUp') || pressed.has('KeyW');
-  if (jump && p.grounded) { p.vy = -470; p.grounded = false; }
+  if (jump && p.grounded) {
+    p.vy = -470; p.grounded = false;
+    // 점프가 시작되는 바로 그 프레임에도 바람이 등을 밀어, 역풍 규칙을 명확히 체감시킨다.
+    if (headwind > 0) p.vx = Math.max(-390, p.vx - 172 * headwind);
+  }
   p.vy += 1220 * dt;
   p.vy = Math.max(-720, Math.min(720, p.vy));
+  if (headwind > 0 && !p.grounded) {
+    // 역풍은 점프 중에만 강하게 작용한다. 달리기·질주 자체를 막지 않아, 규칙을 알아챈 뒤에도 조작감은 남긴다.
+    const liftFactor = p.vy < 0 ? 1 : .62;
+    p.vx = Math.max(-430, p.vx - 610 * headwind * liftFactor * dt);
+    if (!game.headwindHintShown && p.vy < -80) {
+      game.headwindHintShown = true;
+      say('역풍이 점프를 되밀어 냅니다. 출발 약속에 기억의 나를 남겨 바람 기둥을 무너뜨리세요.');
+    }
+  }
   const oldX = p.x;
   p.x = Math.max(0, Math.min(W - p.w, p.x + p.vx * dt));
   if (game.dashTimer > 0) {
     p.x = Math.max(0, Math.min(W - p.w, p.x + game.dashDirection * 520 * dt));
     p.facing = game.dashDirection;
     p.vx = game.dashDirection * 340;
+    // 역풍 기둥이 살아 있을 때는 질주 추진력도 정면에서 되밀린다.
+    // 따라서 기억 발판을 먼저 활성화하지 않으면 Space로 절벽을 억지 돌파할 수 없다.
+    if (headwind > 0 && !p.grounded) {
+      p.x = Math.max(0, p.x - 1040 * headwind * dt);
+      p.vx = Math.min(p.vx, -300 * headwind);
+    }
   }
   const memoryPadsReadyAtFrameStart = puzzleObjectiveReady();
   const memoryGateOpen = memoryPadsReadyAtFrameStart && (stage.layout !== 'watcher' || game.watcherResolved);
-  const solidWalls = game.platforms.filter((item) => item.wall && (item.persistentWall || !memoryGateOpen));
+  // 일반 문은 기억 완성 시 열리고, 15스테이지의 역풍 기둥은 한 번 무너지면 다시 충돌하지 않는다.
+  const solidWalls = game.platforms.filter((item) => item.wall && (!memoryGateOpen || (item.persistentWall && !item.collapseWithMemory)) && !(item.collapseWithMemory && game.windPillarReleased));
   solidWalls.forEach((wall) => resolveWallHorizontal(p, wall, oldX));
   const oldY = p.y;
   p.y += p.vy * dt;
@@ -4103,17 +4149,118 @@ function drawHarinCarouselWall(item) {
 function drawHaneulHeadwindPillar(item) {
   const { x, y, w, h } = item;
   const image = objectSprites.haneulHeadwindPillar;
+  const rubble = objectSprites.haneulHeadwindRubble;
+  const collapse = item.collapseWithMemory ? Math.max(0, Math.min(1, game.windPillarCollapse || 0)) : 0;
+  const fracture = Math.max(0, Math.min(1, collapse / .16));
+  const fall = Math.max(0, Math.min(1, (collapse - .16) / .84));
+  const fallEase = fall * fall * (3 - 2 * fall);
+  const visualH = Math.max(360, h + 220);
+  const visualW = image?.naturalWidth && image?.naturalHeight ? visualH * image.naturalWidth / image.naturalHeight : w * 4.4;
+  const centerX = x + w / 2;
+  const floorY = y + h;
   ctx.save();
   ctx.imageSmoothingEnabled = false;
-  ctx.shadowBlur = 28; ctx.shadowColor = '#68e9ff';
-  if (image?.complete && image.naturalWidth > 0) {
-    // 충돌 폭은 유지하되, 배경의 거대한 첨탑과 이어지는 규모로 보이게 한다.
-    const visualH = Math.max(360, h + 220);
-    const visualW = visualH * image.naturalWidth / image.naturalHeight;
-    ctx.drawImage(image, x + w / 2 - visualW / 2, y + h - visualH, visualW, visualH);
-  } else {
+  // 사각 단면이 보이지 않도록, 원본 석탑을 불규칙한 균열선으로 잘라 각각 다른 중력·회전으로 떨어뜨린다.
+  const drawShard = (top, bottom, offsetX, offsetY, rotation, alpha = 1, seed = 0) => {
+    if (!image?.complete || !image.naturalWidth) return;
+    const sourceY = Math.round(image.naturalHeight * top);
+    const sourceH = Math.max(1, Math.round(image.naturalHeight * (bottom - top)));
+    const destinationH = visualH * (bottom - top);
+    const halfW = visualW / 2;
+    const halfH = destinationH / 2;
+    const notch = 11 + (seed % 3) * 7;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(centerX + offsetX, floorY - visualH + visualH * top + destinationH / 2 + offsetY);
+    ctx.rotate(rotation);
+    // 위·아래가 한 줄로 잘린 단면이 아니라, 금이 번진 조각처럼 톱니 형태로 클리핑한다.
+    ctx.beginPath();
+    ctx.moveTo(-halfW, -halfH + notch);
+    ctx.lineTo(-halfW * .56, -halfH);
+    ctx.lineTo(-halfW * .14, -halfH + notch * .42);
+    ctx.lineTo(halfW * .28, -halfH);
+    ctx.lineTo(halfW, -halfH + notch * .8);
+    ctx.lineTo(halfW, halfH - notch * .55);
+    ctx.lineTo(halfW * .42, halfH);
+    ctx.lineTo(halfW * .06, halfH - notch * .6);
+    ctx.lineTo(-halfW * .33, halfH);
+    ctx.lineTo(-halfW, halfH - notch);
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(image, 0, sourceY, image.naturalWidth, sourceH, -visualW / 2, -destinationH / 2, visualW, destinationH);
+    ctx.restore();
+  };
+  if (!image?.complete || !image.naturalWidth) {
     ctx.fillStyle = '#16365d'; ctx.fillRect(x, y, w, h);
     ctx.fillStyle = '#76efff'; ctx.fillRect(x + 3, y + 3, w - 6, h - 6);
+    ctx.restore();
+    return;
+  }
+  const shake = fracture > 0 && fall < .08 ? Math.sin(game.elapsed * 84) * fracture * 7 : 0;
+  ctx.shadowBlur = 28 * (1 - fallEase * .65); ctx.shadowColor = '#68e9ff';
+  if (fall < .03) {
+    // 처음에는 탑 전체가 흔들리고 균열만 퍼진다. 크기는 절대 줄이지 않는다.
+    drawShard(0, 1, shake, 0, 0, 1, 0);
+    if (fracture > 0) {
+      ctx.save();
+      ctx.globalAlpha = fracture * .9;
+      ctx.strokeStyle = '#c7fbff'; ctx.shadowBlur = 14; ctx.shadowColor = '#56eaff'; ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(centerX - 16, floorY - visualH * .22); ctx.lineTo(centerX + 8, floorY - visualH * .38); ctx.lineTo(centerX - 11, floorY - visualH * .54); ctx.lineTo(centerX + 13, floorY - visualH * .71); ctx.stroke();
+      ctx.restore();
+    }
+  } else if (fall < .92) {
+    // 네 균열 조각이 시간차로 무너지며 서로 다른 방향으로 기울어진다. 겹치는 범위가 절단선을 숨긴다.
+    drawShard(0, .26, -fallEase * 156, fallEase * fallEase * 304, -fallEase * 1.34, 1 - Math.max(0, fall - .60) * 2.5, 1);
+    drawShard(.18, .50, fallEase * 112, fallEase * fallEase * 212, fallEase * .91, 1 - Math.max(0, fall - .67) * 3.05, 2);
+    drawShard(.42, .75, -fallEase * 82, fallEase * fallEase * 144, -fallEase * .68, 1 - Math.max(0, fall - .76) * 4.0, 3);
+    drawShard(.66, 1, fallEase * 26, fallEase * 58, fallEase * .19, 1 - Math.max(0, fall - .84) * 5.7, 4);
+  }
+  if (fall > .12) {
+    // 바닥 충돌 시 생기는 돌가루·마력 먼지. 잔해가 도착하기 전 빈 공간을 자연스럽게 메운다.
+    const dustLife = Math.max(0, 1 - Math.max(0, fall - .76) / .24);
+    for (let index = 0; index < 12; index += 1) {
+      const spread = ((index * 47) % 254) - 127;
+      const rise = (1 - fall) * 16 + (index % 3) * 5;
+      ctx.save();
+      ctx.globalAlpha = Math.min(.34, (fall - .12) * 1.2) * dustLife;
+      ctx.fillStyle = index % 3 ? '#88dff6' : '#dffcff';
+      ctx.beginPath();
+      ctx.ellipse(centerX + spread * fallEase, floorY - 7 - rise, 12 + index % 4 * 5, 3 + index % 3 * 2, (index % 2 ? -.15 : .15), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+  // 떨어지는 석편도 원본 기둥의 조각을 잘라 사용해 장난감 같은 사각 파티클이 되지 않게 한다.
+  if (fall > .02 && fall < .98) {
+    const fragments = [
+      [.08, .12, -116, 128, -1.4], [.34, .39, 126, 94, .96], [.53, .58, -86, 176, -1.06],
+      [.72, .77, 105, 144, 1.2], [.18, .23, 58, 230, .72], [.82, .87, -142, 96, -.78],
+    ];
+    fragments.forEach(([top, bottom, driftX, dropY, spin], index) => {
+      const local = Math.max(0, Math.min(1, (fall - index * .055) / .58));
+      if (local <= 0) return;
+      const sourceY = image.naturalHeight * top;
+      const sourceH = Math.max(1, image.naturalHeight * (bottom - top));
+      const pieceH = visualH * (bottom - top) * .72;
+      ctx.save();
+      ctx.globalAlpha = (1 - local * .24) * .98;
+      ctx.translate(centerX + driftX * local, floorY - visualH + visualH * top + dropY * local * local);
+      ctx.rotate(spin * local);
+      ctx.drawImage(image, 0, sourceY, image.naturalWidth, sourceH, -visualW * .31, -pieceH / 2, visualW * .62, pieceH);
+      ctx.restore();
+    });
+  }
+  // 마지막에는 전용 잔해 일러스트가 바닥에 남아, 탑이 단순히 사라진 느낌을 없앤다.
+  if (fall > .38 && rubble?.complete && rubble.naturalWidth > 0) {
+    const rubbleAlpha = Math.min(1, (fall - .38) / .34);
+    const rubbleH = 168;
+    const rubbleW = rubbleH * rubble.naturalWidth / rubble.naturalHeight;
+    ctx.save();
+    ctx.globalAlpha = rubbleAlpha;
+    ctx.shadowBlur = 22; ctx.shadowColor = '#5deeff';
+    ctx.drawImage(rubble, centerX - rubbleW / 2, floorY - rubbleH + 10, rubbleW, rubbleH);
+    ctx.restore();
   }
   ctx.restore();
 }
@@ -5057,6 +5204,9 @@ function drawPuzzle() {
     const hidden = platform.hidden && !techniques.resonance;
     if (platform === stage02GateStructure && stage02GateSprite) {
       return;
+    } else if (platform.collapseWithMemory && game.windPillarReleased) {
+      // 15스테이지는 투명 벽을 남기지 않고, 실제로 무너지는 마지막 프레임만 보여 준다.
+      drawHaneulHeadwindPillar(platform);
     } else if (platform.wall && gateOpen && game.layout === 'carousel' && !platform.persistentWall) {
       return;
     } else if (platform.wall && gateOpen) {
@@ -5114,6 +5264,55 @@ function drawHaneulSignpost(x, groundY, scale = 1, trueDirection = false) {
   }
 }
 
+function drawWindCliffHeadwind() {
+  const strength = windCliffHeadwindStrength();
+  if (strength <= 0) return;
+  const t = game.elapsed || 0;
+  const pillar = game.platforms.find((platform) => platform.label === 'HEADWIND PILLAR');
+  const sourceX = pillar ? pillar.x + pillar.w / 2 : 700;
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.lineCap = 'round';
+  // 기둥에서 출발한 넓은 난류 리본이 플레이어 쪽으로 휘어 나가는 형태. 단순 가로 선보다 압력감을 준다.
+  for (let index = 0; index < 9; index += 1) {
+    const travel = (t * (.42 + (index % 3) * .055) + index * .163) % 1;
+    const laneY = 88 + index * 45 + Math.sin(t * 1.7 + index * 1.9) * 18;
+    const headX = sourceX - travel * (sourceX + 125);
+    const tailX = Math.min(sourceX + 32, headX + 146 + (index % 3) * 31);
+    const curl = (index % 2 ? -1 : 1) * (24 + (index % 4) * 7);
+    const ribbon = ctx.createLinearGradient(headX, laneY, tailX, laneY);
+    ribbon.addColorStop(0, 'rgba(49, 199, 255, 0)');
+    ribbon.addColorStop(.56, index % 3 === 0 ? 'rgba(147, 243, 255, .42)' : 'rgba(54, 194, 255, .34)');
+    ribbon.addColorStop(1, 'rgba(218, 253, 255, .04)');
+    ctx.globalAlpha = (.56 + (index % 2) * .17) * strength;
+    ctx.strokeStyle = ribbon;
+    ctx.lineWidth = 4 + (index % 3) * 2;
+    ctx.beginPath();
+    ctx.moveTo(tailX, laneY - curl * .14);
+    ctx.bezierCurveTo(tailX - 44, laneY - curl, headX + 54, laneY + curl, headX, laneY + Math.sin(t * 4.8 + index) * 7);
+    ctx.stroke();
+    ctx.globalAlpha = (.34 + (index % 3) * .08) * strength;
+    ctx.strokeStyle = '#d9fbff'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(tailX - 10, laneY - curl * .12);
+    ctx.bezierCurveTo(tailX - 52, laneY - curl * .72, headX + 48, laneY + curl * .72, headX + 7, laneY);
+    ctx.stroke();
+  }
+  // 작은 빛·먼지 입자는 바람에 따라 왼쪽으로 가속해, 공중 물리와 시각 효과가 같은 방향임을 보여 준다.
+  for (let index = 0; index < 28; index += 1) {
+    const travel = (t * (.68 + (index % 5) * .06) + index * .071) % 1;
+    const particleX = sourceX + 52 - travel * (sourceX + 94);
+    const particleY = 92 + (index * 61) % 374 + Math.sin(t * 6 + index) * 12;
+    const particleSize = index % 4 === 0 ? 3 : 1.5;
+    ctx.globalAlpha = (.18 + (index % 3) * .08) * strength;
+    ctx.fillStyle = index % 4 === 0 ? '#e8fdff' : '#60dcff';
+    ctx.fillRect(particleX, particleY, particleSize * 3.4, particleSize);
+  }
+  ctx.globalAlpha = .11 * strength;
+  ctx.fillStyle = '#76eaff'; ctx.fillRect(0, 462, sourceX + 30, 3);
+  ctx.restore();
+}
+
 function drawLayoutLandmarks() {
   const layout = game.layout;
   const t = game.elapsed || 0;
@@ -5127,7 +5326,8 @@ function drawLayoutLandmarks() {
   } else if (layout === 'wind-tunnel') {
     // 위아래로 갈라지는 바람 터널은 실제 픽셀 배경에 포함되어 있다.
   } else if (layout === 'wind-cliff') {
-    // 여러 높이의 절벽과 역풍 기둥은 실제 픽셀 배경에 포함되어 있다.
+    // 여러 높이의 절벽은 배경에, 공중을 되미는 역풍은 상호작용 효과로 별도 표시한다.
+    drawWindCliffHeadwind();
   } else if (layout === 'signpost-maze') {
     // 같은 자산을 희미한 가짜 방향과 선명한 진짜 방향으로 나눠, 배경 장식이 아닌 판단 대상임을 보인다.
     drawHaneulSignpost(392, 350, .84, false);
