@@ -1397,19 +1397,11 @@ function primeGameAudio() {
 }
 
 function syncBossBgmTimeStop() {
-  if (game.stageIndex !== 4 || stageBgm.key !== 'harin-5') {
-    stageBgm.frozen = false;
-    return;
-  }
-  const shouldFreeze = game.phase === 'playing' && frozenTime();
-  if (shouldFreeze && !stageBgm.frozen) {
-    cancelStageBgmFade();
-    if (stageBgm.audio) stageBgm.audio.pause();
-    stageBgm.frozen = true;
-  } else if (!shouldFreeze && stageBgm.frozen) {
-    stageBgm.frozen = false;
-    playStageBgm();
-  }
+  // 정지 능력은 꿈속 오브젝트에만 적용하고 BGM의 재생 시간은 계속 흐르게 한다.
+  // 이전 실행 상태에서 이미 멈춘 오디오가 남아 있다면 한 번만 정상 재생으로 복구한다.
+  const wasFrozen = stageBgm.frozen;
+  stageBgm.frozen = false;
+  if (wasFrozen && game.phase === 'playing' && stageBgm.enabled && stageBgm.audio?.paused) playStageBgm();
 }
 
 function primeGameSfx() {
@@ -2537,7 +2529,7 @@ function setupBoss(name, config = {}) {
   ] : [];
   game.boss = {
     name, x: config.x || 734, y: config.y || 168, w: config.w || 164, h: config.h || 205, maxHp: bossHp, hp: bossHp, flash: 0, attack: 0, attackIndex: 0,
-    phase: 1, reflections: 0, memoryShield: 0, calmed: false, mode: config.mode || 'standard', resolving: false, activePads: 0,
+    phase: 1, reflections: 0, memoryShield: 0, calmed: false, mode: config.mode || 'standard', resolving: false, activePads: 0, threatElapsed: 0,
     attackUnlocked: false, visual: config.visual || 'clown', attackTarget: config.attackTarget || 'player',
     requiredEchoHits: Number(config.requiredEchoHits) || 0, echoHits: 0, baitImpact: null, baitImpactPulse: 0,
     // 모든 보스전에서 기억의 나는 공포 탄환을 세 번까지 받아 낸다. 세 번째 피격에 사라진다.
@@ -2657,11 +2649,11 @@ function activateCalmFakeMemories(boss) {
 }
 
 function updateCalmFakeMemories(boss, dt, frozen) {
-  activateCalmFakeMemories(boss);
+  if (!frozen) activateCalmFakeMemories(boss);
   const bounds = boss.moveBounds || { xMin: 45, xMax: 565, yMin: 86, yMax: 437 };
   activeCalmFakeMemories(boss).forEach((fake) => {
     fake.hitFlash = Math.max(0, (fake.hitFlash || 0) - dt);
-    fake.stunTimer = Math.max(0, (fake.stunTimer || 0) - dt);
+    if (!frozen) fake.stunTimer = Math.max(0, (fake.stunTimer || 0) - dt);
     if (!frozen && fake.stunTimer <= 0) {
       const minX = Math.max(24, bounds.xMin - 8);
       const maxX = Math.min(W - fake.w - 28, bounds.xMax + 68);
@@ -2688,8 +2680,8 @@ function updateCalmFakeMemories(boss, dt, frozen) {
       holding: true,
       motionState: {
         running: true,
-        phase: (game.elapsed || 0) * Math.PI * 2,
-        frameIndex: currentRunFrameIndex(),
+        phase: (boss.threatElapsed || 0) * Math.PI * 2,
+        frameIndex: currentRunFrameIndex(boss.threatElapsed || 0),
       },
     });
   });
@@ -3279,7 +3271,7 @@ function updatePuzzle(dt) {
   const p = game.player;
   updateHarinStage02Restoration(dt, stage);
   updateWindCliffPillar(dt, stage);
-  if (!frozen) game.elapsed += dt;
+  game.elapsed += dt;
   updateCarouselRotation(dt);
   const carouselRingColliders = stage.layout === 'carousel' ? getCarouselRingColliders() : [];
   const carouselExitShutter = stage.layout === 'carousel' ? getCarouselExitShutter() : null;
@@ -3522,6 +3514,7 @@ function nextBossAttackDelay(b) {
 function spawnNightmarePattern() {
   const b = game.boss;
   const p = game.player;
+  const threatTime = b.threatElapsed || 0;
   const origin = b.mode === 'resonance'
     ? { x: b.x + b.w / 2, y: b.y + 78 }
     : { x: b.x + 8, y: b.y + 92 };
@@ -3535,7 +3528,7 @@ function spawnNightmarePattern() {
       return;
     }
     if (pattern === 2) launchNightmareFan(origin, p, 3, .48, { speed: 260, r: 9, kind: 'wind' });
-    else launchNightmareRing(origin, 6, { speed: 205, r: 8, kind: 'wind', offset: game.elapsed * .9 });
+    else launchNightmareRing(origin, 6, { speed: 205, r: 8, kind: 'wind', offset: threatTime * .9 });
     return;
   }
 
@@ -3551,20 +3544,20 @@ function spawnNightmarePattern() {
     }
     if (b.codaActive) {
       // 마지막 20초는 기존의 박자 맞추기와 전혀 다른, 불규칙한 불협화음 생존 패턴이다.
-      if (attackNumber % 3 === 0) launchNightmareRing(origin, 12, { speed: 236, r: 10, kind: 'dissonant-note', offset: game.elapsed * 1.45 });
+      if (attackNumber % 3 === 0) launchNightmareRing(origin, 12, { speed: 236, r: 10, kind: 'dissonant-note', offset: threatTime * 1.45 });
       else if (attackNumber % 3 === 1) launchNightmareFan(origin, p, 7, .98, { speed: 315, r: 10, kind: 'dissonant-note' });
       else {
-        launchNightmareRing(origin, 7, { speed: 190, r: 9, kind: 'dissonant-note', offset: game.elapsed * .48 });
+        launchNightmareRing(origin, 7, { speed: 190, r: 9, kind: 'dissonant-note', offset: threatTime * .48 });
         launchNightmareFan(origin, p, 3, .34, { speed: 340, r: 9, kind: 'dissonant-note' });
       }
-    } else if (attackNumber % 4 === 0) launchNightmareRing(origin, 8, { speed: 220, r: 9, kind: 'dissonant-note', offset: game.elapsed * .7 });
+    } else if (attackNumber % 4 === 0) launchNightmareRing(origin, 8, { speed: 220, r: 9, kind: 'dissonant-note', offset: threatTime * .7 });
     else if (attackNumber % 4 === 3) launchNightmareFan(origin, p, 5, .72, { speed: 280, r: 9, kind: 'dissonant-note' });
     else launchNightmareFan(origin, p, 3, .52, { speed: 265, r: 10, kind: 'dissonant-note' });
     return;
   }
 
   if (b.mode === 'mirror') {
-    if (attackNumber % 2 === 0) launchNightmareRing(origin, 8, { speed: 230, r: 8, kind: 'shard', offset: Math.PI / 8 + game.elapsed * .45 });
+    if (attackNumber % 2 === 0) launchNightmareRing(origin, 8, { speed: 230, r: 8, kind: 'shard', offset: Math.PI / 8 + threatTime * .45 });
     else launchNightmareFan(origin, p, 4, .72, { speed: 285, r: 9, kind: 'shard' });
     return;
   }
@@ -3572,16 +3565,16 @@ function spawnNightmarePattern() {
   b.phase = finalBossPhase(b);
   if (b.phase === 1) {
     if (attackNumber % 2) launchNightmareFan(origin, p, 3, .44, { speed: 270, r: 10, kind: 'memory' });
-    else launchNightmareRing(origin, 6, { speed: 200, r: 8, kind: 'memory', offset: game.elapsed * .6 });
+    else launchNightmareRing(origin, 6, { speed: 200, r: 8, kind: 'memory', offset: threatTime * .6 });
   } else if (b.phase === 2) {
     if (attackNumber % 2) launchNightmareFan(origin, p, 5, .76, { speed: 300, r: 10, kind: 'memory' });
-    else launchNightmareRing(origin, 9, { speed: 235, r: 8, kind: 'memory', offset: game.elapsed * .85 });
+    else launchNightmareRing(origin, 9, { speed: 235, r: 8, kind: 'memory', offset: threatTime * .85 });
   } else if (b.phase === 3) {
     // 진짜 기억 이후에는 거대한 수호자가 무너진 모습으로도 마지막 저항을 한다.
-    if (attackNumber % 3 === 0) launchNightmareRing(origin, 11, { speed: 245, r: 9, kind: 'memory', offset: game.elapsed * 1.1 });
+    if (attackNumber % 3 === 0) launchNightmareRing(origin, 11, { speed: 245, r: 9, kind: 'memory', offset: threatTime * 1.1 });
     else if (attackNumber % 3 === 1) launchNightmareFan(origin, p, 6, .92, { speed: 325, r: 10, kind: 'memory' });
     else {
-      launchNightmareRing(origin, 6, { speed: 205, r: 8, kind: 'memory', offset: game.elapsed * .35 });
+      launchNightmareRing(origin, 6, { speed: 205, r: 8, kind: 'memory', offset: threatTime * .35 });
       launchNightmareFan(origin, p, 3, .3, { speed: 355, r: 9, kind: 'memory' });
     }
   } else {
@@ -3639,9 +3632,9 @@ function resolveBoss(b, message) {
   setTimeout(completeStage, 1000);
 }
 
-function updateMemoryCollapse(dt, frozen = false) {
+function updateMemoryCollapse(dt) {
   const challenge = game.challenge;
-  if (!challenge || game.phase !== 'playing' || frozen || game.boss?.resolving) return;
+  if (!challenge || game.phase !== 'playing' || game.boss?.resolving) return;
   challenge.remaining = Math.max(0, challenge.remaining - dt);
   if (!challenge.warned && challenge.remaining <= 15) {
     challenge.warned = true;
@@ -3803,7 +3796,7 @@ function finalTruthTarget(b) {
 function updateFinalTruthTargets(b) {
   b.truthTargets.forEach((target) => {
     if (!target.motion) return;
-    const angle = game.elapsed * (target.motion.speed || 1) + (target.motion.phase || 0);
+    const angle = (b.threatElapsed || 0) * (target.motion.speed || 1) + (target.motion.phase || 0);
     target.x = target.homeX + Math.sin(angle) * (target.motion.xRange || 0);
     target.y = target.homeY + Math.cos(angle) * (target.motion.yRange || 0);
   });
@@ -3833,7 +3826,8 @@ function updateBoss(dt) {
   updateDash(dt);
   imaginationRegen(dt, techniques);
   if (game.phase !== 'playing') return;
-  if (!frozen) game.elapsed += dt;
+  game.elapsed += dt;
+  if (!frozen) b.threatElapsed = (b.threatElapsed || 0) + dt;
   if (game.fireCooldown > 0) game.fireCooldown = Math.max(0, game.fireCooldown - dt);
   game.nightmareHitCooldown = Math.max(0, (game.nightmareHitCooldown || 0) - dt);
   b.flash = Math.max(0, (b.flash || 0) - dt);
@@ -3860,10 +3854,10 @@ function updateBoss(dt) {
   if (horizontal) p.facing = horizontal;
   if (!frozen) {
     b.y = b.mode === 'calm'
-      ? 166 + Math.sin(game.elapsed * 1.1) * 18
+      ? 166 + Math.sin(b.threatElapsed * 1.1) * 18
       : b.mode === 'resonance'
-        ? 76 + Math.sin(game.elapsed * 1.45) * 16
-        : 160 + Math.sin(game.elapsed * 1.45) * 56;
+        ? 76 + Math.sin(b.threatElapsed * 1.45) * 16
+        : 160 + Math.sin(b.threatElapsed * 1.45) * 56;
     if (b.mode === 'final' && b.attackUnlocked && finalBossPhase(b) === 2) updateFinalTruthTargets(b);
     const listeningToDaughter = b.mode === 'final' && b.attackUnlocked && finalBossPhase(b) === 4;
     if (b.mode !== 'calm' && !b.releaseReady && !listeningToDaughter && b.memoryReplay <= 0) {
@@ -3873,55 +3867,55 @@ function updateBoss(dt) {
   }
   if (!frozen) {
     for (const shot of game.nightmareShots) { shot.x += shot.vx * dt; shot.y += shot.vy * dt; }
+    game.nightmareShots = game.nightmareShots.filter((shot) => {
+      const rect = { x: shot.x - shot.r, y: shot.y - shot.r, w: shot.r * 2, h: shot.r * 2 };
+      const echoHit = game.echoes.find((echo) => overlaps(rect, echo));
+      if (echoHit) {
+        echoHit.flash = .24;
+        damageBossEcho(echoHit, b);
+        const validDecoyHit = b.mode === 'chase' && shot.decoyShot && b.decoyPads.some((pad) => echoOverlapsPad(echoHit, pad));
+        if (validDecoyHit && b.requiredEchoHits > 0 && b.echoHits < b.requiredEchoHits) {
+          b.echoHits += 1;
+          echoHit.baitUses = (echoHit.baitUses || 0) + 1;
+          echoHit.baitCooldown = 1.25;
+          b.baitImpact = b.decoyPads.find((pad) => echoOverlapsPad(echoHit, pad)) || null;
+          b.baitImpactPulse = .72;
+          say(`바람 탄환이 기억 미끼에 닿았습니다. 바람 표식 ${b.echoHits} / ${b.requiredEchoHits} · 표식 세 개를 채우면 바람 고리가 열립니다.`);
+        }
+        const truthEchoHit = b.mode === 'final' && b.attackUnlocked && b.memoryPads.some((pad) => echoOverlapsPad(echoHit, pad));
+        if (truthEchoHit) {
+          b.memoryShield = Math.min(1.25, b.memoryShield + .68);
+          b.memoryReplay = Math.max(1.15, b.memoryReplay);
+          say('과거의 내가 과학자의 연구실 기억을 재생했습니다. 공포 패턴이 잠시 멈추고 반사 방패가 생깁니다.');
+        }
+        return false;
+      }
+      if (overlaps(rect, p) && b.memoryShield > 0) {
+        const reflectDirection = p.x + p.w / 2 < b.x + b.w / 2 ? 1 : -1;
+        game.dreamShots.push({ x: p.x + p.w / 2, y: p.y + p.h / 2 - 3, w: 19, h: 7, vx: reflectDirection * 680, reflected: true });
+        b.memoryShield = 0;
+        say('진실의 기억 방패가 공포 탄환을 과학자에게 되돌렸습니다!');
+        return false;
+      }
+      if (overlaps(rect, p) && game.dashTimer > 0) {
+        say('질주로 공포 탄막을 가로질렀습니다!');
+        return false;
+      }
+      if (overlaps(rect, p)) {
+        if (game.nightmareHitCooldown <= 0) {
+          game.nightmareHitCooldown = .34;
+          const damage = bossShotDamage(shot, b);
+          hitByNightmare(`공포가 상상력 연결을 크게 갉아먹습니다. -${damage}`, damage, false);
+        }
+        return false;
+      }
+      return shot.x > -40 && shot.y > -40 && shot.y < H + 40;
+    });
   }
-  game.nightmareShots = game.nightmareShots.filter((shot) => {
-    const rect = { x: shot.x - shot.r, y: shot.y - shot.r, w: shot.r * 2, h: shot.r * 2 };
-    const echoHit = game.echoes.find((echo) => overlaps(rect, echo));
-    if (echoHit) {
-      echoHit.flash = .24;
-      damageBossEcho(echoHit, b);
-      const validDecoyHit = b.mode === 'chase' && shot.decoyShot && b.decoyPads.some((pad) => echoOverlapsPad(echoHit, pad));
-      if (validDecoyHit && b.requiredEchoHits > 0 && b.echoHits < b.requiredEchoHits) {
-        b.echoHits += 1;
-        echoHit.baitUses = (echoHit.baitUses || 0) + 1;
-        echoHit.baitCooldown = 1.25;
-        b.baitImpact = b.decoyPads.find((pad) => echoOverlapsPad(echoHit, pad)) || null;
-        b.baitImpactPulse = .72;
-        say(`바람 탄환이 기억 미끼에 닿았습니다. 바람 표식 ${b.echoHits} / ${b.requiredEchoHits} · 표식 세 개를 채우면 바람 고리가 열립니다.`);
-      }
-      const truthEchoHit = b.mode === 'final' && b.attackUnlocked && b.memoryPads.some((pad) => echoOverlapsPad(echoHit, pad));
-      if (truthEchoHit) {
-        b.memoryShield = Math.min(1.25, b.memoryShield + .68);
-        b.memoryReplay = Math.max(1.15, b.memoryReplay);
-        say('과거의 내가 과학자의 연구실 기억을 재생했습니다. 공포 패턴이 잠시 멈추고 반사 방패가 생깁니다.');
-      }
-      return false;
-    }
-    if (overlaps(rect, p) && b.memoryShield > 0) {
-      const reflectDirection = p.x + p.w / 2 < b.x + b.w / 2 ? 1 : -1;
-      game.dreamShots.push({ x: p.x + p.w / 2, y: p.y + p.h / 2 - 3, w: 19, h: 7, vx: reflectDirection * 680, reflected: true });
-      b.memoryShield = 0;
-      say('진실의 기억 방패가 공포 탄환을 과학자에게 되돌렸습니다!');
-      return false;
-    }
-    if (overlaps(rect, p) && game.dashTimer > 0) {
-      say('질주로 공포 탄막을 가로질렀습니다!');
-      return false;
-    }
-    if (overlaps(rect, p)) {
-      if (game.nightmareHitCooldown <= 0) {
-        game.nightmareHitCooldown = .34;
-        const damage = bossShotDamage(shot, b);
-        hitByNightmare(`공포가 상상력 연결을 크게 갉아먹습니다. -${damage}`, damage, false);
-      }
-      return false;
-    }
-    return shot.x > -40 && shot.y > -40 && shot.y < H + 40;
-  });
   updateMemoryLoops(dt);
   if (b.mode === 'calm') updateCalmFakeMemories(b, dt, frozen);
   // 보스전에서는 기억의 나 둘과 현재의 내가 각자 한 자리를 맡는다.
-  if (!frozen && game.dreamShots.length) {
+  if (game.dreamShots.length) {
     game.dreamShots = game.dreamShots.filter((shot) => {
       shot.x += shot.vx * dt;
       shot.y += shot.vy * dt;
@@ -4021,7 +4015,7 @@ function updateBoss(dt) {
     b.phase = b.codaActive ? 3 : Math.min(3, b.resonanceProgress + 1);
     updateYunaBossMusic(b);
     if (b.codaActive) {
-      if (!frozen) b.codaElapsed = Math.min(b.codaDuration, b.codaElapsed + dt);
+      b.codaElapsed = Math.min(b.codaDuration, b.codaElapsed + dt);
       if (b.codaElapsed >= b.codaDuration) resolveBoss(b, '불협화음이 끝나고, 유나의 노래가 꿈 전체에 울려 퍼집니다.');
     } else if (b.activePads >= b.memoryPads.length) {
       updateResonanceBassCue(b);
@@ -6182,8 +6176,8 @@ function drawCalmFleeingFakeMemory(fake, index) {
   ctx.restore();
 }
 
-function currentRunFrameIndex() {
-  let cycleTime = ((game.elapsed || 0) * 1000) % PLAYER_RUN_CYCLE_MS;
+function currentRunFrameIndex(elapsed = game.elapsed || 0) {
+  let cycleTime = (elapsed * 1000) % PLAYER_RUN_CYCLE_MS;
   for (let index = 0; index < PLAYER_RUN_FRAME_DURATIONS.length; index += 1) {
     if (cycleTime < PLAYER_RUN_FRAME_DURATIONS[index]) return index;
     cycleTime -= PLAYER_RUN_FRAME_DURATIONS[index];
@@ -7671,7 +7665,7 @@ function update(dt) {
   if (currentStage().type === 'boss') {
     updateBoss(dt);
     refreshBossGuide();
-    updateMemoryCollapse(dt, frozenTime());
+    updateMemoryCollapse(dt);
   } else updatePuzzle(dt);
   updateDreamTrails(dt);
   updateHud();
