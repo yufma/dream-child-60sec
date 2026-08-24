@@ -167,6 +167,10 @@ const platformSprites = Object.freeze({
   daughterGarden: loadSprite('assets/platforms/daughter-garden-platform-v1.png'),
   daughterFracturedClassroom: loadSprite('assets/platforms/daughter-fractured-classroom-platform-v1.png'),
 });
+const carouselLockSprites = Object.freeze({
+  star: loadSprite('assets/structures/harin-stage-04-star-lock-v1.png'),
+  ribbon: loadSprite('assets/structures/harin-stage-04-ribbon-lock-v1.png'),
+});
 const gateSprites = Object.freeze({
   harin: loadSprite('assets/gates/harin-carousel-gate-v1.png'),
   yuna: loadSprite('assets/gates/yuna-piano-gate-v1.png'),
@@ -613,7 +617,13 @@ function stageSpriteSet(stageIndex = game?.stageIndex || 0) {
     sprites.push(harinBackgrounds[stageIndex], gateSprites.harin, memoryPadSprites.harin, platformSprites.harinCarouselPlatform);
     if (stageIndex === 1) sprites.push(harinStage02GateSprites.blocked, harinStage02GateSprites.open, harinStage02MagicFrames.awakening, harinStage02MagicFrames.restoring);
     if (stageIndex === 2) sprites.push(objectSprites.harinLaughCollector, objectSprites.harinRelayBulb, memoryPadSprites.harinRelay, platformSprites.harinEchoBridge);
-    if (stageIndex === 3) sprites.push(objectSprites.harinCarouselWall, platformSprites.harinCarouselWalkway, platformSprites.harinCarouselRingTile);
+    if (stageIndex === 3) sprites.push(
+      objectSprites.harinCarouselWall,
+      platformSprites.harinCarouselWalkway,
+      platformSprites.harinCarouselRingTile,
+      carouselLockSprites.star,
+      carouselLockSprites.ribbon,
+    );
     if (stage.type === 'boss') sprites.push(bossSprites.harinClown, memoryPadSprites.distortion);
   } else if (stageIndex < 12) {
     sprites.push(yunaBackgrounds[stageIndex - 6], gateSprites.yuna, memoryPadSprites.yuna, platformSprites.yunaResonancePad);
@@ -4963,39 +4973,35 @@ function drawHaneulWindPlatform(item) {
 }
 
 function drawHarinTopdownCarouselPlatform(item) {
-  const image = platformSprites.harinCarouselWalkway;
   const x = Math.round(item.x);
   const y = Math.round(item.y);
   const w = Math.round(item.w);
   const h = Math.round(item.h);
-  const visualHeight = item.carouselSurface === 'ground' ? 44 : item.carouselSurface === 'anchor' ? 36 : 32;
+  const visualHeight = item.carouselSurface === 'ground' ? 40 : item.carouselSurface === 'anchor' ? 34 : 28;
   const top = y - 9;
   const accent = carouselStructureColor(item);
   ctx.save();
   ctx.imageSmoothingEnabled = false;
-  ctx.shadowBlur = item.carouselSurface === 'anchor' ? 9 : 4;
+  ctx.shadowBlur = item.carouselSurface === 'anchor' ? 7 : 2;
   ctx.shadowColor = accent;
-  ctx.beginPath();
-  ctx.rect(x, top, w, visualHeight);
-  ctx.clip();
-  if (image?.complete && image.naturalWidth > 0) {
-    ctx.drawImage(image, x, top, w, visualHeight);
-  } else {
-    ctx.fillStyle = '#17152f';
-    ctx.fillRect(x, top, w, visualHeight);
-    ctx.fillStyle = '#4a3156';
-    for (let stripe = x + 12; stripe < x + w; stripe += 30) ctx.fillRect(stripe, top + 4, 8, visualHeight - 8);
-  }
+  ctx.fillStyle = '#151329';
+  ctx.fillRect(x, top, w, visualHeight);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#25203d';
+  ctx.fillRect(x + 2, top + 3, Math.max(1, w - 4), Math.max(1, visualHeight - 6));
+  ctx.fillStyle = '#745234';
+  ctx.fillRect(x, top, w, 2);
+  ctx.fillRect(x, top + visualHeight - 2, w, 2);
   ctx.shadowBlur = 0;
   ctx.globalCompositeOperation = 'screen';
-  ctx.globalAlpha = .62;
+  ctx.globalAlpha = .5;
   ctx.fillStyle = accent;
-  ctx.fillRect(x + 2, y - 1, Math.max(1, w - 4), 2);
+  ctx.fillRect(x + 2, top + 3, Math.max(1, w - 4), 1);
   ctx.globalCompositeOperation = 'source-over';
   ctx.globalAlpha = 1;
   if (item.carouselSurface === 'anchor') {
     const cx = Math.round(x + w / 2);
-    drawCarouselTopdownTile(cx - 12, top + Math.round((visualHeight - 24) / 2), 24, 24, item.carouselMemoryStart ? 1 : .78);
+    drawCarouselTopdownTile(cx - 10, top + Math.round((visualHeight - 20) / 2), 20, 20, item.carouselMemoryStart ? .88 : .68);
   }
   ctx.restore();
 }
@@ -5296,9 +5302,9 @@ function drawCarouselStageDimming() {
     CAROUSEL_RING_CENTER.x, CAROUSEL_RING_CENTER.y, 85,
     CAROUSEL_RING_CENTER.x, CAROUSEL_RING_CENTER.y, 430,
   );
-  shade.addColorStop(0, 'rgba(2, 5, 18, .08)');
-  shade.addColorStop(.56, 'rgba(2, 5, 18, .13)');
-  shade.addColorStop(1, 'rgba(2, 5, 18, .34)');
+  shade.addColorStop(0, 'rgba(2, 5, 18, .14)');
+  shade.addColorStop(.56, 'rgba(2, 5, 18, .19)');
+  shade.addColorStop(1, 'rgba(2, 5, 18, .38)');
   ctx.fillStyle = shade;
   ctx.fillRect(0, 0, W, H);
   ctx.restore();
@@ -5339,57 +5345,68 @@ function drawCarouselTopdownTile(x, y, w, h, alpha = 1) {
 }
 
 function drawCarouselRingAtRotation(rotation, color, alpha = 1, ghost = false) {
+  const gapCenter = rotation + Math.PI;
+  const arcStart = gapCenter + CAROUSEL_RING_GAP_HALF_ANGLE;
+  const arcEnd = gapCenter + Math.PI * 2 - CAROUSEL_RING_GAP_HALF_ANGLE;
+  const traceArc = (radius, strokeStyle, lineWidth, localAlpha = 1) => {
+    ctx.globalAlpha = alpha * (ghost ? .34 : 1) * localAlpha;
+    ctx.strokeStyle = strokeStyle;
+    ctx.lineWidth = lineWidth;
+    ctx.beginPath();
+    ctx.arc(CAROUSEL_RING_CENTER.x, CAROUSEL_RING_CENTER.y, radius, arcStart, arcEnd);
+    ctx.stroke();
+  };
   ctx.save();
   ctx.imageSmoothingEnabled = false;
-  ctx.globalAlpha = alpha * (ghost ? .42 : 1);
-  for (let index = 0; index < CAROUSEL_RING_SEGMENT_COUNT; index += 1) {
-    const baseAngle = index / CAROUSEL_RING_SEGMENT_COUNT * Math.PI * 2;
-    if (carouselAngleDistance(baseAngle, Math.PI) <= CAROUSEL_RING_GAP_HALF_ANGLE) continue;
-    const angle = baseAngle + rotation;
-    const x = Math.round(CAROUSEL_RING_CENTER.x + Math.cos(angle) * CAROUSEL_RING_RADIUS - CAROUSEL_RING_SEGMENT_SIZE / 2);
-    const y = Math.round(CAROUSEL_RING_CENTER.y + Math.sin(angle) * CAROUSEL_RING_RADIUS - CAROUSEL_RING_SEGMENT_SIZE / 2);
-    if (!ghost && index % 4 === 0) {
-      drawCarouselTopdownTile(x, y, CAROUSEL_RING_SEGMENT_SIZE, CAROUSEL_RING_SEGMENT_SIZE, .96);
-    } else {
-      ctx.fillStyle = ghost ? '#29213e' : index % 2 ? '#332342' : '#201b39';
-      ctx.fillRect(x, y, CAROUSEL_RING_SEGMENT_SIZE, CAROUSEL_RING_SEGMENT_SIZE);
-      ctx.strokeStyle = ghost ? '#5b4c66' : '#b78643';
-      ctx.strokeRect(x + .5, y + .5, CAROUSEL_RING_SEGMENT_SIZE - 1, CAROUSEL_RING_SEGMENT_SIZE - 1);
-    }
-    ctx.fillStyle = color;
-    ctx.globalAlpha = alpha * (ghost ? .24 : .72);
-    ctx.fillRect(x + 2, y + 2, CAROUSEL_RING_SEGMENT_SIZE - 4, 2);
-    ctx.fillRect(x + 2, y + 4, 2, CAROUSEL_RING_SEGMENT_SIZE - 6);
-    if (!ghost && index % 3 === 0) {
-      ctx.fillStyle = '#fff4bf';
-      ctx.globalAlpha = alpha;
-      ctx.fillRect(x + 9, y + 9, 3, 3);
+  ctx.lineCap = 'butt';
+  ctx.shadowBlur = ghost ? 0 : 5;
+  ctx.shadowColor = color;
+  traceArc(CAROUSEL_RING_RADIUS, ghost ? '#211d34' : '#111126', 26);
+  ctx.shadowBlur = 0;
+  traceArc(CAROUSEL_RING_RADIUS, ghost ? '#302943' : '#29203d', 20);
+  traceArc(CAROUSEL_RING_RADIUS - 11, ghost ? '#5a506c' : '#8b6439', 2, .82);
+  traceArc(CAROUSEL_RING_RADIUS + 11, ghost ? '#5a506c' : '#8b6439', 2, .82);
+  traceArc(CAROUSEL_RING_RADIUS, color, ghost ? 1 : 2, ghost ? .42 : .62);
+  if (!ghost) {
+    ctx.fillStyle = '#fff2b2';
+    ctx.globalAlpha = alpha * .86;
+    for (let index = 0; index < 16; index += 1) {
+      const baseAngle = index / 16 * Math.PI * 2;
+      if (carouselAngleDistance(baseAngle, Math.PI) <= CAROUSEL_RING_GAP_HALF_ANGLE + .05) continue;
+      const angle = baseAngle + rotation;
+      const x = Math.round(CAROUSEL_RING_CENTER.x + Math.cos(angle) * CAROUSEL_RING_RADIUS);
+      const y = Math.round(CAROUSEL_RING_CENTER.y + Math.sin(angle) * CAROUSEL_RING_RADIUS);
+      ctx.fillRect(x - 1, y - 1, 3, 3);
     }
   }
   ctx.restore();
 }
 
 function drawCarouselRingOpenings(rotation, color, alpha = 1) {
+  const gapCenter = rotation + Math.PI;
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   ctx.globalAlpha = alpha;
-  [rotation + Math.PI].forEach((angle) => {
+  [gapCenter - CAROUSEL_RING_GAP_HALF_ANGLE, gapCenter + CAROUSEL_RING_GAP_HALF_ANGLE].forEach((angle) => {
     const x = Math.round(CAROUSEL_RING_CENTER.x + Math.cos(angle) * CAROUSEL_RING_RADIUS);
     const y = Math.round(CAROUSEL_RING_CENTER.y + Math.sin(angle) * CAROUSEL_RING_RADIUS);
     ctx.translate(x, y);
     ctx.rotate(angle);
-    ctx.fillStyle = 'rgba(5, 9, 28, .9)';
-    ctx.fillRect(-25, -15, 50, 30);
+    ctx.fillStyle = '#111126';
+    ctx.fillRect(-4, -13, 8, 26);
     ctx.strokeStyle = color;
     ctx.lineWidth = 2;
-    ctx.strokeRect(-24.5, -14.5, 49, 29);
-    ctx.fillStyle = color;
-    ctx.fillRect(-17, -3, 11, 6);
-    ctx.fillRect(1, -7, 6, 14);
-    ctx.fillRect(7, -3, 11, 6);
+    ctx.strokeRect(-3.5, -12.5, 7, 25);
     ctx.rotate(-angle);
     ctx.translate(-x, -y);
   });
+  const markerX = Math.round(CAROUSEL_RING_CENTER.x + Math.cos(gapCenter) * CAROUSEL_RING_RADIUS);
+  const markerY = Math.round(CAROUSEL_RING_CENTER.y + Math.sin(gapCenter) * CAROUSEL_RING_RADIUS);
+  ctx.translate(markerX, markerY);
+  ctx.rotate(gapCenter + Math.PI / 4);
+  ctx.fillStyle = color;
+  ctx.globalAlpha = alpha * .72;
+  ctx.fillRect(-4, -4, 8, 8);
   ctx.restore();
 }
 
@@ -5402,30 +5419,22 @@ function drawCarouselMazeConnectors() {
     { pose: 'ribbon', color: '#ff9fcf', points: [[480, 341], [480, 415], [565, 435], [750, 470]] },
   ];
   const currentPose = carouselPhaseInfo(game.carouselRotationTimer > 0 ? game.carouselTargetPhase : game.carouselPhase).id;
+  const route = routes.find((item) => item.pose === currentPose);
+  if (!route) return;
   ctx.save();
   ctx.imageSmoothingEnabled = false;
-  const innerOctagon = [[480, 190], [572, 235], [600, 333], [572, 430], [480, 446], [388, 430], [360, 333], [388, 235]];
-  ctx.globalAlpha = .18;
-  ctx.strokeStyle = '#b08d58';
-  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.globalAlpha = .54;
+  ctx.strokeStyle = 'rgba(5, 9, 28, .9)';
+  ctx.lineWidth = 5;
   ctx.beginPath();
-  innerOctagon.forEach(([x, y], index) => index ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
-  ctx.closePath();
+  route.points.forEach(([x, y], index) => index ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
   ctx.stroke();
-  routes.forEach((route) => {
-    ctx.globalAlpha = route.pose === currentPose ? .62 : .12;
-    ctx.fillStyle = route.color;
-    for (let pointIndex = 0; pointIndex < route.points.length - 1; pointIndex += 1) {
-      const [x1, y1] = route.points[pointIndex];
-      const [x2, y2] = route.points[pointIndex + 1];
-      const distance = Math.hypot(x2 - x1, y2 - y1);
-      const steps = Math.max(1, Math.floor(distance / 18));
-      for (let step = 0; step <= steps; step += 1) {
-        const ratio = step / steps;
-        ctx.fillRect(Math.round(x1 + (x2 - x1) * ratio), Math.round(y1 + (y2 - y1) * ratio), 4, 3);
-      }
-    }
-  });
+  ctx.globalAlpha = .58;
+  ctx.strokeStyle = route.color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
   ctx.restore();
 }
 
@@ -5526,7 +5535,7 @@ function drawCarouselTopdownWall(platform, color, active, targetPreview) {
   ctx.clip();
   ctx.fillStyle = active ? '#241a39' : '#141125';
   ctx.fillRect(x, y, w, h);
-  ctx.fillStyle = '#a8773c';
+  ctx.fillStyle = '#785736';
   if (vertical) {
     ctx.fillRect(x, y, 2, h);
     ctx.fillRect(x + w - 2, y, 2, h);
@@ -5534,14 +5543,12 @@ function drawCarouselTopdownWall(platform, color, active, targetPreview) {
     ctx.fillRect(x, y, w, 2);
     ctx.fillRect(x, y + h - 2, w, 2);
   }
+  ctx.globalAlpha = active ? .5 : targetPreview ? .34 : .18;
+  ctx.fillStyle = active || targetPreview ? color : '#6b617d';
   if (vertical) {
-    for (let tileY = y + 5; tileY < y + h; tileY += 54) drawCarouselTopdownTile(x + Math.max(0, (w - 20) / 2), tileY, 20, 20, active ? .9 : .42);
-    ctx.fillStyle = '#ffe072';
-    for (let bulbY = y + 34; bulbY < y + h - 4; bulbY += 54) ctx.fillRect(x + Math.round(w / 2) - 2, bulbY, 4, 4);
+    ctx.fillRect(x + Math.round(w / 2) - 1, y + 4, 2, Math.max(1, h - 8));
   } else {
-    for (let tileX = x + 5; tileX < x + w; tileX += 54) drawCarouselTopdownTile(tileX, y + Math.max(0, (h - 20) / 2), 20, 20, active ? .9 : .42);
-    ctx.fillStyle = '#ffe072';
-    for (let bulbX = x + 34; bulbX < x + w - 4; bulbX += 54) ctx.fillRect(bulbX, y + Math.round(h / 2) - 2, 4, 4);
+    ctx.fillRect(x + 4, y + Math.round(h / 2) - 1, Math.max(1, w - 8), 2);
   }
   ctx.restore();
   ctx.save();
@@ -5576,9 +5583,11 @@ function drawCarouselStructureGuide(platform) {
   if (!active) {
     ctx.fillStyle = 'rgba(2, 4, 15, .78)';
     ctx.fillRect(x - 3, y - 7, w + 6, Math.min(17, platform.h + 7));
-    ctx.globalAlpha = targetPreview ? .72 : .44;
+    ctx.globalAlpha = targetPreview ? .68 : .34;
     ctx.fillStyle = targetPreview ? color : '#665b79';
-    for (let dotX = x; dotX < x + w; dotX += 9) ctx.fillRect(dotX, y - 2, 4, 2);
+    ctx.fillRect(x, y - 2, w, 2);
+    ctx.fillRect(x, y - 4, 3, 4);
+    ctx.fillRect(x + w - 3, y - 4, 3, 4);
     ctx.restore();
     return;
   }
@@ -5595,9 +5604,6 @@ function drawCarouselStructureGuide(platform) {
   ctx.globalAlpha = .82;
   ctx.fillRect(x, y - 5, 3, 5);
   ctx.fillRect(x + w - 3, y - 5, 3, 5);
-  if (platformPoseId) {
-    for (let lightX = x + 9; lightX < x + w - 5; lightX += 18) ctx.fillRect(lightX, y - 7, 3, 3);
-  }
   ctx.restore();
   drawCarouselAnchorBadge(platform);
 }
@@ -5639,26 +5645,49 @@ function drawCarouselRelaySwitch(relay) {
   const active = game.carouselRelays instanceof Set && game.carouselRelays.has(relay.id);
   const pulse = .72 + Math.sin((game.elapsed || 0) * 5 + relay.x * .03) * .18;
   const color = active ? '#9effd7' : relay.color;
+  const image = carouselLockSprites[relay.id];
+  const spriteReady = image?.complete && image.naturalWidth > 0;
+  const visualSize = 48;
+  const drawX = Math.round(relay.x + relay.w / 2 - visualSize / 2);
+  const drawY = Math.round(relay.y + relay.h / 2 - visualSize / 2);
   ctx.save();
   ctx.imageSmoothingEnabled = false;
-  ctx.globalAlpha = active ? 1 : .78;
+  ctx.globalAlpha = active ? 1 : .82;
   ctx.shadowBlur = active ? 16 : 8;
   ctx.shadowColor = color;
-  ctx.fillStyle = '#10162f';
-  ctx.fillRect(relay.x, relay.y, relay.w, relay.h);
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 2;
-  ctx.strokeRect(relay.x + .5, relay.y + .5, relay.w - 1, relay.h - 1);
-  ctx.fillStyle = color;
-  const coreSize = active ? 16 : Math.round(12 + pulse * 3);
-  ctx.fillRect(
-    Math.round(relay.x + relay.w / 2 - coreSize / 2),
-    Math.round(relay.y + relay.h / 2 - coreSize / 2),
-    coreSize,
-    coreSize,
-  );
-  ctx.fillStyle = '#10162f';
-  ctx.fillRect(relay.x + relay.w / 2 - 3, relay.y + relay.h / 2 - 3, 6, 6);
+  if (spriteReady) {
+    ctx.drawImage(image, drawX, drawY, visualSize, visualSize);
+    if (active) {
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = .82;
+      ctx.strokeStyle = '#9effd7';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(drawX + 3.5, drawY + 3.5, visualSize - 7, visualSize - 7);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = '#9effd7';
+      ctx.fillRect(drawX + visualSize - 13, drawY + 4, 9, 9);
+      ctx.fillStyle = '#12313a';
+      ctx.font = '900 8px ui-monospace, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('✓', drawX + visualSize - 8.5, drawY + 12);
+    }
+  } else {
+    ctx.fillStyle = '#10162f';
+    ctx.fillRect(relay.x, relay.y, relay.w, relay.h);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(relay.x + .5, relay.y + .5, relay.w - 1, relay.h - 1);
+    ctx.fillStyle = color;
+    const coreSize = active ? 16 : Math.round(12 + pulse * 3);
+    ctx.fillRect(
+      Math.round(relay.x + relay.w / 2 - coreSize / 2),
+      Math.round(relay.y + relay.h / 2 - coreSize / 2),
+      coreSize,
+      coreSize,
+    );
+    ctx.fillStyle = '#10162f';
+    ctx.fillRect(relay.x + relay.w / 2 - 3, relay.y + relay.h / 2 - 3, 6, 6);
+  }
   ctx.shadowBlur = 0;
   ctx.font = '800 8px "Segoe UI", sans-serif';
   ctx.textAlign = 'center';
