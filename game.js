@@ -334,14 +334,14 @@ const STAGES = [
   },
   {
     chapter: '하린 · 잃어버린 웃음', name: '하린이 가장 두려워한 것', type: 'boss', skills: ['time'], objective: '세 기억을 완성하고 움직이는 광대의 동선을 예측해 가면을 맞혀라',
-    intro: '하린은 모두가 웃는 곳에서 혼자 웃지 못하게 될까 봐 두려워했어. 그 두려움이 “웃음을 훔치는 광대”가 되었다. 처음에는 진짜와 가짜 기억이 똑같이 보여. K로 남긴 기억의 나가 가짜에 닿으면, 가짜 기억이 잔상을 훔쳐 달아나. 가까이 따라붙어 J로 두 번 직접 타격해 훔쳐 간 잔상을 지워. 진짜 기억 세 곳은 본체나 유지 중인 잔상 중 어느 쪽으로든 동시에 밝혀. 천천히 퍼지는 웃음 탄막은 이동해 피해야 해. 세 기억을 완성하면 무대가 비워지고 작아진 광대와 가면 셋이 전역을 떠돌아. 가면 가까이에서 발사 각도를 잡고 J를 누르면 가면이 캐릭터에서 가면을 향한 방향 그대로 직선 비행해. 광대의 다음 동선을 예상해서 앞을 노려 줘.',
+    intro: '하린은 모두가 웃는 곳에서 혼자 웃지 못하게 될까 봐 두려워했어. 그 두려움이 “웃음을 훔치는 광대”가 되었다. 처음에는 진짜와 가짜 기억이 똑같이 보여. K로 남긴 기억의 나가 가짜에 닿으면, 가짜 기억이 잔상을 훔쳐 달아나. 가까이 따라붙어 J로 두 번 직접 타격해 훔쳐 간 잔상을 지워. 진짜 기억 세 곳은 본체나 유지 중인 잔상 중 어느 쪽으로든 동시에 밝혀. 세 기억을 완성하면 2페이즈가 시작돼. 무대가 비워지고 작아진 광대와 가면 셋이 전역을 떠돌며, 이때부터 천천히 퍼지는 웃음 탄막이 나와. 가면 가까이에서 발사 각도를 잡고 J를 누르면 가면이 캐릭터에서 가면을 향한 방향 그대로 직선 비행해. 광대의 다음 동선을 예상해서 앞을 노려 줘.',
     boss: '웃음을 훔치는 광대', bossConfig: {
       mode: 'calm', visual: 'carousel', calmDuration: 2.1,
       distortedMemoryPads: [
         { x: 128, y: 316, w: 42, h: 42, label: '혼자 웃기' },
         { x: 470, y: 132, w: 42, h: 42, label: '텅 빈 관람석' },
       ],
-    }, hint: '① 똑같은 기억 후보를 K 잔상으로 확인 ② 가짜가 잔상을 훔치면 가까이 추격해 J 직접 타격 2회 ③ 세 진짜 기억을 본체/잔상 조합으로 동시 활성화 ④ 느린 웃음 탄막은 이동 회피 ⑤ 가면 가까이에서 발사선을 정하고 광대의 동선을 예상해 J로 직선 발사하세요.',
+    }, hint: '① 똑같은 기억 후보를 K 잔상으로 확인 ② 가짜가 잔상을 훔치면 가까이 추격해 J 직접 타격 2회 ③ 세 진짜 기억을 본체/잔상 조합으로 동시 활성화 ④ 2페이즈부터 느린 웃음 탄막 이동 회피 ⑤ 가면 가까이에서 발사선을 정하고 광대의 동선을 예상해 J로 직선 발사하세요.',
     teaches: ['time'],
   },
   {
@@ -1869,7 +1869,7 @@ function bossEntryLine(stage = currentStage()) {
 
 function bossBriefForStage(stage = currentStage()) {
   const mode = stage?.bossConfig?.mode;
-  if (mode === 'calm') return '① 똑같이 보이는 기억 후보를 K 잔상으로 확인  ② 가짜를 가까이 추격해 J 직접 타격 2회\n③ 세 기억을 본체/잔상 조합으로 동시 활성화  ④ 느린 웃음 탄막 회피  ⑤ 가면 가까이에서 각도 조준 → 광대 동선을 예상해 J 직선 발사';
+  if (mode === 'calm') return '① 똑같이 보이는 기억 후보를 K 잔상으로 확인  ② 가짜를 가까이 추격해 J 직접 타격 2회\n③ 세 기억을 본체/잔상 조합으로 동시 활성화  ④ 2페이즈부터 느린 웃음 탄막 회피  ⑤ 가면 가까이에서 각도 조준 → 광대 동선을 예상해 J 직선 발사';
   if (mode === 'resonance') return '① K로 화음 앵커 두 곳 재생  ② 앵커가 불협화음 3회에 사라지기 전 다시 기록  ③ 별빛 박자에 맞춰 L을 짧게 6회  ④ 앵커·잔상 없이 마지막 불협화음 20초 회피';
   if (mode === 'chase') return '① K로 두 바람 기준점 준비  ② 되돌림 바람을 Space 질주로 가로채 순풍으로 뒤집기  ③ 열린 순풍 고리 통과 · 세 번 릴레이';
   if (mode === 'mirror') return '① K로 진짜 사진 재생  ② L로 진짜 균열만 드러내기  ③ Space 질주로 균열 네 곳 통과';
@@ -1903,7 +1903,7 @@ function guideKeyHints() {
   if (boss.mode === 'calm') {
     if (boss.calmReflectionActive) return [{ key: '↑ ↓', label: '웃음 탄막 회피' }, { key: 'J', label: '가면 직선 발사' }, { key: 'Shift', label: '가면만 정지' }];
     const state = calmMemoryState(boss);
-    if (activeCalmFakeMemories(boss).length) return [{ key: '↑ ↓', label: '웃음 탄막 회피' }, { key: 'J', label: '가까이서 직접 타격' }, { key: 'K', label: '새 기억 기록' }];
+    if (activeCalmFakeMemories(boss).length) return [{ key: 'J', label: '가까이서 직접 타격' }, { key: 'K', label: '새 기억 기록' }];
     if (state.trueMemoryCount < state.memoryTargetCount) return [{ key: 'K', label: '기억 배치' }, { key: '이동', label: '본체로 활성화' }, { key: 'I', label: '최근 잔상 삭제' }];
     return [{ key: '이동', label: '반사전 준비' }];
   }
@@ -2042,9 +2042,9 @@ function phaseGuide() {
     }
     const fakeProgress = calmFakeProgress(boss);
     const state = calmMemoryState(boss);
-    if (fakeProgress.active.length) return { step: 'FALSE MEMORY', text: '가짜 기억이 잔상을 훔쳐 달아납니다. 가까이 따라붙어 J로 각각 두 번 직접 타격하고, 천천히 퍼지는 웃음 탄막은 이동해 피하세요.', compact: `가짜 기억 직접 타격 ${fakeProgress.hitCount} / ${fakeProgress.requiredHits}` };
+    if (fakeProgress.active.length) return { step: 'FALSE MEMORY', text: '가짜 기억이 잔상을 훔쳐 달아납니다. 1페이즈에는 탄막이 나오지 않으니 가까이 따라붙어 J로 각각 두 번 직접 타격하세요.', compact: `가짜 기억 직접 타격 ${fakeProgress.hitCount} / ${fakeProgress.requiredHits}` };
     if (state.trueMemoryCount < state.memoryTargetCount) {
-      return { step: 'STEP 1 / 2', text: '진짜 기억 세 곳을 동시에 밝히세요. 각 기억은 현재 본체나 유지 중인 K 잔상 어느 쪽으로든 활성화할 수 있습니다. 느린 탄막은 이동해 피하세요.', compact: `세 기억 ${state.trueMemoryCount} / ${state.memoryTargetCount}` };
+      return { step: 'STEP 1 / 2', text: '진짜 기억 세 곳을 동시에 밝히세요. 각 기억은 현재 본체나 유지 중인 K 잔상 어느 쪽으로든 활성화할 수 있습니다. 1페이즈에는 탄막이 나오지 않습니다.', compact: `세 기억 ${state.trueMemoryCount} / ${state.memoryTargetCount}` };
     }
     return { step: 'MEMORY COMPLETE', text: '세 기억이 모두 겹쳤습니다. 비워지는 무대에서 마지막 반사전을 준비하세요.', compact: '세 기억 완성 · 반사전 진입' };
   }
@@ -2906,7 +2906,7 @@ function activateCalmFakeMemories(boss) {
     activatedCount += 1;
   });
   if (activatedCount > 0) {
-    say('가짜 기억이 잔상을 훔쳐 달아납니다! 느린 웃음 탄막을 피하며 가까이 추격해 J로 두 번 직접 타격하세요.');
+    say('가짜 기억이 잔상을 훔쳐 달아납니다! 1페이즈에는 탄막이 나오지 않으니 가까이 추격해 J로 두 번 직접 타격하세요.');
   }
 }
 
@@ -3963,7 +3963,7 @@ function finalBossPhase(b) {
 }
 
 function nextBossAttackDelay(b) {
-  if (b.mode === 'calm') return b.calmReflectionActive ? 1.65 : 1.5;
+  if (b.mode === 'calm') return b.calmReflectionActive ? 1.35 : 99;
   if (b.mode === 'final') {
     const phase = finalBossPhase(b);
     return phase === 4 ? 99 : phase === 3 ? .58 : phase === 2 ? .68 : .82;
@@ -3981,19 +3981,20 @@ function spawnNightmarePattern() {
   const origin = b.mode === 'resonance'
     ? { x: b.x + b.w / 2, y: b.y + 78 }
     : { x: b.x + 8, y: b.y + 92 };
+  if (b.mode === 'calm' && !b.calmReflectionActive) return;
   const attackNumber = ++b.attackIndex;
 
   if (b.mode === 'calm') {
     const activeLaughShots = game.nightmareShots.filter((shot) => shot.kind === 'harin-laugh').length;
-    const capacity = Math.max(0, 14 - activeLaughShots);
+    const capacity = Math.max(0, 18 - activeLaughShots);
     if (!capacity) return;
     const calmOrigin = { x: b.x + b.w / 2, y: b.y + b.h * .5 };
     if (attackNumber % 4 === 0) {
-      launchNightmareRing(calmOrigin, Math.min(5, capacity), { speed: 145, r: 7, kind: 'harin-laugh', offset: threatTime * .32 });
+      launchNightmareRing(calmOrigin, Math.min(6, capacity), { speed: 155, r: 7, kind: 'harin-laugh', offset: threatTime * .36 });
     } else if (attackNumber % 2 === 0) {
-      launchNightmareFan(calmOrigin, p, Math.min(2, capacity), .8, { speed: 180, r: 8, kind: 'harin-laugh' });
+      launchNightmareFan(calmOrigin, p, Math.min(3, capacity), .82, { speed: 190, r: 8, kind: 'harin-laugh' });
     } else {
-      launchNightmareFan(calmOrigin, p, 1, 0, { speed: 200, r: 8, kind: 'harin-laugh' });
+      launchNightmareFan(calmOrigin, p, 1, 0, { speed: 210, r: 8, kind: 'harin-laugh' });
     }
     return;
   }
@@ -4425,7 +4426,8 @@ function updateBoss(dt) {
     }
     if (b.mode === 'final' && b.attackUnlocked && finalBossPhase(b) === 2) updateFinalTruthTargets(b);
     const listeningToDaughter = b.mode === 'final' && b.attackUnlocked && finalBossPhase(b) === 4;
-    if (!b.releaseReady && !listeningToDaughter && b.memoryReplay <= 0) {
+    const attackPhaseActive = b.mode !== 'calm' || b.calmReflectionActive;
+    if (attackPhaseActive && !b.releaseReady && !listeningToDaughter && b.memoryReplay <= 0) {
       game.nextAttack -= dt;
       if (game.nextAttack <= 0) { spawnNightmarePattern(); game.nextAttack = nextBossAttackDelay(b); }
     }
@@ -5058,9 +5060,9 @@ function updateMemoryLoopUI() {
       memoryStatus.textContent = boss.calmReflectionActive
         ? `가면 명중 ${boss.calmReflectionBroken} / ${boss.calmReflectionRequired} · 가면 가까이에서 조준선을 정하고 광대의 다음 동선을 예상해 J로 직선 발사하세요. Shift는 가면만 멈추며 광대와 탄막은 계속 움직입니다. K 기록은 비활성화됩니다.`
         : fakeProgress.active.length
-        ? `잔상 슬롯 ${countedEchoes.length} / 3 · 가까이서 J 직접 타격 ${fakeProgress.hitCount} / ${fakeProgress.requiredHits} · 훔친 잔상은 슬롯을 차지하며 I와 선입선출 교체로 사라지지 않습니다. 느린 웃음 탄막은 본체로 피하세요.`
+        ? `잔상 슬롯 ${countedEchoes.length} / 3 · 가까이서 J 직접 타격 ${fakeProgress.hitCount} / ${fakeProgress.requiredHits} · 훔친 잔상은 슬롯을 차지하며 I와 선입선출 교체로 사라지지 않습니다. 1페이즈에는 탄막이 나오지 않습니다.`
         : state.trueMemoryCount < state.memoryTargetCount
-          ? `세 기억 ${state.trueMemoryCount} / ${state.memoryTargetCount} · 각 기억은 현재 본체 또는 유지 중인 K 잔상으로 활성화할 수 있습니다. 느린 웃음 탄막은 본체로 피하세요.`
+          ? `세 기억 ${state.trueMemoryCount} / ${state.memoryTargetCount} · 각 기억은 현재 본체 또는 유지 중인 K 잔상으로 활성화할 수 있습니다. 탄막은 2페이즈부터 시작됩니다.`
           : '세 기억이 완성됐습니다. 무대가 비워지며 마지막 반사전으로 전환됩니다.';
     } else if (boss.mode === 'resonance') {
       memoryStatus.textContent = boss.codaActive
