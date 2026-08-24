@@ -331,7 +331,7 @@ const STAGES = [
   {
     chapter: '하린 · 잃어버린 웃음', name: '무너지는 회전목마', type: 'puzzle', skills: [], blockedSkills: ['bridge', 'dash'], objective: '세 기억 장치를 자유로운 순서로 복구하고 출구 구멍을 맞춰라',
     intro: '위에서 내려다본 회전목마 바닥이 다섯 개의 기억 구역으로 갈라져 있어. 중앙 회전축을 둘러싼 원형벽에는 단 하나의 구멍만 있고, P/Y로 구멍을 각 방사형 통로와 맞춰야 바깥 원주로 건너갈 수 있어. K 기록은 언제나 중앙 보랏빛 허브에서 시작해. 북서쪽에는 K로 고정할 하린의 기억, 북동쪽과 남동쪽에는 직접 밟아 켜는 별빛·리본 잠금 장치가 있어. 세 장치는 어떤 순서로 찾아도 돼. 모두 복구한 뒤 동쪽 구멍을 출구 통로와 맞추면 다음 꿈의 문이 열린다.',
-    layout: 'carousel', echoGoal: 1, blockedHint: '이 회전목마에서는 O와 Space 대신 빛나는 조작대에서 P/Y로 원형벽의 구멍을 양방향 회전할 수 있습니다.', hint: 'K는 항상 원 중앙 보랏빛 발판에서 시작합니다. P/Y로 북서 기억·북동 별빛·남동 리본 구역을 원하는 순서로 방문하고, 세 장치를 복구한 뒤 동쪽 출구 구멍을 맞추세요.',
+    layout: 'carousel', echoGoal: 1, blockedHint: '이 회전목마에서는 O와 Space 대신 빛나는 조작대에서 P/Y로 원형벽의 구멍을 양방향 회전할 수 있습니다.', hint: 'K는 항상 원 중앙 보랏빛 발판에서 시작합니다. 남동 리본 길은 중앙 허브에서 ↓/S로 하단 방사로에 내려가세요. P/Y로 세 장치를 원하는 순서로 복구한 뒤 동쪽 출구 구멍을 맞추세요.',
   },
   {
     chapter: '하린 · 잃어버린 웃음', name: '하린이 가장 두려워한 것', type: 'boss', skills: ['time'], objective: '행복한 기억을 맞추고 멈춘 순간으로 하린을 안심시켜라',
@@ -1753,6 +1753,7 @@ function guideKeyHints() {
     if (game.recording) return [...basics, { key: 'K', label: '되감기' }, { key: 'I', label: '기록 취소' }];
     if (stage.layout === 'carousel') return [
       ...basics,
+      { key: '↓ / S', label: '하단 방사로' },
       { key: 'P / Y', label: '원형벽 회전' },
       ...(!game.carouselCoreLatched && !(game.echoes || []).some((echo) => !echo.holding)
         ? [{ key: 'K', label: '중앙 발판 기록' }]
@@ -2382,9 +2383,9 @@ function setupPuzzle(layout, echoGoal) {
   } else if (layout === 'carousel') {
     game.platforms = [
       // 중앙 허브. K와 P/Y가 같은 회전축 위에서 항상 시작된다.
-      { x: 360, y: 350, w: 60, h: 18, dropThrough: false, carouselArtCollider: true, carouselSurface: 'anchor', carouselControlAnchor: 'hub-west', label: 'HUB CONTROL WEST' },
-      { x: 420, y: 350, w: 120, h: 18, dropThrough: false, carouselMemoryStart: true, carouselArtCollider: true, carouselSurface: 'anchor', carouselControlAnchor: 'hub-memory', label: 'CENTRAL K HUB' },
-      { x: 540, y: 350, w: 60, h: 18, dropThrough: false, carouselArtCollider: true, carouselSurface: 'anchor', carouselControlAnchor: 'hub-east', label: 'HUB CONTROL EAST' },
+      { x: 360, y: 350, w: 60, h: 18, dropThrough: true, carouselArtCollider: true, carouselSurface: 'anchor', carouselControlAnchor: 'hub-west', label: 'HUB CONTROL WEST' },
+      { x: 420, y: 350, w: 120, h: 18, dropThrough: true, carouselMemoryStart: true, carouselArtCollider: true, carouselSurface: 'anchor', carouselControlAnchor: 'hub-memory', label: 'CENTRAL K HUB' },
+      { x: 540, y: 350, w: 60, h: 18, dropThrough: true, carouselArtCollider: true, carouselSurface: 'anchor', carouselControlAnchor: 'hub-east', label: 'HUB CONTROL EAST' },
 
       // 북서 기억 방사로. passage만 원형벽의 기억 구멍을 관통한다.
       { x: 335, y: 290, w: 110, h: 16, carouselArtCollider: true, label: 'NORTHWEST INNER SPOKE' },
@@ -2403,9 +2404,10 @@ function setupPuzzle(layout, echoGoal) {
       { x: 80, y: 350, w: 155, h: 18, dropThrough: false, carouselArtCollider: true, carouselSurface: 'anchor', label: 'MOON OUTER PORCH' },
 
       // 남동 리본 방사로. 중앙 허브에서 아래로 내려간 뒤 되돌아올 수 있다.
-      { x: 420, y: 430, w: 120, h: 18, carouselArtCollider: true, label: 'SOUTH RETURN STEP' },
-      { x: 530, y: 435, w: 140, h: 18, carouselArtCollider: true, label: 'SOUTHEAST RIBBON PASSAGE' },
-      { x: 640, y: 470, w: 220, h: 40, dropThrough: false, carouselArtCollider: true, carouselSurface: 'ground', label: 'RIBBON OUTER FLOOR' },
+      { x: 420, y: 415, w: 170, h: 18, carouselArtCollider: true, label: 'SOUTH RETURN STEP' },
+      { x: 530, y: 435, w: 170, h: 18, carouselArtCollider: true, label: 'SOUTHEAST RIBBON PASSAGE' },
+      { x: 600, y: 470, w: 260, h: 40, dropThrough: false, carouselArtCollider: true, carouselSurface: 'ground', label: 'RIBBON OUTER FLOOR' },
+      { x: 860, y: 394, w: 24, h: 146, wall: true, persistentWall: true, carouselArtCollider: true, carouselSurface: 'wall', label: 'RIBBON OUTER GUARD' },
 
       // 원주 구역 사이의 영구 방사형 레일. 회전벽 바깥 우회를 막는다.
       { x: 0, y: 205, w: 310, h: 24, wall: true, persistentWall: true, carouselArtCollider: true, carouselSurface: 'wall', label: 'MEMORY MOON DIVIDER' },
@@ -5175,7 +5177,7 @@ function drawCarouselMazeConnectors() {
     { pose: 'memory', color: '#c6a5ff', points: [[480, 341], [390, 290], [382, 235], [357, 170], [210, 100]] },
     { pose: 'star', color: '#8ff5e8', points: [[480, 341], [570, 290], [578, 235], [603, 170], [750, 100]] },
     { pose: 'exit', color: '#fff0a8', points: [[480, 341], [640, 290], [775, 350], [884, 350]] },
-    { pose: 'ribbon', color: '#ff9fcf', points: [[480, 341], [480, 430], [565, 435], [750, 470]] },
+    { pose: 'ribbon', color: '#ff9fcf', points: [[480, 341], [480, 415], [565, 435], [750, 470]] },
   ];
   const currentPose = carouselPhaseInfo(game.carouselRotationTimer > 0 ? game.carouselTargetPhase : game.carouselPhase).id;
   ctx.save();
