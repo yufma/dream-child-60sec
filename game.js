@@ -319,7 +319,7 @@ const STAGES = [
   {
     chapter: '하린 · 잃어버린 웃음', name: '무너지는 회전목마', type: 'puzzle', skills: [], blockedSkills: ['bridge', 'dash'], objective: '세 기억 장치를 자유로운 순서로 복구하고 출구 구멍을 맞춰라',
     intro: '위에서 내려다본 회전목마 바닥이 다섯 개의 기억 구역으로 갈라져 있어. 중앙 회전축을 둘러싼 원형벽에는 단 하나의 구멍만 있고, P/Y로 구멍을 각 방사형 통로와 맞춰야 바깥 원주로 건너갈 수 있어. K 기록은 언제나 중앙 보랏빛 허브에서 시작해. 북서쪽에는 K로 고정할 하린의 기억, 북동쪽과 남동쪽에는 직접 밟아 켜는 별빛·리본 잠금 장치가 있어. 세 장치는 어떤 순서로 찾아도 돼. 모두 복구한 뒤 동쪽 구멍을 출구 통로와 맞추면 다음 꿈의 문이 열린다.',
-    layout: 'carousel', echoGoal: 1, blockedHint: '이 회전목마에서는 Space 질주 대신 빛나는 조작대에서 P/Y로 원형벽의 구멍을 양방향 회전할 수 있습니다.', hint: 'K는 항상 원 중앙 보랏빛 발판에서 시작합니다. 남동 리본 길은 중앙 허브에서 ↓/S로 하단 방사로에 내려가세요. P/Y로 세 장치를 원하는 순서로 복구한 뒤 동쪽 출구 구멍을 맞추세요.',
+    layout: 'carousel', echoGoal: 1, blockedHint: '이 회전목마에서는 Space 질주 대신 어디서든 P/Y로 원형벽의 구멍을 양방향 회전할 수 있습니다.', hint: 'K는 항상 원 중앙 보랏빛 발판에서 시작합니다. 남동 리본 길은 중앙 허브에서 ↓/S로 하단 방사로에 내려가세요. 어디서든 P/Y로 세 장치를 원하는 순서로 복구한 뒤 동쪽 출구 구멍을 맞추세요.',
   },
   {
     chapter: '하린 · 잃어버린 웃음', name: '하린이 가장 두려워한 것', type: 'boss', skills: ['time'], objective: '똑같이 보이는 기억 속에서 진짜를 찾고 멈춘 순간으로 하린을 안심시켜라',
@@ -1794,7 +1794,7 @@ function phaseGuide() {
       }
       if (game.carouselRotationTimer > 0) {
         const target = carouselPhaseInfo(game.carouselTargetPhase);
-        return { step: 'ROUND WALL ROTATING', text: `원형벽의 출입구를 ${target.label} 각도로 돌리고 있습니다. 조작대에서 잠시 기다리세요.`, compact: `${target.label} 각도로 회전 중` };
+        return { step: 'ROUND WALL ROTATING', text: `원형벽의 출입구를 ${target.label} 각도로 돌리고 있습니다. 회전이 끝날 때까지 잠시 기다리세요.`, compact: `${target.label} 각도로 회전 중` };
       }
       const standing = standingCarouselPlatform();
       const relayCount = carouselRelayCount();
@@ -1803,7 +1803,7 @@ function phaseGuide() {
         return { step: 'THREE LOCKS READY', text: '왼쪽 위 기억과 두 외부 잠금 장치가 모두 복구됐습니다. P/Y로 구멍을 동쪽 출구길과 맞추세요.', compact: '세 장치 완료 · 동쪽 출구 정렬' };
       }
       if (game.echoes.some((echo) => !echo.holding)) {
-        return { step: 'MEMORY REPLAYING', text: '기억의 나는 왼쪽 위 코어로 계속 이동합니다. 현재의 나는 기다리지 않고 중앙 조작대에서 P/Y로 다음 방을 열 수 있습니다.', compact: '잔상 재생 중 · P/Y 회전 가능' };
+        return { step: 'MEMORY REPLAYING', text: '기억의 나는 왼쪽 위 코어로 계속 이동합니다. 현재의 나는 기다리지 않고 어디서든 P/Y로 다음 방을 열 수 있습니다.', compact: '잔상 재생 중 · P/Y 회전 가능' };
       }
       if (game.recording) {
         return { step: 'MEMORY RECORDING', text: '북서쪽 틈을 지나 맵 왼쪽 위 기억 코어까지 이동한 뒤 K를 다시 눌러 되감으세요.', compact: '왼쪽 위 코어에서 K · 되감기' };
@@ -1816,9 +1816,6 @@ function phaseGuide() {
           return { step: 'CENTRAL K START', text: '여기가 항상 같은 K 기록 시작점입니다. 먼저 P/Y로 구멍을 북서쪽 기억길과 맞추세요.', compact: 'K 시작 위치 · 북서쪽 구멍 필요' };
         }
         return { step: 'MEMORY COMPLETE', text: `이 중앙 발판의 기억은 고정됐습니다. 외부 잠금 ${relayCount} / ${CAROUSEL_REQUIRED_RELAYS}.`, compact: `기억 ✓ · 잠금 ${relayCount} / ${CAROUSEL_REQUIRED_RELAYS}` };
-      }
-      if (standing?.carouselControlAnchor || standing?.carouselResetAnchor) {
-        return { step: 'FREE ROTATION', text: `P는 시계 방향, Y는 반시계 방향입니다. 기억과 두 잠금 장치는 어떤 순서로 찾아도 됩니다. 현재 잠금 ${relayCount} / ${CAROUSEL_REQUIRED_RELAYS}.`, compact: `Y ◀ 자유 회전 ▶ P · 잠금 ${relayCount} / ${CAROUSEL_REQUIRED_RELAYS}` };
       }
       if ((currentPose === 'star' || currentPose === 'ribbon') && !game.carouselRelays.has(currentPose)) {
         const relay = (game.carouselSwitches || []).find((item) => item.id === currentPose);
@@ -2096,7 +2093,7 @@ function removeLatestEcho() {
     } else if (game.carouselCoreLatched) {
       memoryStatus.textContent = `왼쪽 위 기억 고정 · 외부 잠금 ${relayCount} / ${CAROUSEL_REQUIRED_RELAYS} · 별빛·리본 방을 원하는 순서로 방문하세요.`;
     } else if (game.echoes?.some((echo) => !echo.holding)) {
-      memoryStatus.textContent = '기억 재생 중 · 잔상은 독립 이동 · 중앙 조작대에서 P/Y 회전 가능';
+      memoryStatus.textContent = '기억 재생 중 · 잔상은 독립 이동 · 어디서든 P/Y 회전 가능';
     } else if (game.recording) {
       memoryStatus.textContent = `좌상단 기억 기록 중 · ${game.recording.duration.toFixed(1)}초 · 왼쪽 위 코어에서 K로 되감고 I로 취소`;
     } else if (phase.id === 'memory') {
@@ -2407,10 +2404,10 @@ function setupPuzzle(layout, echoGoal) {
     game.fallZones = [{ x: 205, y: 500, w: 701, h: 40 }];
   } else if (layout === 'carousel') {
     game.platforms = [
-      // 중앙 허브. K와 P/Y가 같은 회전축 위에서 항상 시작된다.
-      { x: 360, y: 350, w: 60, h: 18, dropThrough: true, carouselArtCollider: true, carouselSurface: 'anchor', carouselControlAnchor: 'hub-west', label: 'HUB CONTROL WEST' },
-      { x: 420, y: 350, w: 120, h: 18, dropThrough: true, carouselMemoryStart: true, carouselArtCollider: true, carouselSurface: 'anchor', carouselControlAnchor: 'hub-memory', label: 'CENTRAL K HUB' },
-      { x: 540, y: 350, w: 60, h: 18, dropThrough: true, carouselArtCollider: true, carouselSurface: 'anchor', carouselControlAnchor: 'hub-east', label: 'HUB CONTROL EAST' },
+      // 중앙 허브. K 기록은 가운데 보랏빛 발판에서 시작한다.
+      { x: 360, y: 350, w: 60, h: 18, dropThrough: true, carouselArtCollider: true, carouselSurface: 'anchor', label: 'HUB WEST' },
+      { x: 420, y: 350, w: 120, h: 18, dropThrough: true, carouselMemoryStart: true, carouselArtCollider: true, carouselSurface: 'anchor', label: 'CENTRAL K HUB' },
+      { x: 540, y: 350, w: 60, h: 18, dropThrough: true, carouselArtCollider: true, carouselSurface: 'anchor', label: 'HUB EAST' },
 
       // 북서 기억 방사로. passage만 원형벽의 기억 구멍을 관통한다.
       { x: 335, y: 290, w: 110, h: 16, carouselArtCollider: true, label: 'NORTHWEST INNER SPOKE' },
@@ -3044,7 +3041,7 @@ function standingCarouselPlatform() {
   const centerX = player.x + player.w / 2;
   return game.platforms.find((platform) => !platform.wall
     && carouselPlatformEnabled(platform)
-    && (!(platform.carouselControlAnchor || platform.carouselMemoryStart)
+    && (!platform.carouselMemoryStart
       || (centerX >= platform.x && centerX < platform.x + platform.w))
     && player.x + player.w > platform.x - 3
     && player.x < platform.x + platform.w + 3
@@ -3054,11 +3051,6 @@ function standingCarouselPlatform() {
 function standingCarouselMemoryStart() {
   const platform = standingCarouselPlatform();
   return platform?.carouselMemoryStart ? platform : null;
-}
-
-function carouselRotationControlPlatform() {
-  const platform = standingCarouselPlatform();
-  return platform && (platform.carouselControlAnchor || platform.carouselResetAnchor) ? platform : null;
 }
 
 function carouselRelayCount() {
@@ -3110,10 +3102,6 @@ function rotateCarouselPhase(direction) {
     return true;
   }
   const current = game.carouselPhase || 0;
-  if (!carouselRotationControlPlatform()) {
-    say('원 안쪽의 빛나는 회전 조작대 위에서 P/Y를 눌러 주세요.');
-    return true;
-  }
   const count = CAROUSEL_PHASES.length;
   game.carouselTargetPhase = (current + (direction > 0 ? 1 : -1) + count) % count;
   game.carouselOrbitFromPose = carouselPhaseInfo(current).id;
@@ -3121,7 +3109,7 @@ function rotateCarouselPhase(direction) {
   if (!carouselRingTargetIsClear(game.carouselOrbitTargetPose)) {
     game.carouselTargetPhase = current;
     game.carouselOrbitTargetPose = game.carouselOrbitFromPose;
-    say('회전할 원형벽의 경로가 막혔습니다. 조작대 중앙으로 이동하고, 기억의 나가 막고 있다면 I로 지워 주세요.');
+    say('현재 위치가 회전할 원형벽과 겹칩니다. 원형벽의 회전 경로에서 조금 벗어난 뒤 다시 눌러 주세요.');
     return true;
   }
   game.carouselRotationTimer = CAROUSEL_ROTATION_SECONDS;
@@ -3422,7 +3410,7 @@ function updatePuzzle(dt) {
         } else if (!carouselRelaysReady()) {
           say(`북동쪽 별빛·남동쪽 리본 잠금 장치를 직접 밟으세요. 현재 ${carouselRelayCount()} / ${CAROUSEL_REQUIRED_RELAYS}.`);
         } else {
-          say('원 안쪽 회전 조작대에서 P/Y로 구멍을 동쪽 출구길과 맞추세요.');
+          say('어디서든 P/Y로 구멍을 동쪽 출구길과 맞추세요.');
         }
       } else {
         const roleState = puzzleRoleState();
@@ -5687,13 +5675,6 @@ function drawCarouselOrbitSystem() {
   ctx.fillStyle = '#11172f';
   ctx.fillRect(CAROUSEL_RING_CENTER.x - 2, CAROUSEL_RING_CENTER.y - 2, 4, 4);
   ctx.shadowBlur = 0;
-  ctx.font = '850 8px "Segoe UI", sans-serif';
-  ctx.textAlign = 'center';
-  const tag = game.carouselExitBridgeDeployed ? '문 잠금 해제 · P/Y 회전' : 'P/Y · 자유 회전';
-  ctx.shadowBlur = 9;
-  ctx.shadowColor = '#02040e';
-  ctx.fillStyle = game.carouselCoreLatched ? '#9effea' : '#fff2bd';
-  ctx.fillText(tag, CAROUSEL_RING_CENTER.x, CAROUSEL_RING_CENTER.y - 18);
   ctx.restore();
 }
 
@@ -5708,24 +5689,21 @@ function carouselStructureColor(platform) {
 }
 
 function drawCarouselAnchorBadge(platform) {
-  if (game.carouselRotationTimer > 0 && !platform.carouselMemoryStart) return;
-  if (!platform.carouselControlAnchor && !platform.carouselResetAnchor && !platform.carouselMemoryStart) return;
+  if (!platform.carouselMemoryStart) return;
   const active = standingCarouselPlatform() === platform;
   const memoryAligned = carouselPhaseInfo().id === 'memory';
   const echoReplaying = (game.echoes || []).some((echo) => !echo.holding);
-  const text = platform.carouselMemoryStart
-    ? game.recording
-      ? 'K · 기록 종료/되감기'
-      : echoReplaying
-        ? '잔상 재생 중 · P/Y 가능'
-      : game.carouselCoreLatched
-      ? '✓ K 기억 고정'
-      : game.carouselRotationTimer > 0
-        ? 'K 시작 위치 · 회전 중'
-      : memoryAligned
-        ? active ? 'K · 기록 시작' : 'K 기록 시작 위치'
-        : 'K 시작 위치 · 북서쪽 정렬'
-    : active ? 'Y ◀ 회전 ▶ P' : 'P/Y';
+  const text = game.recording
+    ? 'K · 기록 종료/되감기'
+    : echoReplaying
+      ? '잔상 재생 중'
+    : game.carouselCoreLatched
+    ? '✓ K 기억 고정'
+    : game.carouselRotationTimer > 0
+      ? 'K 시작 위치 · 회전 중'
+    : memoryAligned
+      ? active ? 'K · 기록 시작' : 'K 기록 시작 위치'
+      : 'K 시작 위치 · 북서쪽 정렬';
   if (!text) return;
   const cx = Math.round(platform.x + platform.w / 2);
   ctx.save();
