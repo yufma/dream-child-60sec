@@ -182,12 +182,24 @@ const objectSprites = Object.freeze({
   harinLaughCollector: loadSprite('assets/objects/harin-laugh-collector-v1.png'),
   harinRelayBulb: loadSprite('assets/objects/harin-relay-carnival-bulb-v1.png'),
   harinCarouselWall: loadSprite('assets/objects/harin-carousel-wall-v1.png'),
-  yunaSilentKey: loadSprite('assets/objects/yuna-silent-key-pillar-v1.png'),
   haneulTrueSignpost: loadSprite('assets/objects/haneul-true-signpost-v1.png'),
   haneulHeadwindPillar: loadSprite('assets/objects/haneul-headwind-pillar-v1.png'),
   haneulHeadwindRubble: loadSprite('assets/objects/haneul-headwind-pillar-rubble-v1.png'),
   haneulDashRiftGate: loadSprite('assets/objects/haneul-dash-rift-gate-v1.png'),
   daughterTrueCrack: loadSprite('assets/objects/daughter-true-crack-v1.png'),
+  scientistDaughterVoiceAltar: loadSprite('assets/objects/scientist-daughter-voice-altar-v1.png'),
+});
+const projectileSprites = Object.freeze({
+  // 검은 연이 찢어 낸 천 조각과 돌풍이 섞인 전용 탄환. 단색 원형 탄막 대신 위협의 정체를 읽게 한다.
+  haneulWindShard: loadSprite('assets/projectiles/haneul-black-kite-wind-shard-v1.png'),
+  daughterMirrorShard: loadSprite('assets/projectiles/daughter-perfect-guardian-mirror-shard-v1.png'),
+  scientistDreamCore: loadSprite('assets/projectiles/scientist-stolen-dream-core-v1.png'),
+});
+// 기억의 나가 남긴 이동 경로는 점선 UI가 아니라, 실제 꿈의 빛 조각으로 보이게 한다.
+const memoryEffectSprites = Object.freeze({
+  resonanceTrail: loadSprite('assets/effects/memory-resonance-trail-v1.png'),
+  anchor: loadSprite('assets/effects/memory-resonance-anchor-v1.png'),
+  finalMemoryBraid: loadSprite('assets/effects/final-memory-braid-v2.png'),
 });
 const finalTruthPortraits = Object.freeze({
   harin: loadSprite('assets/portraits/harin.png'),
@@ -253,7 +265,6 @@ const ruleCards = [...document.querySelectorAll('.rule-card')];
 const memoryStatus = document.querySelector('#memory-status');
 const echoCards = [...document.querySelectorAll('[data-echo-slot]')];
 const ruleStates = {
-  bridge: document.querySelector('#bridge-state'),
   time: document.querySelector('#time-state'),
   resonance: document.querySelector('#resonance-state'),
   dash: document.querySelector('#dash-state'),
@@ -284,12 +295,12 @@ const STAGES = [
     layout: 'bridge', echoGoal: 1, hint: '① K 시작 → ② 기억 발판까지 이동 → ③ K 되감기. 기억의 나가 마지막 발판을 지키면 문이 열립니다.',
   },
   {
-    chapter: '하린 · 잃어버린 웃음', name: '웃음을 모으는 거리', type: 'puzzle', skills: ['bridge'], objective: '거리 세 곳에 기억의 나를 남겨 빼앗긴 웃음등을 모두 밝혀라',
+    chapter: '하린 · 잃어버린 웃음', name: '웃음을 모으는 거리', type: 'puzzle', skills: ['resonance'], objective: '거리 세 곳에 기억의 나를 남겨 빼앗긴 웃음등을 모두 밝혀라',
     intro: '웃음 수집탑은 거리 곳곳에 남은 하린의 추억을 빨아들여 광대의 억지웃음으로 바꾸고 있어. 낮은 달빛길, 높은 별풍선 지붕, 회전목마 앞의 웃음등에 과거의 나를 하나씩 남겨 줘. 세 추억이 동시에 빛나면 탑에 붙은 가짜 미소가 무너지고 다음 꿈으로 가는 통로가 열릴 거야.',
-    layout: 'wall', echoGoal: 3, hint: '① O로 중앙 기억 교차로 이동 ② 교차로에서 K 기록 시작 ③ 낮은 길·높은 잔상길·오른쪽 길의 추억등에 각각 K 잔상 남기기 ④ 세 등불이 모두 켜지면 출구로 이동.',
+    layout: 'wall', echoGoal: 3, hint: '① L 공명 파장으로 중앙 공명 길 드러내기 ② 교차로에서 K 기록 시작 ③ 낮은 길·높은 공명 길·오른쪽 길의 추억등에 각각 기억의 나 남기기 ④ 세 등불이 모두 켜지면 출구로 이동.',
   },
   {
-    chapter: '하린 · 잃어버린 웃음', name: '무너지는 회전목마', type: 'puzzle', skills: [], blockedSkills: ['bridge'], objective: '기억의 나가 돌린 회전목마를 타고 큰 벽을 넘어라',
+    chapter: '하린 · 잃어버린 웃음', name: '무너지는 회전목마', type: 'puzzle', skills: [], objective: '기억의 나가 돌린 회전목마를 타고 큰 벽을 넘어라',
     intro: '회전목마의 벽은 너무 높아서 뛰어넘을 수 없어. 먼저 K로 과거의 나를 회전목마 손잡이에 남겨 줘. 기억의 내가 회전목마를 천천히 돌리면, 현재의 네가 올라탈 넓은 달빛 발판이 벽 위까지 올라가. 발판이 널 함께 실어 나르는 동안 점프해 반대편 선반으로 건너가자.',
     layout: 'carousel', echoGoal: 1, blockedHint: '먼저 기억의 나를 회전목마 손잡이에 남겨야 달빛 발판이 움직입니다.', hint: '① K로 회전목마 손잡이에 기억을 남기기 ② 넓은 달빛 발판에 올라타기 ③ 벽 위에서 점프해 반대편 선반으로 건너기.',
   },
@@ -316,9 +327,8 @@ const STAGES = [
     layout: 'chorus', echoGoal: 1, hint: 'L을 유지해 끊어진 건반 계단을 잇고, 공명 중에 K로 기록을 시작해 기억 문양까지 이동한 뒤 되감으세요. 기억의 내가 첫 음을 계속 울립니다.',
   },
   {
-    chapter: '유나 · 사라진 노래', name: '유나의 빈 의자', type: 'puzzle', skills: ['bridge', 'time', 'resonance'], objective: '갈라진 옥타브를 올라 두 빈자리를 연결하라',
-    blockedSkills: ['bridge'],
-    intro: '유나는 늘 누군가의 자리를 기억하던 아이였어. 꿈 추출기는 교실의 낮은 자리와 가장 높은 합창 발코니를 멀리 갈라 놓았어. 이 교실에서는 잔상 발판도 닿지 않아. 낮은 건반 길을 오른 뒤 한 번 내려서, 다시 높은 옥타브까지 올라가 두 빈자리를 연결하자. 두 자리의 기억은 서로를 바라볼 때만 하나의 화음이 된다.',
+    chapter: '유나 · 사라진 노래', name: '유나의 빈 의자', type: 'puzzle', skills: ['time', 'resonance'], objective: '갈라진 옥타브를 올라 두 빈자리를 연결하라',
+    intro: '유나는 늘 누군가의 자리를 기억하던 아이였어. 꿈 추출기는 교실의 낮은 자리와 가장 높은 합창 발코니를 멀리 갈라 놓았어. 낮은 건반 길을 오른 뒤 한 번 내려서, 다시 높은 옥타브까지 올라가 두 빈자리를 연결하자. 두 자리의 기억은 서로를 바라볼 때만 하나의 화음이 된다.',
     layout: 'choir-balcony', echoGoal: 2, hint: '두 빈자리에 기억을 남긴 뒤, 각 발판 위에서 서로를 향해 방향을 돌리고 K로 되감으세요. 그 다음 M자 건반길을 끝까지 이어가세요.',
   },
   {
@@ -327,16 +337,19 @@ const STAGES = [
     layout: 'chorus-memory', echoGoal: 1, hint: 'L로 짧은 반음계를 이어 높은 기억 단까지 오른 뒤, 내려가는 건반과 마지막 상승 구간을 정확히 연결하세요.',
   },
   {
-    chapter: '유나 · 사라진 노래', name: '두 사람의 화음', type: 'puzzle', skills: ['resonance'], objective: '침묵의 기둥을 넘어 두 사람의 화음을 완성하라',
-    intro: '마지막 한 소절은 직선이 아니라, 위아래로 감긴 악보에 숨어 있어. 길 한가운데에는 소리를 삼키는 검은 건반 기둥이 서 있어. 낮은 화음과 높은 화음의 기억이 모두 그 침묵을 바라볼 때, 기둥 너머의 선율이 돌아온다. 두 자리에서 방향까지 맞춘 뒤 길을 이어 가자.',
-    layout: 'harmony-spiral', echoGoal: 2, hint: '낮은·높은 화음의 기억이 모두 검은 기둥을 향하게 K로 다시 기록한 뒤, L로 위쪽 건반을 드러내 기둥 위를 넘으세요.',
+    chapter: '유나 · 사라진 노래', name: '두 사람의 화음', type: 'puzzle', skills: ['resonance'], objective: '두 사람의 기억으로 나선형 화음을 완성하라',
+    intro: '마지막 한 소절은 직선이 아니라, 위아래로 감긴 악보에 숨어 있어. 낮은 화음과 높은 화음의 기억이 서로를 향할 때에만, 비어 있던 음 사이에 선율이 이어진다. 두 자리에서 방향까지 맞춘 뒤, 공명으로 위쪽 건반을 드러내 다음 후렴으로 가자.',
+    layout: 'harmony-spiral', echoGoal: 2, hint: '낮은·높은 화음의 기억이 서로를 향하게 K로 다시 기록한 뒤, L로 위쪽 건반을 드러내 나선형 길을 이어가세요.',
   },
   {
     chapter: '유나 · 사라진 노래', name: '침묵을 삼킨 합창단', type: 'boss', skills: ['resonance'], objective: '여섯 음을 되찾고 20초간 불협화음을 버텨라',
     intro: '유나는 아무리 크게 노래해도 아무에게도 닿지 않을까 봐 두려웠다. 그 두려움은 “침묵을 삼킨 합창단”이 되어 모든 소리를 지운다. 먼저 과거의 나 둘에게 서로 다른 화음 앵커를 맡겨. 그 다음 보스 바깥에 떠 있는 별빛 고리가 밝아지는 박자에 맞춰 L을 짧게 눌러, 여섯 음을 순서대로 되찾자. 마지막 음이 돌아오면 합창단은 무너지는 불협화음으로 20초간 발악한다. 그 시간을 피하면 유나의 노래가 완성된다.',
     boss: '침묵을 삼킨 합창단', bossConfig: {
       mode: 'resonance', visual: 'choir', x: 420, y: 76, w: 120, h: 170, codaDuration: 20,
-      moveBounds: { xMin: 45, xMax: 720, yMin: 86, yMax: 437 },
+      // 오른쪽 박자 고리까지 벽 없이 도달할 수 있도록 보스전 이동 범위를 캔버스 끝까지 연다.
+      moveBounds: { xMin: 45, xMax: 880, yMin: 86, yMax: 437 },
+      // 화음 앵커는 불협화음 세 번을 받아내면 사라진다. 이후 K로 다시 남길 수 있다.
+      echoHitLimit: 3, echoAttackCadence: 3,
       memoryPads: [
         { x: 174, y: 142, w: 42, h: 42, label: '낮은 화음' },
         { x: 330, y: 346, w: 42, h: 42, label: '높은 화음' },
@@ -350,7 +363,7 @@ const STAGES = [
         { x: 68, y: 232, w: 52, h: 52, label: '되찾은 후렴' },
       ],
     },
-    hint: '① 기억의 나 둘을 화음 앵커에 남기기 ② 보스 바깥의 밝아지는 고리에서 L을 짧게 눌러 음 6개를 순서대로 되찾기 ③ 마지막에는 20초간 불협화음 음표 탄막을 피하세요.',
+    hint: '① 기억의 나 둘을 화음 앵커에 남기기 ② 불협화음이 앵커의 기억의 나를 3번 맞히면 사라지므로 K로 다시 남기기 ③ 보스 바깥의 밝아지는 고리에서 L을 짧게 눌러 음 6개를 순서대로 되찾기 ④ 마지막에는 20초간 불협화음 음표 탄막을 피하세요.',
   },
   {
     chapter: '유나 · 사라진 노래', name: '유나의 노래가 남긴 별', type: 'puzzle', skills: ['resonance'], objective: '되찾은 노랫길을 따라 다음 꿈으로 향하라',
@@ -364,24 +377,22 @@ const STAGES = [
   },
   {
     chapter: '하늘 · 멈춰 버린 발걸음', name: '바람을 가르는 달리기', type: 'puzzle', skills: ['resonance', 'dash'], objective: '바람 터널의 위아래 길을 질주와 공명으로 이어라',
-    blockedSkills: ['bridge'],
-    intro: '이 바람길에서는 잔상 발판도 바람에 흩어져 버려. 거대한 바람 터널은 낮은 길과 높은 길을 번갈아 막아. 기억의 나에게 출발 신호를 맡기고, Space로 첫 틈을 넘은 뒤 L로 위쪽 숨은 바람길을 찾아가자.',
+    intro: '거대한 바람 터널은 낮은 길과 높은 길을 번갈아 막아. 기억의 나에게 출발 신호를 맡기고, Space로 첫 틈을 넘은 뒤 L로 위쪽 숨은 바람길을 찾아가자.',
     layout: 'wind-tunnel', echoGoal: 1, hint: '출발 신호에 기억을 남긴 뒤, Space로 터널 틈을 넘고 L로 위쪽 바람길을 드러내세요.',
   },
   {
-    chapter: '하늘 · 멈춰 버린 발걸음', name: '역풍의 높은 벽', type: 'puzzle', skills: ['bridge', 'dash'], objective: '출발 약속의 기억으로 거대한 바람 기둥을 무너뜨려라',
-    intro: '하늘의 길은 이제 벽 하나가 아니라 여러 높이로 갈라진 절벽이 되었어. 기억의 나가 붙잡은 잔상 발판으로 첫 틈을 넘고, 점프로 높은 바람 선반을 따라가자. 출발 약속에 기억의 나를 남기면, 길을 막던 거대한 기둥이 더는 버티지 못하고 무너질 거야. 마지막 좁은 틈은 Space 질주로 가른다.',
+    chapter: '하늘 · 멈춰 버린 발걸음', name: '역풍의 높은 벽', type: 'puzzle', skills: ['dash'], blockedSkills: ['resonance'], objective: '출발 약속의 기억으로 거대한 바람 기둥을 무너뜨려라',
+    intro: '하늘의 길은 이제 벽 하나가 아니라 여러 높이로 갈라진 절벽이 되었어. 기둥이 서 있는 동안에는 역풍이 점프와 질주까지 되밀어. 먼저 출발 약속에 기억의 나를 남겨, 길을 막던 거대한 기둥을 무너뜨리자. 바람이 멎으면 높은 선반을 따라가고 마지막 좁은 틈은 Space 질주로 가른다.',
     layout: 'wind-cliff', echoGoal: 1, hint: '① 출발 약속 위에서 K로 기억 남기기 ② 기억이 재생되면 역풍 기둥이 무너짐 ③ 점프로 높은 바람 선반 오르기 ④ Space로 마지막 틈 돌파.',
   },
   {
     chapter: '하늘 · 멈춰 버린 발걸음', name: '되돌아오는 표지판', type: 'puzzle', skills: ['resonance', 'dash'], objective: '층마다 다른 표지판을 지나 진짜 출발점에 닿아라',
-    blockedSkills: ['bridge'],
     intro: '표지판은 계속 출발점으로 돌아가라고 속삭여. 하지만 진짜 길은 위·아래 층을 지그재그로 오르는 바람 미로 안에 있어. L로 숨은 방향을 보고, Space로 망설임보다 빨리 다음 층으로 질주하자.',
     layout: 'signpost-maze', echoGoal: 1, hint: '기억의 나를 출발 신호에 남기고 L로 다음 층을 보며 Space로 지그재그 바람길을 이어가세요.',
   },
   {
     chapter: '하늘 · 멈춰 버린 발걸음', name: '하늘이의 바람 끝', type: 'boss', skills: ['resonance', 'dash'], objective: '돌풍을 기억의 나에게 유인하고 질주로 바람길을 뚫어라',
-    intro: '하늘이는 넘어져도 다시 달리던 아이였어. 하지만 마지막에는 아무리 달려도 제자리라고 느끼는 것이 가장 무서웠다. 그 공포가 모든 길을 되돌려 보내는 검은 연이 되었다. 먼저 K로 두 명의 과거의 나를 출발 깃발에 남겨 돌풍을 유인해. 그 다음 열리는 바람 고리를 Space 질주로 연속 통과해 용기를 쌓아야 해. 너무 오래 망설이면 바람이 다시 출발점으로 되돌려 보낸다.',
+    intro: '하늘이는 넘어져도 다시 달리던 아이였어. 하지만 마지막에는 아무리 달려도 제자리라고 느끼는 것이 가장 무서웠다. 그 공포가 모든 길을 되돌려 보내는 검은 연이 되었다. 먼저 K로 두 명의 과거의 나를 출발 깃발에 남겨. 검은 연의 바람 탄환이 그 기억 미끼에 닿을 때마다 “바람 표식”이 하나씩 쌓이고, 표식 세 개를 채우면 바람 고리가 열린다. 그 다음 Space 질주로 고리를 연속 통과해 용기를 쌓아야 해. 너무 오래 망설이면 바람이 다시 출발점으로 되돌려 보낸다.',
     boss: '바람을 삼킨 검은 연', bossConfig: {
       mode: 'chase', visual: 'wind', requiredEchoHits: 3, attackTarget: 'echo',
       moveBounds: { xMin: 45, xMax: 720, yMin: 86, yMax: 437 },
@@ -396,7 +407,7 @@ const STAGES = [
         { x: 678, y: 212, w: 30, h: 84, label: '끝의 질주' },
       ],
     },
-    hint: '① 기억의 나 둘을 출발 깃발에 남기기 ② 돌풍 유인 3회 ③ 열린 바람 고리 4개를 제한 시간 안에 Space 질주로 연속 통과하세요.',
+    hint: '① 기억의 나 둘을 출발 깃발에 남기기 ② 바람 탄환을 기억 미끼에 맞혀 바람 표식 3개 쌓기 ③ 열린 바람 고리 4개를 제한 시간 안에 Space 질주로 연속 통과하세요.',
   },
   {
     chapter: '하늘 · 멈춰 버린 발걸음', name: '하늘이의 발걸음이 남긴 길', type: 'puzzle', skills: ['dash'], objective: '바람 위에 남은 발자국 섬을 따라 완벽한 꿈의 문으로 향하라',
@@ -434,7 +445,7 @@ const STAGES = [
     hint: '① K로 딸의 진짜 사진에 기억의 나를 남기기 ② 가짜 풍경이 사라지면 L로 진짜 균열을 드러내기 ③ Space 질주로 균열 4개를 통과하세요.',
   },
   {
-    page: 2, chapter: 'PAGE 02 · 현실을 향한 마지막 꿈', name: '수면 과학자의 연구실', type: 'boss', skills: ['bridge', 'time', 'resonance', 'dash'], objective: '기억과 공명을 완성해 거대한 꿈의 수호자를 멈춰라',
+    page: 2, chapter: 'PAGE 02 · 현실을 향한 마지막 꿈', name: '수면 과학자의 연구실', type: 'boss', skills: ['time', 'resonance', 'dash'], objective: '기억과 공명을 완성해 거대한 꿈의 수호자를 멈춰라',
     intro: '딸이 친구들의 꿈을 보자, 완벽한 세계 전체가 무너지기 시작한다. 수면 과학자는 딸의 마지막 행복을 지키려 자기 자신을 거대한 꿈의 수호자로 바꾼다. 이제는 그를 쓰러뜨리는 것만으로는 부족해. 세 친구의 기억으로 봉인을 열고, 빼앗은 꿈 에너지를 되돌려 주며 그의 집착을 멈춰야 해.',
     boss: '수면 과학자', bossConfig: {
       mode: 'final', finalChargeNeeded: 1.4,
@@ -472,10 +483,10 @@ const PUZZLE_ROLE_RULES = Object.freeze({
     readyText: '두 목소리가 서로를 향합니다. 끊어진 옥타브가 화음으로 이어졌어요.',
   }),
   'harmony-spiral': Object.freeze({
-    title: '침묵을 향한 화음',
-    prompt: '두 기억이 검은 침묵 기둥을 향하게 하세요',
+    title: '서로를 향한 화음',
+    prompt: '두 기억이 서로를 바라보게 하세요',
     directions: Object.freeze([1, -1]),
-    readyText: '두 화음이 침묵을 마주 봅니다. 기둥 너머의 선율이 돌아왔어요.',
+    readyText: '두 화음이 서로에게 닿습니다. 나선형 선율이 돌아왔어요.',
   }),
   'classroom-fracture': Object.freeze({
     title: '서로를 부르는 두 자리',
@@ -588,7 +599,7 @@ function updateFriendReactions(stage = currentStage()) {
 
 function stageSpriteSet(stageIndex = game?.stageIndex || 0) {
   const stage = STAGES[Math.max(0, Math.min(STAGES.length - 1, stageIndex))] || STAGES[0];
-  const sprites = [playerSprites.idle, playerSprites.run, playerSprites.jump];
+  const sprites = [playerSprites.idle, playerSprites.run, playerSprites.jump, memoryEffectSprites.resonanceTrail, memoryEffectSprites.anchor];
   if (stageIndex < 6) {
     // 1~6은 모두 같은 유원지 발판 원화를 쓴다. 4스테이지를 한 번 열어야만
     // 스프라이트가 로드되던 조건을 없애, 재진입 여부와 상관없이 같은 디자인을 유지한다.
@@ -599,18 +610,17 @@ function stageSpriteSet(stageIndex = game?.stageIndex || 0) {
     if (stage.type === 'boss') sprites.push(bossSprites.harinClown, memoryPadSprites.distortion);
   } else if (stageIndex < 12) {
     sprites.push(yunaBackgrounds[stageIndex - 6], gateSprites.yuna, memoryPadSprites.yuna, platformSprites.yunaResonancePad);
-    if (stageIndex === 9) sprites.push(objectSprites.yunaSilentKey);
     if (stage.type === 'boss') sprites.push(bossSprites.yunaChoir);
   } else if (stageIndex < 18) {
     sprites.push(haneulBackgrounds[stageIndex - 12], gateSprites.haneul, memoryPadSprites.haneul, platformSprites.haneulWindLedge);
     if (stageIndex === 14) sprites.push(objectSprites.haneulHeadwindPillar, objectSprites.haneulHeadwindRubble);
     if (stageIndex === 15) sprites.push(objectSprites.haneulTrueSignpost);
-    if (stage.type === 'boss') sprites.push(bossSprites.haneulKite, objectSprites.haneulDashRiftGate);
+    if (stage.type === 'boss') sprites.push(bossSprites.haneulKite, objectSprites.haneulDashRiftGate, projectileSprites.haneulWindShard);
   } else if (stageIndex < 21) {
     sprites.push(daughterBackgrounds[stageIndex - 18], gateSprites.daughter, memoryPadSprites.daughter, platformSprites.daughterGarden, platformSprites.daughterFracturedClassroom, objectSprites.daughterTrueCrack);
-    if (stage.type === 'boss') sprites.push(bossSprites.daughterGuardian);
+    if (stage.type === 'boss') sprites.push(bossSprites.daughterGuardian, projectileSprites.daughterMirrorShard);
   } else {
-    sprites.push(scientistBackground, gateSprites.scientist, memoryPadSprites.scientist, bossSprites.scientistGuardian, bossSprites.scientistGuardianAwakened, finalTruthPortraits.harin, finalTruthPortraits.yuna, finalTruthPortraits.haneul);
+    sprites.push(scientistBackground, gateSprites.scientist, memoryPadSprites.scientist, bossSprites.scientistGuardian, bossSprites.scientistGuardianAwakened, projectileSprites.scientistDreamCore, finalTruthPortraits.harin, finalTruthPortraits.yuna, finalTruthPortraits.haneul, objectSprites.scientistDaughterVoiceAltar, memoryEffectSprites.finalMemoryBraid);
   }
   return sprites.flat(Infinity).filter(Boolean);
 }
@@ -677,9 +687,9 @@ const PROLOGUE_STORY = Object.freeze({
   lines: [
     { speaker: '하린', portrait: 'harin', text: '어제도 웃는 꿈을 꿨는데… 깨어나니까 왜 웃었는지 기억이 안 나. 요즘은 웃는 게 조금 무서워.' },
     { speaker: '전 조수', portrait: 'assistant', text: '하린뿐만이 아니야. 누군가 아이들의 꿈과 감정을 빼앗아, 한 아이만을 위한 완벽한 꿈을 유지하고 있어.' },
-    { speaker: '주인공', portrait: 'protagonist', text: '그 아이도 우리 친구잖아요. 누군가의 행복 때문에 다른 친구가 울면 안 돼요.' },
+    { speaker: '윤호', portrait: 'protagonist', text: '그 아이도 우리 친구잖아요. 누군가의 행복 때문에 다른 친구가 울면 안 돼요.' },
     { speaker: '전 조수', portrait: 'assistant', text: '내 장치로 하린의 꿈에 들어가. 꿈속에서는 네가 믿는 상상력이 규칙을 바꿀 수 있어. 부수는 게 아니라, 빼앗긴 기억을 돌려주는 거야.' },
-    { speaker: '주인공', portrait: 'protagonist', text: '그럼 하린의 웃음부터 찾아올게요. 모두가 다시 자기 꿈을 꾸게 될 때까지.' },
+    { speaker: '윤호', portrait: 'protagonist', text: '그럼 하린의 웃음부터 찾아올게요. 모두가 다시 자기 꿈을 꾸게 될 때까지.' },
   ],
 });
 
@@ -688,28 +698,28 @@ const STORY_BEATS = {
     tag: 'DREAM LINK · A SMALL PROMISE', title: '처음으로 닿은 꿈', artId: 'story-00-first-link',
     lines: [
       { speaker: '전 조수', portrait: 'assistant', text: '접속은 성공했어. 네가 한 걸음 내디딜 때마다, 이 꿈은 “아직 돌아올 수 있다”고 대답하고 있어.' },
-      { speaker: '주인공', portrait: 'protagonist', text: '그럼 내가 계속 걸을게요. 하린이 혼자 무서워하지 않게.' },
+      { speaker: '윤호', portrait: 'protagonist', text: '그럼 내가 계속 걸을게요. 하린이 혼자 무서워하지 않게.' },
     ],
   },
   1: {
     tag: 'MEMORY LOG · FIRST ECHO', title: '한 명이었던 나는, 둘이 되었다', artId: 'story-01-first-echo',
     lines: [
       { speaker: '전 조수', portrait: 'assistant', text: '봤지? 방금 전의 네가 지금의 너를 기다렸어. 꿈은 혼자 견디는 곳이 아니야.' },
-      { speaker: '주인공', portrait: 'protagonist', text: '과거의 나도 같이 도와줄 수 있다면… 하린에게도 혼자가 아니라고 말해 줄 수 있어요.' },
+      { speaker: '윤호', portrait: 'protagonist', text: '과거의 나도 같이 도와줄 수 있다면… 하린에게도 혼자가 아니라고 말해 줄 수 있어요.' },
     ],
   },
   2: {
     tag: 'HARIN · THE CAROUSEL LIGHT', title: '꺼져 가는 회전목마', artId: 'story-02-carousel-light',
     lines: [
       { speaker: '하린의 기억', portrait: 'harin', text: '다른 애들은 다 웃고 있는데… 나만 웃지 못하면 어떡하지? 그러면 아무도 나를 찾지 않을 것 같아.' },
-      { speaker: '주인공', portrait: 'protagonist', text: '하린아, 네가 못 웃는 날에도 나는 널 찾을 거야. 그러니까 조금만 기다려.' },
+      { speaker: '윤호', portrait: 'protagonist', text: '하린아, 네가 못 웃는 날에도 나는 널 찾을 거야. 그러니까 조금만 기다려.' },
     ],
   },
   3: {
     tag: 'HARIN · BEFORE THE FEAR', title: '웃지 못할까 봐 무서웠던 아이', artId: 'story-03-harin-fear',
     lines: [
       { speaker: '전 조수', portrait: 'assistant', text: '광대는 하린을 해치려는 낯선 괴물이 아니야. “혼자 남을까 봐” 떨던 마음이 추출기에 붙잡힌 거야.' },
-      { speaker: '주인공', portrait: 'protagonist', text: '그럼 쓰러뜨리지 않을 거예요. 하린이 좋아했던 순간을 다시 보여 줄게요.' },
+      { speaker: '윤호', portrait: 'protagonist', text: '그럼 쓰러뜨리지 않을 거예요. 하린이 좋아했던 순간을 다시 보여 줄게요.' },
     ],
   },
   4: {
@@ -723,21 +733,21 @@ const STORY_BEATS = {
     tag: 'NEXT DREAM · A VOICE WITHOUT A SONG', title: '노래를 잃어버린 아이', artId: 'story-05-yuna-call',
     lines: [
       { speaker: '유나의 기억', portrait: 'yuna', text: '누가 내 이름을 부른 것 같은데… 대답하려고 하면 목소리가 사라져. 내 노래가 어디에 있는지 모르겠어.' },
-      { speaker: '주인공', portrait: 'protagonist', text: '들려, 유나야. 네 노래가 완전히 사라진 건 아니야. 내가 찾으러 갈게.' },
+      { speaker: '윤호', portrait: 'protagonist', text: '들려, 유나야. 네 노래가 완전히 사라진 건 아니야. 내가 찾으러 갈게.' },
     ],
   },
   6: {
     tag: 'YUNA · THE EMPTY CHAIR', title: '비어 있는 자리의 목소리', artId: 'story-06-yuna-empty-chair',
     lines: [
       { speaker: '유나', portrait: 'yuna', text: '빈자리를 볼 때마다, 내가 누군가에게 잊힌 것 같았어. 그래서 노래를 불러도 아무도 듣지 못할까 봐 무서웠어.' },
-      { speaker: '주인공', portrait: 'protagonist', text: '비어 있는 자리는 네가 함께했던 시간을 지우지 못해. 내가 그 자리를 같이 지킬게.' },
+      { speaker: '윤호', portrait: 'protagonist', text: '비어 있는 자리는 네가 함께했던 시간을 지우지 못해. 내가 그 자리를 같이 지킬게.' },
     ],
   },
   7: {
     tag: 'YUNA · THE MISSING SCORE', title: '빠진 음표 사이에서', artId: 'story-07-yuna-missing-score',
     lines: [
       { speaker: '유나', portrait: 'yuna', text: '악보의 빈칸을 볼 때마다 내가 잘못 불렀다고 생각했어. 그래서 다음 음을 내는 게 무서웠어.' },
-      { speaker: '주인공', portrait: 'protagonist', text: '비어 있는 음도 같이 채우면 돼. 유나가 멈춘 자리부터 다시 시작하자.' },
+      { speaker: '윤호', portrait: 'protagonist', text: '비어 있는 음도 같이 채우면 돼. 유나가 멈춘 자리부터 다시 시작하자.' },
     ],
   },
   8: {
@@ -751,7 +761,7 @@ const STORY_BEATS = {
     tag: 'YUNA · BEFORE THE SILENCE', title: '목소리가 닿지 않을까 봐', artId: 'story-09-yuna-silence',
     lines: [
       { speaker: '전 조수', portrait: 'assistant', text: '침묵을 삼킨 합창단은 유나가 “아무도 내 목소리를 듣지 않을 거야”라고 믿었던 순간에 태어났어.' },
-      { speaker: '주인공', portrait: 'protagonist', text: '그럼 우리가 먼저 들을게요. 유나의 가장 작은 목소리까지.' },
+      { speaker: '윤호', portrait: 'protagonist', text: '그럼 우리가 먼저 들을게요. 유나의 가장 작은 목소리까지.' },
     ],
   },
   10: {
@@ -765,35 +775,35 @@ const STORY_BEATS = {
     tag: 'NEXT DREAM · A ROAD OF WIND', title: '멈춰 버린 발걸음', artId: 'story-11-haneul-call',
     lines: [
       { speaker: '하늘의 기억', portrait: 'haneul', text: '계속 달렸는데… 왜 다시 여기야? 이번에도 못 나가면 어떡하지?' },
-      { speaker: '주인공', portrait: 'protagonist', text: '한 번 멈춘다고 길이 없어지는 건 아니야. 이번에는 같이 달리자.' },
+      { speaker: '윤호', portrait: 'protagonist', text: '한 번 멈춘다고 길이 없어지는 건 아니야. 이번에는 같이 달리자.' },
     ],
   },
   12: {
     tag: 'HA-NEUL · FIRST RUSH', title: '바람보다 먼저 내딛는 발', artId: 'story-12-haneul-dash',
     lines: [
       { speaker: '하늘', portrait: 'haneul', text: '멀어서 못 갈 것 같으면, 나는 그냥 더 빨리 달렸어. 그런데 이 길은 자꾸 나를 처음으로 돌려보내.' },
-      { speaker: '주인공', portrait: 'protagonist', text: '이번에는 되돌아오더라도 괜찮아. 다시 출발할 기억을 남겨 둘게.' },
+      { speaker: '윤호', portrait: 'protagonist', text: '이번에는 되돌아오더라도 괜찮아. 다시 출발할 기억을 남겨 둘게.' },
     ],
   },
   13: {
     tag: 'HA-NEUL · THE TRUE DIRECTION', title: '표지판보다 믿을 수 있는 것', artId: 'story-13-haneul-sign',
     lines: [
       { speaker: '전 조수', portrait: 'assistant', text: '바람은 길을 지우고, 표지판은 거짓말을 해. 하지만 하늘이의 기억만은 계속 앞으로를 가리키고 있어.' },
-      { speaker: '주인공', portrait: 'protagonist', text: '그럼 바람이 뭐라고 하든, 우리가 기억한 방향으로 갈 거야.' },
+      { speaker: '윤호', portrait: 'protagonist', text: '그럼 바람이 뭐라고 하든, 우리가 기억한 방향으로 갈 거야.' },
     ],
   },
   14: {
     tag: 'HA-NEUL · ABOVE THE HEADWIND', title: '한 가지 방법만으로는 못 가는 길', artId: 'story-14-haneul-wall',
     lines: [
       { speaker: '하늘', portrait: 'haneul', text: '나는 빨리만 가면 된다고 생각했어. 그런데 혼자 달릴수록 더 멀어지는 느낌이었어.' },
-      { speaker: '주인공', portrait: 'protagonist', text: '달리는 것도, 기다리는 것도, 도움을 받는 것도 전부 앞으로 가는 방법이야.' },
+      { speaker: '윤호', portrait: 'protagonist', text: '달리는 것도, 기다리는 것도, 도움을 받는 것도 전부 앞으로 가는 방법이야.' },
     ],
   },
   15: {
     tag: 'HA-NEUL · BEFORE THE KITE', title: '제자리일까 봐 무서웠던 아이', artId: 'story-15-haneul-fear',
     lines: [
       { speaker: '전 조수', portrait: 'assistant', text: '검은 연은 하늘이를 끌어내리려는 괴물이 아니야. 아무리 달려도 달라지지 않을까 봐 떨던 마음이야.' },
-      { speaker: '주인공', portrait: 'protagonist', text: '하늘아, 이번에는 네가 달린 길이 여기 남아 있어. 내가 봤어.' },
+      { speaker: '윤호', portrait: 'protagonist', text: '하늘아, 이번에는 네가 달린 길이 여기 남아 있어. 내가 봤어.' },
     ],
   },
   16: {
@@ -807,7 +817,7 @@ const STORY_BEATS = {
     tag: 'DAUGHTER · THE PERFECT GARDEN', title: '너무 완벽해서 이상한 곳', artId: 'story-17-daughter-garden',
     lines: [
       { speaker: '수면 과학자의 딸', portrait: 'daughter', text: '여기는 매일 꽃이 피고, 친구들도 웃어. 그런데 왜 가끔 누군가 울고 있는 소리가 들리지?' },
-      { speaker: '주인공', portrait: 'protagonist', text: '그 소리가 들린다면, 네가 잘못된 게 아니야. 같이 어디에서 오는지 찾아보자.' },
+      { speaker: '윤호', portrait: 'protagonist', text: '그 소리가 들린다면, 네가 잘못된 게 아니야. 같이 어디에서 오는지 찾아보자.' },
     ],
   },
   18: {
@@ -821,7 +831,7 @@ const STORY_BEATS = {
     tag: 'DAUGHTER · THE DREAM DEFENDS ITSELF', title: '완벽한 세계가 두려워한 균열', artId: 'story-19-perfect-guardian',
     lines: [
       { speaker: '수면 과학자의 딸', portrait: 'daughter', text: '아빠가 만든 이곳이 누군가의 꿈을 빼앗아 만든 거라면… 나는 여기서 웃으면 안 되는 걸까?' },
-      { speaker: '주인공', portrait: 'protagonist', text: '네가 웃었던 게 잘못은 아니야. 이제부터는 아무도 울지 않는 방법을 같이 찾으면 돼.' },
+      { speaker: '윤호', portrait: 'protagonist', text: '네가 웃었던 게 잘못은 아니야. 이제부터는 아무도 울지 않는 방법을 같이 찾으면 돼.' },
     ],
   },
   20: {
@@ -985,7 +995,7 @@ function renderCampaignRoute() {
 
 function freshGameState(phase = 'intro') {
   return {
-    phase, stageIndex: 0, imagination: 100, elapsed: 0, bridge: false,
+    phase, stageIndex: 0, imagination: 100, elapsed: 0,
     player: freshPlayer(), platforms: [], boss: null, dreamShots: [], nightmareShots: [], fireCooldown: 0,
     nextAttack: 1.2, message: '', completed: [], memories: new Set(campaign.memories), learnedSkills: new Set(campaign.skills), fragments: [], echoes: [], recording: null, memoryRecordsUsed: 0, reactionSeen: new Set(), rewindExpressionTimer: 0, dreamTrails: [], dashTrailClock: 0, dashVisualTimer: 0, memoryPads: [], fallZones: [], transition: 'start', stageIntroTimer: null, dashCooldown: 0, dashTimer: 0, dashDirection: 1, watcherResolved: false,
     stageRealElapsed: 0, challenge: null, bossGuideKey: '', bossGuideUntil: 0, bossGuideStarted: 0,
@@ -1663,7 +1673,7 @@ function bossEntryLine(stage = currentStage()) {
   const mode = stage?.bossConfig?.mode;
   if (mode === 'calm') return '하린의 “혼자 남을까 봐”라는 두려움이 광대가 되었습니다. 쓰러뜨리지 말고, 함께했던 기억을 보여 주세요.';
   if (mode === 'resonance') return '침묵의 합창단이 유나의 목소리를 삼키고 있습니다. 박자를 듣고 화음을 되찾으세요.';
-  if (mode === 'chase') return '검은 연이 하늘의 발걸음을 출발점으로 되돌립니다. 기억에게 바람을 맡기고, 현재의 너는 끝까지 달리세요.';
+  if (mode === 'chase') return '검은 연이 하늘의 발걸음을 출발점으로 되돌립니다. 두 기억 미끼가 바람 탄환을 받을 때마다 바람 표식이 쌓입니다. 표식 세 개를 채운 뒤, 현재의 너는 끝까지 달리세요.';
   if (mode === 'mirror') return '수호자는 딸을 지키려 가짜 풍경을 만들었습니다. 진짜 사진을 재생해 균열을 구분하세요.';
   if (mode === 'final') return '꿈이 무너지자 과학자가 직접 수호자가 되었습니다. 이 싸움의 끝은 승리가 아니라, 놓아주는 선택입니다.';
   return stage?.intro || '';
@@ -1672,8 +1682,8 @@ function bossEntryLine(stage = currentStage()) {
 function bossBriefForStage(stage = currentStage()) {
   const mode = stage?.bossConfig?.mode;
   if (mode === 'calm') return '① K로 진짜 기억 두 곳 재생  ② 가짜 기억은 I로 삭제  ③ 마지막 빛에서 Shift 2.1초 유지\n공격은 필요 없습니다.';
-  if (mode === 'resonance') return '① K로 화음 앵커 두 곳 재생  ② 별빛 박자에 맞춰 L을 짧게 6회  ③ 마지막 불협화음 20초 회피';
-  if (mode === 'chase') return '① K로 두 기억 미끼 준비  ② 돌풍이 기억을 세 번 따라가게 유도  ③ Space 질주로 바람 고리 연속 통과';
+  if (mode === 'resonance') return '① K로 화음 앵커 두 곳 재생  ② 앵커가 불협화음 3회에 사라지기 전 다시 기록  ③ 별빛 박자에 맞춰 L을 짧게 6회  ④ 마지막 불협화음 20초 회피';
+  if (mode === 'chase') return '① K로 두 기억 미끼 준비  ② 바람 탄환을 미끼에 맞혀 바람 표식 3개 채우기  ③ Space 질주로 바람 고리 연속 통과';
   if (mode === 'mirror') return '① K로 진짜 사진 재생  ② L로 진짜 균열만 드러내기  ③ Space 질주로 균열 네 곳 통과';
   if (mode === 'final') return '① K로 세 친구의 봉인 완성  ② L로 꿈 에너지 분리  ③ J로 첫 기억 반환\n④ 움직이는 TRUE 기억 추적  ⑤ 부서진 수호자 체력 모두 해체  ⑥ 마지막에는 딸의 목소리에 L 유지';
   return '기억의 역할을 완성해 공포의 규칙을 바꾸세요.';
@@ -1686,6 +1696,7 @@ function guideKeyHints() {
     const basics = [{ key: '← →', label: '이동' }, { key: '↑', label: '점프' }];
     if (game.recording) return [...basics, { key: 'K', label: '되감기' }, { key: 'I', label: '기록 취소' }];
     if (stage.layout === 'carousel') return [...basics, { key: 'K', label: '회전목마 기억' }];
+    if (stage.layout === 'wall') return [...basics, { key: 'L', label: '공명 길' }, { key: 'K', label: '기억 기록' }];
     if ((stage.chapter || '').includes('유나')) return [...basics, { key: 'L', label: '공명 길' }, { key: 'K', label: '기억 역할' }];
     if ((stage.chapter || '').includes('하늘')) return [...basics, { key: 'Space', label: '질주' }, { key: 'K', label: '출발 기억' }];
     if ((stage.chapter || '').includes('딸')) return [...basics, { key: 'L', label: '숨은 균열' }, { key: 'K', label: '친구 기억' }];
@@ -1730,6 +1741,12 @@ function phaseGuide() {
     if (stage.layout === 'carousel') {
       return { step: 'STEP 2 / 3', text: '움직이는 달빛 발판에 올라타세요. 발판이 벽 위까지 실어 주면 점프로 반대편 선반으로 건너세요.', compact: '달빛 발판을 타고 벽 위로 건너라' };
     }
+    if (stage.layout === 'wall' && !activeTechniques().resonance) {
+      return { step: 'STEP 1 / 3', text: 'L 공명 파장을 유지해 세 갈래 공명 길을 드러내세요. 공명을 멈추면 길도 사라집니다.', compact: 'L로 공명 길을 유지하라' };
+    }
+    if (stage.layout === 'wind-cliff' && !game.windPillarReleased) {
+      return { step: `BREAK THE HEADWIND · ${active} / ${goal}`, text: '출발 약속 위까지 K로 기록한 뒤 되감으세요. 기억의 나가 약속을 지키면 역풍 기둥이 무너집니다.', compact: '기억의 나로 역풍 기둥을 무너뜨려라' };
+    }
     if (stage.layout === 'wind-cliff' && game.windPillarReleased) {
       return { step: 'HEADWIND BROKEN', text: '역풍 기둥이 무너져 절벽길이 열렸습니다. 높은 바람 선반을 따라가고, 마지막 틈은 Space 질주로 건너세요.', compact: '무너진 역풍 너머로 질주하라' };
     }
@@ -1768,15 +1785,15 @@ function phaseGuide() {
   if (boss.mode === 'resonance') {
     if (boss.codaActive) {
       const remaining = Math.max(0, boss.codaDuration - boss.codaElapsed);
-      return { step: 'FINAL CODA', text: '합창단이 무너진 불협화음을 쏟아내고 있습니다. 공격하지 말고, 20초 동안 음표 탄막을 피하세요.', compact: `불협화음 버티기 ${remaining.toFixed(1)}초` };
+      return { step: 'FINAL CODA', text: '합창단이 무너진 불협화음을 쏟아냅니다. 잔상은 세 번 맞으면 흩어지지만 이미 되찾은 음은 유지됩니다. 20초 동안 음표 탄막을 피하세요.', compact: `불협화음 버티기 ${remaining.toFixed(1)}초` };
     }
     return boss.activePads < boss.memoryPads.length
-      ? { step: 'STEP 1 / 2', text: '두 기억의 나를 화음 앵커에 남기세요.', compact: `화음 앵커 ${boss.activePads} / ${boss.memoryPads.length}` }
+      ? { step: 'STEP 1 / 2', text: '두 기억의 나를 화음 앵커에 남기세요. 각 앵커는 불협화음 세 번을 맞으면 사라지니, 깨지면 K로 다시 기록하세요.', compact: `화음 앵커 ${boss.activePads} / ${boss.memoryPads.length} · 3회 방어` }
       : { step: 'STEP 2 / 2', text: '별빛 고리가 밝아지는 박자에 맞춰 L을 짧게 한 번씩 눌러, 음을 순서대로 되찾으세요.', compact: `박자 탭 · 음 ${boss.resonanceProgress} / ${boss.resonanceGates.length}` };
   }
   if (boss.mode === 'chase') {
     return boss.echoHits < boss.requiredEchoHits
-      ? { step: 'STEP 1 / 2', text: '두 기억 미끼를 출발 깃발에 남기세요. 돌풍을 번갈아 유인하면 길이 열립니다.', compact: `바람 유인 ${boss.echoHits} / ${boss.requiredEchoHits}` }
+      ? { step: 'STEP 1 / 2', text: '두 기억 미끼를 출발 깃발에 남기세요. 검은 연의 바람 탄환이 미끼에 닿을 때마다 바람 표식이 하나씩 쌓입니다. 표식 3개를 채우면 길이 열립니다.', compact: `바람 표식 ${boss.echoHits} / ${boss.requiredEchoHits} · 기억 미끼에 탄환을 맞혀라` }
       : { step: 'STEP 2 / 2', text: '열린 바람 고리를 Space 질주로 연속 통과해 용기를 쌓으세요. 망설이면 처음으로 돌아갑니다.', compact: `용기 연속 ${boss.chaseProgress} / ${boss.windGates.length}` };
   }
   if (boss.mode === 'mirror') {
@@ -1999,7 +2016,6 @@ function startStage() {
   game.phase = 'playing';
   game.imagination = 100;
   game.elapsed = 0;
-  game.bridge = false;
   game.player = freshPlayer();
   game.dreamShots = [];
   game.nightmareShots = [];
@@ -2162,13 +2178,12 @@ function setupPuzzle(layout, echoGoal) {
     game.fallZones = [];
   } else if (layout === 'harmony-spiral') {
     game.platforms = [
-      // 10스테이지: 화음을 남긴 뒤, 검은 건반 기둥의 꼭대기를 타고 반대편 선율로 넘어간다.
+      // 10스테이지: 두 화음을 맞춘 뒤, 비어 있던 나선형 악보를 따라 반대편 선율로 넘어간다.
       { x: 0, y: 500, w: 154, h: 40, label: 'SCORE START' },
       { x: 194, y: 430, w: 52, h: 16, hidden: true, label: 'SPIRAL NOTE 01' },
       { x: 284, y: 354, w: 70, h: 18, label: 'LOW HARMONY' },
       { x: 394, y: 278, w: 54, h: 16, hidden: true, label: 'SPIRAL NOTE 02' },
       { x: 484, y: 204, w: 58, h: 18, label: 'UPPER OCTAVE' },
-      { x: 572, y: 190, w: 54, h: 310, wall: true, persistentWall: true, label: 'SILENT KEY' },
       { x: 656, y: 270, w: 54, h: 16, hidden: true, label: 'SPIRAL NOTE 03' },
       { x: 748, y: 344, w: 72, h: 18, label: 'HIGH HARMONY' },
       { x: 856, y: 272, w: 46, h: 16, hidden: true, label: 'FINAL REFRAIN' },
@@ -2343,7 +2358,9 @@ function setupBoss(name, config = {}) {
     name, x: config.x || 734, y: config.y || 168, w: config.w || 164, h: config.h || 205, maxHp: bossHp, hp: bossHp, flash: 0, attack: 0, attackIndex: 0,
     phase: 1, reflections: 0, memoryShield: 0, calmed: false, mode: config.mode || 'standard', resolving: false, activePads: 0,
     attackUnlocked: false, visual: config.visual || 'clown', attackTarget: config.attackTarget || 'player',
-    requiredEchoHits: Number(config.requiredEchoHits) || 0, echoHits: 0,
+    requiredEchoHits: Number(config.requiredEchoHits) || 0, echoHits: 0, baitImpact: null, baitImpactPulse: 0,
+    // 모든 보스전에서 기억의 나는 공포 탄환을 세 번까지 받아 낸다. 세 번째 피격에 사라진다.
+    echoHitLimit: Math.max(1, Math.round(Number(config.echoHitLimit) || 3)), echoAttackCadence: Math.max(0, Math.round(Number(config.echoAttackCadence) || 0)), echoDamagePulse: 0,
     calmDuration: Number(config.calmDuration) || 1.4, calmProgress: 0,
     distortedMemoryPads: (config.distortedMemoryPads || []).map((pad) => ({ ...pad })),
     decoyPads: (config.decoyPads || []).map((pad) => ({ ...pad })), windGates: (config.windGates || []).map((gate) => ({ ...gate })), chaseProgress: 0, courageDeadline: 0,
@@ -2465,6 +2482,7 @@ function finishMemoryRecording() {
     role: memoryRoleForCurrentDream(),
     baitUses: 0,
     baitCooldown: 0,
+    nightmareHits: 0,
   };
   const replacedOldestEcho = game.echoes.length >= 3;
   if (replacedOldestEcho) {
@@ -2522,7 +2540,6 @@ function spend(amount) {
 
 function activeTechniques() {
   return {
-    bridge: game.phase === 'playing' && hasSkill('bridge') && keys.has('KeyO') && game.imagination > 0,
     time: game.phase === 'playing' && hasSkill('time') && (keys.has('ShiftLeft') || keys.has('ShiftRight')) && game.imagination > 0,
     resonance: game.phase === 'playing' && hasSkill('resonance') && keys.has('KeyL') && game.imagination > 0,
   };
@@ -2582,14 +2599,14 @@ function resonanceDrainPerSecond() {
 }
 
 function imaginationRegen(dt, techniques) {
-  const drain = (techniques.bridge ? 16 : 0) + (techniques.time ? 28 : 0) + (techniques.resonance ? resonanceDrainPerSecond() : 0);
+  const drain = (techniques.time ? 28 : 0) + (techniques.resonance ? resonanceDrainPerSecond() : 0);
   if (drain > 0) {
     game.imagination = Math.max(0, game.imagination - drain * dt);
     if (game.imagination <= 0) disconnect();
   } else game.imagination = Math.min(100, game.imagination + 11 * dt);
 }
 
-function getWallBridges() {
+function getWallResonancePaths() {
   const t = game.elapsed || 0;
   return [
     { x: 205 + Math.sin(t * 1.7) * 6, y: 452, w: 108, h: 16, label: 'HUB PATH' },
@@ -2598,10 +2615,6 @@ function getWallBridges() {
     { x: 160, y: 305 + Math.sin(t * 1.2 + 2.5) * 4, w: 170, h: 16, label: 'UP PATH 02' },
     { x: 635 + Math.sin(t * 1.4 + 3.1) * 5, y: 420, w: 130, h: 16, label: 'LOW LINK' },
   ];
-}
-
-function getLegacyBridge() {
-  return { x: 313 + Math.sin(game.elapsed * 2.2) * 56, y: 452, w: 92, h: 18, label: 'MEMORY PATH' };
 }
 
 function getCarouselRide() {
@@ -2735,7 +2748,6 @@ function updatePuzzle(dt) {
       p.y += afterRide.y - beforeRide.y;
     }
   }
-  game.bridge = techniques.bridge;
   updateHarinStage02Restoration(dt, stage);
   updateWindCliffPillar(dt, stage);
   if (!frozen) game.elapsed += dt;
@@ -2783,10 +2795,7 @@ function updatePuzzle(dt) {
   p.y += p.vy * dt;
   p.grounded = false;
   const colliders = game.platforms.filter((item) => !item.wall && (!item.hidden || techniques.resonance));
-  if (game.bridge) {
-    if (stage.layout === 'wall') colliders.push(...getWallBridges());
-    else colliders.push(getLegacyBridge());
-  }
+  if (techniques.resonance && stage.layout === 'wall') colliders.push(...getWallResonancePaths());
   if (stage.layout === 'carousel' && game.carouselRideProgress > .02) colliders.push(getCarouselRide());
   // 기억의 나는 단순 스위치가 아니라, 필요할 때 한 칸 더 올라설 수 있는 움직이는 기억 발판이다.
   const echoColliders = game.echoes.map((echo) => ({ x: echo.x, y: echo.y, w: echo.w, h: echo.h, memoryEcho: true }));
@@ -2932,6 +2941,15 @@ function spawnNightmarePattern() {
   }
 
   if (b.mode === 'resonance') {
+    // 박자 퍼즐 중에는 세 번째 불협화음이 화음 앵커를 겨냥한다.
+    // 앵커는 세 번 버티면 사라지므로, 플레이어가 다시 기록할 시간도 남긴다.
+    const anchorEcho = !b.codaActive && b.echoHitLimit > 0 && b.echoAttackCadence > 0 && attackNumber % b.echoAttackCadence === 0
+      ? getResonanceAnchorEcho(b)
+      : null;
+    if (anchorEcho) {
+      launchNightmareFan(origin, anchorEcho, 1, 0, { speed: 330, r: 10, kind: 'dissonant-note' });
+      return;
+    }
     if (b.codaActive) {
       // 마지막 20초는 기존의 박자 맞추기와 전혀 다른, 불규칙한 불협화음 생존 패턴이다.
       if (attackNumber % 3 === 0) launchNightmareRing(origin, 12, { speed: 236, r: 10, kind: 'dissonant-note', offset: game.elapsed * 1.45 });
@@ -2978,6 +2996,41 @@ function getHoldingDecoy(b) {
   return game.echoes
     .filter((echo) => echo.holding && b.decoyPads.some((pad) => echoOverlapsPad(echo, pad)) && (echo.baitCooldown || 0) <= 0)
     .sort((first, second) => (first.baitUses || 0) - (second.baitUses || 0))[0] || null;
+}
+
+function getResonanceAnchorEcho(b) {
+  return game.echoes
+    .filter((echo) => echo.holding && b.memoryPads.some((pad) => echoOverlapsPad(echo, pad)))
+    .sort((first, second) => (first.nightmareHits || 0) - (second.nightmareHits || 0))[0] || null;
+}
+
+function bossEchoPads(b) {
+  return b?.mode === 'chase' ? b.decoyPads || [] : b?.memoryPads || [];
+}
+
+function damageBossEcho(echo, b) {
+  if (!echo || !b || !b.echoHitLimit) return false;
+  const pads = bossEchoPads(b);
+  const pad = pads.find((candidate) => echoOverlapsPad(echo, candidate));
+  const echoLabel = pad?.label || (echo.holding ? '기억의 나' : '재생 중인 잔상');
+  const hitLimit = b.echoHitLimit;
+  echo.nightmareHits = Math.min(hitLimit, (echo.nightmareHits || 0) + 1);
+  echo.flash = .72;
+  b.echoDamagePulse = .62;
+  if (echo.nightmareHits >= hitLimit) {
+    game.echoes = game.echoes.filter((candidate) => candidate !== echo);
+    b.activePads = activeMemoryPads(pads);
+    // 유나의 코다는 이미 여섯 음을 되찾은 뒤의 생존 단계다. 잔상이 사라져도 진행도와 시간은 유지한다.
+    if (b.mode === 'resonance' && b.codaActive) {
+      say(`코다의 불협화음이 “${echoLabel}” 잔상을 세 번 깨뜨렸습니다. 되찾은 음과 남은 시간은 유지됩니다.`);
+    } else {
+      say(`${b.name}의 공포 탄환이 “${echoLabel}” 잔상을 세 번 깨뜨렸습니다. 필요하면 K로 새 기억을 남기세요.`);
+    }
+  } else {
+    const attackName = b.mode === 'resonance' ? '불협화음' : '공포 탄환';
+    say(`${attackName}이 “${echoLabel}” 잔상을 흔듭니다. ${echo.nightmareHits} / ${hitLimit} · 세 번 맞으면 사라집니다.`);
+  }
+  return true;
 }
 
 function resolveBoss(b, message) {
@@ -3188,6 +3241,8 @@ function updateBoss(dt) {
   b.memoryShield = Math.max(0, (b.memoryShield || 0) - dt);
   b.memoryReplay = Math.max(0, (b.memoryReplay || 0) - dt);
   b.falseMirrorCooldown = Math.max(0, (b.falseMirrorCooldown || 0) - dt);
+  b.baitImpactPulse = Math.max(0, (b.baitImpactPulse || 0) - dt);
+  b.echoDamagePulse = Math.max(0, (b.echoDamagePulse || 0) - dt);
   const horizontal = horizontalInput();
   const vertical = verticalInput();
   const bounds = b.moveBounds || { xMin: 45, xMax: 565, yMin: 86, yMax: 437 };
@@ -3225,12 +3280,15 @@ function updateBoss(dt) {
     const echoHit = game.echoes.find((echo) => overlaps(rect, echo));
     if (echoHit) {
       echoHit.flash = .24;
+      damageBossEcho(echoHit, b);
       const validDecoyHit = b.mode === 'chase' && shot.decoyShot && b.decoyPads.some((pad) => echoOverlapsPad(echoHit, pad));
       if (validDecoyHit && b.requiredEchoHits > 0 && b.echoHits < b.requiredEchoHits) {
         b.echoHits += 1;
         echoHit.baitUses = (echoHit.baitUses || 0) + 1;
         echoHit.baitCooldown = 1.25;
-        say(`검은 연이 ${echoHit.baitUses > 1 ? '다른' : '첫'} 기억 미끼를 따라갔습니다. 바람 유인 ${b.echoHits} / ${b.requiredEchoHits}`);
+        b.baitImpact = b.decoyPads.find((pad) => echoOverlapsPad(echoHit, pad)) || null;
+        b.baitImpactPulse = .72;
+        say(`바람 탄환이 기억 미끼에 닿았습니다. 바람 표식 ${b.echoHits} / ${b.requiredEchoHits} · 표식 세 개를 채우면 바람 고리가 열립니다.`);
       }
       const truthEchoHit = b.mode === 'final' && b.attackUnlocked && b.memoryPads.some((pad) => echoOverlapsPad(echoHit, pad));
       if (truthEchoHit) {
@@ -3725,7 +3783,7 @@ function updateHud() {
       bossHealthEl.textContent = `되찾은 음 ${game.boss.resonanceProgress} / ${game.boss.resonanceGates.length}`;
     } else if (game.boss.mode === 'chase' && game.boss.echoHits < game.boss.requiredEchoHits) {
       bossFill.style.width = `${game.boss.echoHits / game.boss.requiredEchoHits * 100}%`;
-      bossHealthEl.textContent = `바람 유인 ${game.boss.echoHits} / ${game.boss.requiredEchoHits}`;
+      bossHealthEl.textContent = `바람 표식 ${game.boss.echoHits} / ${game.boss.requiredEchoHits}`;
     } else if (game.boss.mode === 'chase') {
       bossFill.style.width = `${game.boss.chaseProgress / Math.max(1, game.boss.windGates.length) * 100}%`;
       const left = Math.max(0, (game.boss.courageDeadline || 0) - game.elapsed);
@@ -3755,7 +3813,6 @@ function updateHud() {
     }
   }
   const techniques = activeTechniques();
-  ruleStates.bridge.textContent = techniques.bridge ? 'HOLDING · DRAIN 16 / SEC' : 'HOLD O · DRAIN 16 / SEC';
   ruleStates.time.textContent = techniques.time ? 'HOLDING · DRAIN 28 / SEC' : 'HOLD SHIFT · DRAIN 28 / SEC';
   if (ruleStates.resonance) {
     const drain = resonanceDrainPerSecond();
@@ -3773,12 +3830,15 @@ function updateHud() {
 }
 
 function updateMemoryLoopUI() {
+  const boss = game.boss;
   echoCards.forEach((card, index) => {
     const echo = game.echoes?.[index];
+    const durability = boss?.echoHitLimit > 0 && echo
+      ? ` · ${boss.mode === 'resonance' ? '불협' : '공포'} ${Math.min(boss.echoHitLimit, echo.nightmareHits || 0)}/${boss.echoHitLimit}`
+      : '';
     card.classList.toggle('found', Boolean(echo));
-    card.querySelector('small').textContent = !echo ? 'EMPTY' : echo.holding ? `${echo.role?.label || 'MEMORY'} · HOLDING` : 'REPLAYING';
+    card.querySelector('small').textContent = !echo ? 'EMPTY' : echo.holding ? `${echo.role?.label || 'MEMORY'} · HOLDING${durability}` : 'REPLAYING';
   });
-  const boss = game.boss;
   if (game.recording) {
     memoryStatus.textContent = `기억 기록 중 · ${game.recording.duration.toFixed(1)}초 · K로 되감고, I로 취소할 수 있습니다.`;
   } else if (boss) {
@@ -3789,12 +3849,12 @@ function updateMemoryLoopUI() {
         : `안심의 순간 ${boss.calmProgress.toFixed(1)} / ${boss.calmDuration.toFixed(1)}초 · 마지막 빛 위에서 Shift를 유지하세요.`;
     } else if (boss.mode === 'resonance') {
       memoryStatus.textContent = active < boss.memoryPads.length
-        ? `화음 앵커 ${active} / ${boss.memoryPads.length} · 두 기억의 나를 앵커에 남기세요.`
+        ? `화음 앵커 ${active} / ${boss.memoryPads.length} · 두 기억의 나를 앵커에 남기세요. 앵커 하나는 불협화음 3회에 사라집니다.`
         : boss.codaActive
-          ? `불협화음 버티기 ${Math.max(0, boss.codaDuration - boss.codaElapsed).toFixed(1)}초 · 공격하지 말고, 깨진 음표 탄막 사이를 피하세요.`
+          ? `불협화음 버티기 ${Math.max(0, boss.codaDuration - boss.codaElapsed).toFixed(1)}초 · 잔상은 3회 피격 시 사라지지만, 되찾은 음과 시간은 유지됩니다.`
           : `되찾은 음 ${boss.resonanceProgress} / ${boss.resonanceGates.length} · ${resonanceBeat(boss).open ? '지금은 별빛 박자입니다. L을 짧게 한 번 누르세요.' : '별빛 고리가 밝아질 때까지 다음 음 앞에서 기다리세요.'}`;
     } else if (boss.mode === 'chase' && boss.echoHits < boss.requiredEchoHits) {
-      memoryStatus.textContent = `바람 유인 ${boss.echoHits} / ${boss.requiredEchoHits} · 두 기억 미끼를 출발 깃발에 남기고, 돌풍이 한 명을 따라간 뒤 다른 기억으로 교대하게 하세요.`;
+      memoryStatus.textContent = `바람 표식 ${boss.echoHits} / ${boss.requiredEchoHits} · 검은 연의 바람 탄환을 “바람 미끼” 위 기억의 나에게 맞히면 표식이 하나씩 쌓입니다. 세 개를 채우세요.`;
     } else if (boss.mode === 'chase') {
       const left = Math.max(0, (boss.courageDeadline || 0) - game.elapsed);
       memoryStatus.textContent = `용기 연속 ${boss.chaseProgress} / ${boss.windGates.length}${boss.chaseProgress && left ? ` · 다음 고리까지 ${left.toFixed(1)}초` : ''} · Space 질주로 바람 고리를 이어가세요.`;
@@ -4275,41 +4335,6 @@ function drawHarinStage02Restoration(structure, layer) {
   ctx.restore();
 }
 
-function drawYunaSilentKeyWall(item) {
-  const { x, y, w, h } = item;
-  const image = objectSprites.yunaSilentKey;
-  ctx.save();
-  ctx.imageSmoothingEnabled = false;
-  if (image?.complete && image.naturalWidth > 0) {
-    ctx.shadowBlur = 24; ctx.shadowColor = '#67ead5';
-    ctx.drawImage(image, x - 14, y - 7, w + 28, h + 14);
-    ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .2;
-    ctx.fillStyle = '#9effd7'; ctx.fillRect(x + 3, y + 2, w - 6, h - 4);
-    ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
-    ctx.strokeStyle = '#9effd7'; ctx.lineWidth = 2; ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
-    ctx.fillStyle = '#e8fff5'; ctx.font = '800 8px ui-monospace, monospace'; ctx.textAlign = 'center';
-    ctx.fillText('SILENT KEY', x + w / 2, y - 10);
-    ctx.restore();
-    return;
-  }
-  ctx.shadowBlur = 24; ctx.shadowColor = '#67ead5';
-  const body = ctx.createLinearGradient(x, y, x + w, y);
-  body.addColorStop(0, '#08162a'); body.addColorStop(.52, '#1c3042'); body.addColorStop(1, '#07101e');
-  ctx.fillStyle = body; ctx.fillRect(x, y, w, h);
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = '#dffff4'; ctx.fillRect(x + 2, y + 2, w - 4, 4);
-  ctx.fillStyle = '#72dac9'; ctx.fillRect(x + 5, y + 8, w - 10, 2);
-  for (let keyY = y + 28; keyY < y + h - 15; keyY += 34) {
-    ctx.fillStyle = keyY % 68 === (y + 28) % 68 ? '#163d53' : '#10283d';
-    ctx.fillRect(x + 9, keyY, w - 18, 18);
-    ctx.fillStyle = 'rgba(190, 255, 239, .4)'; ctx.fillRect(x + 11, keyY + 3, w - 22, 1);
-  }
-  ctx.strokeStyle = '#9effd7'; ctx.lineWidth = 2; ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
-  ctx.translate(x + w / 2, y + h / 2); ctx.rotate(-Math.PI / 2);
-  ctx.fillStyle = '#e5fff4'; ctx.font = '900 9px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText('SILENT KEY · JUMP OVER', 0, 3);
-  ctx.restore();
-}
-
 function drawHarinCarouselWall(item) {
   const { x, y, w, h } = item;
   const image = objectSprites.harinCarouselWall;
@@ -4573,10 +4598,6 @@ function drawPlatform(item) {
       return;
     }
     if (item.persistentWall) {
-      if (dreamTheme().id === 'yuna') {
-        drawYunaSilentKeyWall(item);
-        return;
-      }
       if (dreamTheme().id === 'haneul') {
         drawHaneulHeadwindPillar(item);
         return;
@@ -4644,23 +4665,25 @@ function drawPlatform(item) {
   }
 }
 
-function drawBridge(bridge) {
-  const label = game.bridge ? bridge.label : bridge.label.replace('PATH', 'ECHO').replace('LINK', 'ECHO');
-  const relayBridge = game.layout === 'wall';
-  const image = relayBridge ? platformSprites.harinEchoBridge : null;
-  ctx.save(); ctx.translate(bridge.x + bridge.w / 2, bridge.y + bridge.h / 2); ctx.shadowBlur = game.bridge ? 24 : 10; ctx.shadowColor = game.bridge ? '#61faff' : '#ff6d90';
+function drawResonancePath(path) {
+  const active = activeTechniques().resonance;
+  const image = game.layout === 'wall' ? platformSprites.harinEchoBridge : null;
+  ctx.save();
+  ctx.translate(path.x + path.w / 2, path.y + path.h / 2);
+  ctx.imageSmoothingEnabled = false;
+  ctx.shadowBlur = active ? 24 : 7;
+  ctx.shadowColor = active ? '#61faff' : '#6275b7';
   if (image?.complete && image.naturalWidth > 0) {
-    ctx.imageSmoothingEnabled = false;
-    ctx.globalAlpha = game.bridge ? 1 : .26;
-    const visualHeight = Math.max(36, bridge.h * 2.7);
-    ctx.drawImage(image, -bridge.w / 2 - 11, -visualHeight * .46, bridge.w + 22, visualHeight);
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha = active ? 1 : .14;
+    const visualHeight = Math.max(36, path.h * 2.7);
+    ctx.drawImage(image, -path.w / 2 - 11, -visualHeight * .46, path.w + 22, visualHeight);
   } else {
-    ctx.fillStyle = game.bridge ? '#2b8da7' : 'rgba(196,54,106,.34)'; ctx.fillRect(-bridge.w / 2, -bridge.h / 2, bridge.w, bridge.h);
+    const glow = ctx.createLinearGradient(-path.w / 2, 0, path.w / 2, 0);
+    glow.addColorStop(0, '#4db4d8'); glow.addColorStop(.5, '#cbffff'); glow.addColorStop(1, '#4db4d8');
+    ctx.globalAlpha = active ? .9 : .12;
+    ctx.fillStyle = glow;
+    ctx.fillRect(-path.w / 2, -path.h / 2, path.w, path.h);
   }
-  // 하린의 웃음 중계 잔상길은 전용 일러스트 자체가 발판의 경계를 갖기 때문에 데모형 사각 테두리를 겹치지 않는다.
-  if (!relayBridge) { ctx.strokeStyle = game.bridge ? '#8fffff' : '#ff7895'; ctx.lineWidth = 2; ctx.strokeRect(-bridge.w / 2 + 1, -bridge.h / 2 + 1, bridge.w - 2, bridge.h - 2); }
-  if (!relayBridge) { ctx.fillStyle = game.bridge ? '#d2ffff' : '#ffbbc8'; ctx.font = '800 9px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText(label, 0, 4); }
   ctx.restore();
 }
 
@@ -4884,7 +4907,10 @@ function drawMemoryPad(pad, active, index, role = 'normal') {
   ctx.restore();
 
   ctx.save();
-  const label = active ? (role === 'distortion' ? '⚠ 왜곡에 갇힘' : '✓ 기억 연결됨') : style.title;
+  const windBaitPad = role === 'echo' && game.boss?.mode === 'chase';
+  const label = windBaitPad
+    ? (active ? '✓ 바람 미끼 대기' : 'K · 바람 미끼')
+    : active ? (role === 'distortion' ? '⚠ 왜곡에 갇힘' : '✓ 기억 연결됨') : style.title;
   ctx.font = '800 8px "Segoe UI", sans-serif';
   const labelWidth = Math.max(62, ctx.measureText(label).width + 15);
   const labelHeight = 17;
@@ -4929,6 +4955,25 @@ function drawEcho(echo, index) {
     scaleX: (recordedMotion.scaleX || 1) * (1.02 + pulse * .025),
     scaleY: (recordedMotion.scaleY || 1) * (.98 - pulse * .018),
   }, { effectAlpha: .38, fallback: false });
+  const boss = game.boss;
+  if (boss?.echoHitLimit > 0) {
+    const hitLimit = boss.echoHitLimit;
+    const hits = Math.min(hitLimit, echo.nightmareHits || 0);
+    const centerX = echo.x + echo.w / 2;
+    const markerY = echo.y - 12 + (boss.echoDamagePulse > 0 ? Math.sin(game.elapsed * 42) * 2 : 0);
+    ctx.save();
+    ctx.shadowBlur = 8; ctx.shadowColor = '#d58bff';
+    for (let mark = 0; mark < hitLimit; mark += 1) {
+      const x = centerX + (mark - (hitLimit - 1) / 2) * 10;
+      ctx.fillStyle = mark < hits ? '#eeb3ff' : 'rgba(75, 60, 112, .9)';
+      ctx.fillRect(x - 3, markerY - 3, 6, 6);
+      ctx.fillStyle = mark < hits ? '#fff1ff' : '#9a8db4';
+      ctx.fillRect(x - 1, markerY - 5, 2, 10);
+    }
+    ctx.fillStyle = '#f6e7ff'; ctx.font = '800 7px ui-monospace, monospace'; ctx.textAlign = 'center';
+    ctx.fillText(`${boss.mode === 'resonance' ? '불협화음' : '공포 피격'} ${hits}/${hitLimit}`, centerX, markerY - 10);
+    ctx.restore();
+  }
 }
 
 function currentRunFrameIndex() {
@@ -5179,34 +5224,77 @@ function drawPhaseGuide() {
   ctx.restore();
 }
 
-function drawMemoryPath(frames, color, alpha, startIndex = 0, markerLabel = '') {
+function drawMemoryPath(frames, color, alpha, options = {}) {
   if (!frames?.length) return;
-  const firstVisibleIndex = Math.max(0, Math.min(frames.length - 1, startIndex));
-  const visibleFrames = frames.slice(firstVisibleIndex);
-  const last = frames[frames.length - 1];
-  ctx.save();
-  ctx.globalAlpha = alpha;
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 2;
-  ctx.setLineDash([5, 5]);
-  if (visibleFrames.length > 1) {
+  const firstVisibleIndex = Math.max(0, Math.min(frames.length - 1, options.startIndex || 0));
+  const lastVisibleIndex = Math.max(firstVisibleIndex, Math.min(frames.length - 1, options.endIndex ?? frames.length - 1));
+  const visibleFrames = frames.slice(firstVisibleIndex, lastVisibleIndex + 1);
+  const stride = Math.max(1, Math.floor(visibleFrames.length / 48));
+  const points = visibleFrames
+    .filter((_, index) => index % stride === 0)
+    .map((frame) => ({ x: frame.x + frame.w / 2, y: frame.y + frame.h / 2 }));
+  const lastFrame = visibleFrames[visibleFrames.length - 1];
+  const lastPoint = { x: lastFrame.x + lastFrame.w / 2, y: lastFrame.y + lastFrame.h / 2 };
+  if (!points.length || points.at(-1).x !== lastPoint.x || points.at(-1).y !== lastPoint.y) points.push(lastPoint);
+  const drawRibbonStroke = (width, stroke, opacity, shadow = 0) => {
+    if (points.length < 2) return;
+    ctx.save();
+    ctx.globalAlpha = alpha * opacity;
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = width;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.shadowBlur = shadow;
+    ctx.shadowColor = color;
     ctx.beginPath();
-    visibleFrames.forEach((frame, index) => {
-      const x = frame.x + frame.w / 2;
-      const y = frame.y + frame.h / 2;
-      if (index === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-    });
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let index = 1; index < points.length - 1; index += 1) {
+      const midpoint = { x: (points[index].x + points[index + 1].x) / 2, y: (points[index].y + points[index + 1].y) / 2 };
+      ctx.quadraticCurveTo(points[index].x, points[index].y, midpoint.x, midpoint.y);
+    }
+    ctx.lineTo(lastPoint.x, lastPoint.y);
     ctx.stroke();
+    ctx.restore();
+  };
+  // 여러 개의 굵은 리본 원화를 반복해 붙이지 않고, 한 줄로 이어지는 기억의 흐름을 만든다.
+  drawRibbonStroke(15, '#102b5a', .28, 16);
+  drawRibbonStroke(9, color, .44, 12);
+  drawRibbonStroke(4, '#dffcff', .72, 4);
+  drawRibbonStroke(1.4, '#fff5cc', .92);
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  const glitterStep = Math.max(5, Math.floor(points.length / 8));
+  for (let index = 0; index < points.length; index += glitterStep) {
+    const point = points[index];
+    const size = index % (glitterStep * 2) === 0 ? 4 : 3;
+    ctx.globalAlpha = alpha * (.55 + Math.sin(game.elapsed * 7 + index) * .18);
+    ctx.shadowBlur = 8; ctx.shadowColor = color;
+    ctx.fillStyle = index % (glitterStep * 2) === 0 ? '#fff6cf' : color;
+    ctx.fillRect(point.x - size / 2, point.y - size / 2, size, size);
   }
-  ctx.setLineDash([]);
-  ctx.beginPath();
-  ctx.arc(last.x + last.w / 2, last.y + last.h / 2, 8, 0, Math.PI * 2);
-  ctx.stroke();
-  if (markerLabel) {
-    ctx.fillStyle = color;
+  // 원화 리본은 움직이는 기억의 나 바로 뒤에 한 번만 붙여, 여러 마리처럼 보이지 않게 한다.
+  const trail = ensureSprite(memoryEffectSprites.resonanceTrail);
+  const previous = points[Math.max(0, points.length - 2)] || lastPoint;
+  const dx = lastPoint.x - previous.x;
+  const dy = lastPoint.y - previous.y;
+  const length = Math.hypot(dx, dy) || 1;
+  if (trail?.complete && trail.naturalWidth > 0 && points.length > 1) {
+    const tailWidth = 40;
+    const tailHeight = tailWidth * .34;
+    ctx.save();
+    ctx.translate(lastPoint.x - dx / length * 16, lastPoint.y - dy / length * 16);
+    ctx.rotate(Math.atan2(dy, dx));
+    ctx.globalAlpha = alpha * .58;
+    ctx.shadowBlur = 12; ctx.shadowColor = color;
+    ctx.drawImage(trail, -tailWidth / 2, -tailHeight / 2, tailWidth, tailHeight);
+    ctx.restore();
+  }
+  if (options.markerLabel) {
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#fff4bf';
     ctx.font = '800 9px ui-monospace, monospace';
     ctx.textAlign = 'center';
-    ctx.fillText(markerLabel, last.x + last.w / 2, last.y - 12);
+    ctx.fillText(options.markerLabel, lastPoint.x, lastPoint.y - 28);
   }
   ctx.restore();
 }
@@ -5214,15 +5302,91 @@ function drawMemoryPath(frames, color, alpha, startIndex = 0, markerLabel = '') 
 function drawMemoryLoopFeedback() {
   game.echoes.forEach((echo, index) => {
     if (echo.holding) return;
-    drawMemoryPath(echo.frames, ['#9effea', '#9eb9ff', '#ffb5d7'][index % 3], .42, echo.playbackIndex || 0);
+    drawMemoryPath(echo.frames, ['#9effea', '#9eb9ff', '#ffb5d7'][index % 3], .42, { endIndex: echo.playbackIndex || 0 });
   });
   if (!game.recording) return;
-  drawMemoryPath(game.recording.frames, '#ffe37d', .85, 0, 'K · REWIND');
-  const p = game.player;
-  const pulse = 15 + Math.sin(game.elapsed * 8) * 3;
-  ctx.save(); ctx.strokeStyle = '#ffe37d'; ctx.lineWidth = 2; ctx.shadowBlur = 18; ctx.shadowColor = '#ffe37d';
-  ctx.beginPath(); ctx.arc(p.x + p.w / 2, p.y + p.h / 2, pulse, 0, Math.PI * 2); ctx.stroke();
-  ctx.fillStyle = '#fff3ad'; ctx.font = '800 9px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText('RECORDING', p.x + p.w / 2, p.y - 12);
+  drawMemoryPath(game.recording.frames, '#ffe37d', .85, { markerLabel: 'K · 기억 되감기' });
+}
+
+function releaseCurvePoint(start, control, end, t) {
+  const inverse = 1 - t;
+  return {
+    x: inverse * inverse * start.x + 2 * inverse * t * control.x + t * t * end.x,
+    y: inverse * inverse * start.y + 2 * inverse * t * control.y + t * t * end.y,
+  };
+}
+
+function drawFinalMemoryBranch(start, control, end, color, index, progress) {
+  const reveal = Math.max(0, Math.min(1, (progress - index * .055) / .58));
+  if (reveal <= 0) return;
+  const points = [];
+  const pointCount = Math.max(2, Math.ceil(38 * reveal));
+  for (let step = 0; step <= pointCount; step += 1) {
+    points.push(releaseCurvePoint(start, control, end, Math.min(reveal, step / pointCount * reveal)));
+  }
+  const stroke = (width, strokeStyle, opacity, blur = 0) => {
+    ctx.save();
+    ctx.globalAlpha = opacity * (.38 + progress * .62);
+    ctx.lineWidth = width;
+    ctx.strokeStyle = strokeStyle;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.shadowBlur = blur;
+    ctx.shadowColor = color;
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let pointIndex = 1; pointIndex < points.length - 1; pointIndex += 1) {
+      const point = points[pointIndex];
+      const next = points[pointIndex + 1];
+      ctx.quadraticCurveTo(point.x, point.y, (point.x + next.x) / 2, (point.y + next.y) / 2);
+    }
+    ctx.lineTo(points.at(-1).x, points.at(-1).y);
+    ctx.stroke();
+    ctx.restore();
+  };
+  // 세 갈래는 각각 끊긴 조각이 아니라, 한 번에 그려지는 실처럼 합류점까지 이어진다.
+  stroke(15, '#10284f', .26, 18);
+  stroke(9, color, .6, 13);
+  stroke(4, '#e8fcff', .72, 5);
+  stroke(1.5, '#fff0b5', .9);
+  for (let sparkleIndex = 0; sparkleIndex < 3; sparkleIndex += 1) {
+    const t = Math.min(reveal, (progress * 1.15 + sparkleIndex * .28 + index * .17) % 1);
+    const point = releaseCurvePoint(start, control, end, t);
+    ctx.save();
+    ctx.globalAlpha = .75;
+    ctx.shadowBlur = 12; ctx.shadowColor = color;
+    ctx.fillStyle = sparkleIndex === 1 ? '#fff7cb' : color;
+    ctx.fillRect(point.x - 2, point.y - 2, 4, 4);
+    ctx.restore();
+  }
+}
+
+function drawFinalMemoryBraid(start, end, progress, braid) {
+  const reveal = Math.max(0, Math.min(1, (progress - .12) / .74));
+  if (reveal <= 0) return;
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const length = Math.hypot(dx, dy) || 1;
+  const angle = Math.atan2(dy, dx);
+  const spriteWidth = Math.max(250, length);
+  const spriteHeight = braid?.naturalWidth && braid?.naturalHeight
+    ? spriteWidth * braid.naturalHeight / braid.naturalWidth
+    : 88;
+  ctx.save();
+  ctx.translate(start.x, start.y);
+  ctx.rotate(angle);
+  ctx.globalAlpha = .24 + reveal * .76;
+  ctx.shadowBlur = 22; ctx.shadowColor = '#a8f7ff';
+  ctx.beginPath();
+  ctx.rect(-4, -spriteHeight / 2 - 8, spriteWidth * reveal + 8, spriteHeight + 16);
+  ctx.clip();
+  if (braid?.complete && braid.naturalWidth > 0) {
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(braid, 0, -spriteHeight / 2, spriteWidth, spriteHeight);
+  } else {
+    ctx.strokeStyle = '#9ef7ff'; ctx.lineWidth = 15; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(spriteWidth, 0); ctx.stroke();
+  }
   ctx.restore();
 }
 
@@ -5230,12 +5394,23 @@ function drawFinalReleaseScene(b) {
   if (b.mode !== 'final' || !b.releaseReady) return;
   const progress = b.releaseProgress / b.releaseDuration;
   const colors = ['#ffb5d7', '#9effd7', '#a6efff'];
+  const braid = ensureSprite(memoryEffectSprites.finalMemoryBraid);
+  const destination = { x: b.x + b.w * .42, y: b.y + b.h * .56 };
+  const braidStart = { x: destination.x - 262, y: destination.y };
+  const branchEnds = [-32, 0, 32].map((offset) => ({ x: braidStart.x + 13, y: braidStart.y + offset }));
   ctx.save();
   b.memoryPads.forEach((pad, index) => {
-    ctx.strokeStyle = colors[index]; ctx.globalAlpha = .35 + progress * .45; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(pad.x + pad.w / 2, pad.y + pad.h / 2); ctx.quadraticCurveTo(W / 2, H / 2, b.x + b.w / 2, b.y + b.h / 2); ctx.stroke();
+    const start = { x: pad.x + pad.w / 2, y: pad.y + pad.h / 2 };
+    const end = branchEnds[index];
+    const control = {
+      x: start.x + (end.x - start.x) * .48,
+      y: start.y + (end.y - start.y) * .52 + (index - 1) * 54,
+    };
+    drawFinalMemoryBranch(start, control, end, colors[index], index, progress);
   });
-  ctx.globalAlpha = .12 + progress * .12; ctx.fillStyle = '#efffff'; ctx.fillRect(0, 0, W, H);
+  // 세 갈래가 여기서 하나의 브레이드 원화로 합쳐져 수면 과학자에게 이어진다.
+  drawFinalMemoryBraid(braidStart, destination, progress, braid);
+  ctx.globalAlpha = .10 + progress * .12; ctx.fillStyle = '#efffff'; ctx.fillRect(0, 0, W, H);
   ctx.globalAlpha = 1; ctx.fillStyle = 'rgba(12, 23, 47, .88)'; ctx.fillRect(168, 438, 624, 48);
   ctx.strokeStyle = '#ffe27e'; ctx.lineWidth = 1; ctx.strokeRect(168.5, 438.5, 623, 47);
   ctx.fillStyle = '#fff4c4'; ctx.font = '800 12px "Segoe UI", sans-serif'; ctx.textAlign = 'center';
@@ -5451,7 +5626,7 @@ function drawPuzzle() {
   });
   if (game.layout === 'wall') {
     drawLaughRelayNetwork();
-    getWallBridges().forEach(drawBridge);
+    getWallResonancePaths().forEach(drawResonancePath);
   }
   if (game.layout === 'carousel' && game.carouselRideProgress > .02) {
     const ride = getCarouselRide();
@@ -5601,6 +5776,55 @@ function drawWindGate(gate, index, active, cleared, unlocked) {
   ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.ellipse(0, 0, gate.w / 2 + WIND_GATE_OUTER_PADDING, gate.h / 2 + WIND_GATE_OUTER_PADDING, 0, 0, Math.PI * 2); ctx.stroke();
   ctx.restore();
   ctx.fillStyle = locked ? '#687487' : cleared ? '#8bc6c1' : active ? '#d7fbff' : '#7391ad'; ctx.font = '800 9px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(locked ? `LOCKED · ${gate.label}` : gate.label, gate.x + gate.w / 2, gate.y - 12);
+}
+
+function drawFinalVoiceAltar(gate, active, progress = 0) {
+  const image = ensureSprite(objectSprites.scientistDaughterVoiceAltar);
+  const centerX = gate.x + gate.w / 2;
+  const baseY = gate.y + gate.h + 12;
+  const pulse = .5 + Math.sin((game.elapsed || 0) * 5.4) * .5;
+  const visualHeight = 146 + (active ? 8 + pulse * 7 : 0);
+  const visualWidth = image?.naturalWidth && image?.naturalHeight
+    ? visualHeight * image.naturalWidth / image.naturalHeight
+    : 158;
+  ctx.save();
+  ctx.translate(centerX, baseY - visualHeight * .52);
+  ctx.globalAlpha = active ? 1 : .72;
+  ctx.shadowBlur = active ? 36 + pulse * 18 : 15;
+  ctx.shadowColor = active ? '#bffeff' : '#76bce8';
+  ctx.fillStyle = 'rgba(93, 221, 255, .16)';
+  ctx.beginPath(); ctx.ellipse(0, visualHeight * .12, visualWidth * .41 + pulse * 7, 19 + pulse * 5, 0, 0, Math.PI * 2); ctx.fill();
+  if (image?.complete && image.naturalWidth > 0) {
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(image, -visualWidth / 2, -visualHeight / 2, visualWidth, visualHeight);
+  } else {
+    ctx.fillStyle = '#102a55'; ctx.beginPath(); ctx.ellipse(0, 18, 54, 19, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#aef8ff'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = '#69eaff'; ctx.beginPath(); ctx.arc(0, -8, 12, 0, Math.PI * 2); ctx.fill();
+  }
+  if (active) {
+    ctx.globalAlpha = .46 + pulse * .38;
+    ctx.strokeStyle = '#fff1b8'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(0, visualHeight * .13, visualWidth * .47 + pulse * 11, 27 + pulse * 8, 0, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.restore();
+  const percent = Math.round(Math.max(0, Math.min(1, progress)) * 100);
+  const label = active ? `딸의 목소리 전달 · ${percent}%` : 'L · 딸의 목소리';
+  ctx.save();
+  ctx.font = '900 9px "Segoe UI", sans-serif';
+  const labelWidth = Math.max(108, ctx.measureText(label).width + 18);
+  const labelY = gate.y - 22;
+  ctx.fillStyle = 'rgba(10, 24, 54, .94)';
+  ctx.strokeStyle = active ? '#fff0b6' : '#a6efff';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.roundRect(centerX - labelWidth / 2, labelY, labelWidth, 18, 5); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = active ? '#fff7d2' : '#d9f8ff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(label, centerX, labelY + 9.5);
+  if (active || progress > 0) {
+    ctx.fillStyle = 'rgba(5, 16, 39, .86)'; ctx.fillRect(centerX - 44, labelY + 23, 88, 5);
+    ctx.fillStyle = '#ffe5a2'; ctx.fillRect(centerX - 43, labelY + 24, 86 * Math.max(0, Math.min(1, progress)), 3);
+  }
+  ctx.restore();
 }
 
 function drawDreamGate(gate, active, cleared, kind = 'resonance', revealed = true, heartbeat = 0) {
@@ -5858,6 +6082,157 @@ function drawScientistDreamGuardianSprite(b) {
   return true;
 }
 
+function drawHaneulWindShot(shot) {
+  const image = projectileSprites.haneulWindShard;
+  const direction = shot.angle || Math.atan2(shot.vy, shot.vx);
+  const sizeBoost = shot.decoyShot ? 1.14 : 1;
+  const width = Math.max(34, shot.r * 4.2 * sizeBoost);
+  const height = Math.max(18, shot.r * 2.02 * sizeBoost);
+  const pulse = .9 + Math.sin((game.elapsed || 0) * 13 + shot.x * .024) * .1;
+  ctx.save();
+  ctx.translate(shot.x, shot.y);
+  ctx.rotate(direction);
+  ctx.scale(pulse, pulse);
+  ctx.imageSmoothingEnabled = false;
+  ctx.globalAlpha = frozenTime() ? .58 : 1;
+  ctx.shadowBlur = shot.decoyShot ? 21 : 14;
+  ctx.shadowColor = '#67e9ff';
+  if (image?.complete && image.naturalWidth > 0) {
+    ctx.drawImage(image, -width / 2, -height / 2, width, height);
+  } else {
+    // 로딩 중에도 "돌풍"이라는 성격은 남기고, 기존의 단색 원형 탄막으로 되돌아가지 않는다.
+    ctx.strokeStyle = '#bff8ff'; ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.arc(-width * .08, 0, height * .42, -2.4, 1.45); ctx.stroke();
+    ctx.beginPath(); ctx.arc(width * .12, 0, height * .28, -1.9, 1.65); ctx.stroke();
+    ctx.fillStyle = '#173b69'; ctx.beginPath(); ctx.moveTo(-width * .36, -height * .16); ctx.lineTo(width * .16, 0); ctx.lineTo(-width * .36, height * .16); ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawDaughterMirrorShardShot(shot) {
+  const image = projectileSprites.daughterMirrorShard;
+  const direction = Number.isFinite(shot.angle) ? shot.angle : Math.atan2(shot.vy, shot.vx);
+  const width = Math.max(48, shot.r * 5.7);
+  const height = image?.naturalWidth ? width * image.naturalHeight / image.naturalWidth : Math.max(18, shot.r * 2.05);
+  const shimmer = Math.sin((game.elapsed || 0) * 11 + shot.x * .04) * .12;
+  ctx.save();
+  ctx.translate(shot.x, shot.y);
+  // 유리 파편은 정면으로 날아가지만 아주 조금씩 회전해, "완벽한 풍경이 깨져 날아온다"는 감각을 준다.
+  ctx.rotate(direction + shimmer);
+  ctx.imageSmoothingEnabled = false;
+  ctx.globalAlpha = frozenTime() ? .56 : 1;
+  ctx.shadowBlur = 17; ctx.shadowColor = '#ff88c4';
+  if (image?.complete && image.naturalWidth > 0) {
+    ctx.drawImage(image, -width / 2, -height / 2, width, height);
+  } else {
+    ctx.fillStyle = '#dffff3'; ctx.strokeStyle = '#ff8fca'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(width * .48, 0); ctx.lineTo(-width * .2, -height * .46); ctx.lineTo(-width * .48, 0); ctx.lineTo(-width * .2, height * .46); ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawScientistDreamCoreShot(shot) {
+  const image = projectileSprites.scientistDreamCore;
+  const direction = Number.isFinite(shot.angle) ? shot.angle : Math.atan2(shot.vy, shot.vx);
+  const width = Math.max(48, shot.r * 5.45);
+  const height = image?.naturalWidth ? width * image.naturalHeight / image.naturalWidth : Math.max(18, shot.r * 2.05);
+  const pulse = .92 + Math.sin((game.elapsed || 0) * 12 + shot.y * .035) * .08;
+  ctx.save();
+  ctx.translate(shot.x, shot.y);
+  ctx.rotate(direction);
+  ctx.scale(pulse, pulse);
+  ctx.imageSmoothingEnabled = false;
+  ctx.globalAlpha = frozenTime() ? .56 : 1;
+  ctx.shadowBlur = 20; ctx.shadowColor = '#77eaff';
+  if (image?.complete && image.naturalWidth > 0) {
+    ctx.drawImage(image, -width / 2, -height / 2, width, height);
+  } else {
+    ctx.fillStyle = '#153b70'; ctx.strokeStyle = '#89f3ff'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(0, 0, width * .36, height * .38, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#ff9ed3'; ctx.beginPath(); ctx.arc(0, 0, height * .2, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function decoyPadForEcho(b, echo) {
+  return b?.decoyPads?.find((pad) => echo && echoOverlapsPad(echo, pad)) || null;
+}
+
+function drawWindBaitProgress(b) {
+  if (b.mode !== 'chase' || b.echoHits >= b.requiredEchoHits) return;
+  const required = Math.max(1, b.requiredEchoHits);
+  const hits = Math.min(required, b.echoHits);
+  const cardW = 264;
+  const cardH = 27;
+  const cardX = W / 2 - cardW / 2;
+  const cardY = 64;
+  const activeDecoy = getHoldingDecoy(b);
+  const targetPad = decoyPadForEcho(b, activeDecoy);
+
+  // 보스 HUD의 숫자만으로는 "무엇을" 채우는지 모호하므로, 공격 → 기억 미끼 → 표식의 흐름을 늘 화면에 남긴다.
+  ctx.save();
+  ctx.fillStyle = 'rgba(7, 26, 54, .92)';
+  ctx.strokeStyle = '#8eeeff'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.roundRect(cardX, cardY, cardW, cardH, 7); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#d7fbff'; ctx.font = '800 8px ui-monospace, monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillText('GALE → MEMORY BAIT', cardX + 11, cardY + 13.8);
+  const tokenStart = cardX + 143;
+  for (let index = 0; index < required; index += 1) {
+    const filled = index < hits;
+    const x = tokenStart + index * 20;
+    const pulse = filled ? .5 + Math.sin((game.elapsed || 0) * 8 + index) * .5 : 0;
+    ctx.fillStyle = filled ? '#bff9ff' : '#183b5c';
+    ctx.strokeStyle = filled ? '#ecffff' : '#6691af';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(x, cardY + 13.5, 6 + pulse * .6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = filled ? '#167cca' : '#416986';
+    ctx.lineWidth = 1.15;
+    ctx.beginPath(); ctx.arc(x - 1, cardY + 13.5, 3.4, -.8, 1.8); ctx.stroke();
+    ctx.beginPath(); ctx.arc(x + 1.5, cardY + 13.2, 2.25, 2.15, 4.95); ctx.stroke();
+  }
+  ctx.fillStyle = hits ? '#eaffff' : '#9bbfd3'; ctx.textAlign = 'right';
+  ctx.fillText(`${hits} / ${required}`, cardX + cardW - 10, cardY + 13.8);
+  ctx.restore();
+
+  if (targetPad) {
+    const x = targetPad.x + targetPad.w / 2;
+    const y = targetPad.y + targetPad.h / 2;
+    const pulse = .5 + Math.sin((game.elapsed || 0) * 7.4) * .5;
+    // 다음 유인 대상만 선명하게 감싸서, 두 기억 중 어느 쪽이 공격을 받을 차례인지 보여 준다.
+    ctx.save();
+    ctx.globalAlpha = .34 + pulse * .26;
+    ctx.strokeStyle = '#c6fbff'; ctx.shadowBlur = 15; ctx.shadowColor = '#57dfff'; ctx.lineWidth = 2;
+    ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.ellipse(x, y, targetPad.w * .68 + pulse * 3, targetPad.h * .7 + pulse * 3, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = .19;
+    ctx.strokeStyle = '#8cecff'; ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(b.x + 22, b.y + 92);
+    ctx.bezierCurveTo(b.x - 82, b.y + 74, x + 90, y - 58, x, y);
+    ctx.stroke();
+    const tagW = 96;
+    const tagY = Math.min(H - 15, targetPad.y + targetPad.h + 17);
+    ctx.globalAlpha = .96; ctx.fillStyle = 'rgba(6, 28, 57, .92)'; ctx.strokeStyle = '#aef5ff';
+    ctx.beginPath(); ctx.roundRect(x - tagW / 2, tagY - 8, tagW, 16, 5); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#e5ffff'; ctx.font = '800 7px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('유인될 기억 · 바람 탄환', x, tagY + .5);
+    ctx.restore();
+  }
+
+  if (b.baitImpact && b.baitImpactPulse > 0) {
+    const x = b.baitImpact.x + b.baitImpact.w / 2;
+    const y = b.baitImpact.y + b.baitImpact.h / 2;
+    const ratio = b.baitImpactPulse / .72;
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, ratio * 1.4);
+    ctx.strokeStyle = '#efffff'; ctx.shadowBlur = 19; ctx.shadowColor = '#62e9ff'; ctx.lineWidth = 2.4;
+    ctx.beginPath(); ctx.arc(x, y, 16 + (1 - ratio) * 30, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#cfffff'; ctx.font = '900 10px ui-monospace, monospace'; ctx.textAlign = 'center';
+    ctx.fillText('+1 바람 표식', x, y - 31 - (1 - ratio) * 10);
+    ctx.restore();
+  }
+}
+
 function drawDissonantNoteShot(shot) {
   const size = Math.max(.75, shot.r / 10);
   const drift = Math.sin(game.elapsed * 12 + shot.x * .03) * .16;
@@ -5925,6 +6300,7 @@ function drawBoss() {
   if (b.mode === 'chase') {
     const windGatesUnlocked = b.echoHits >= b.requiredEchoHits;
     b.windGates.forEach((gate, index) => drawWindGate(gate, index, windGatesUnlocked && index === b.chaseProgress, index < b.chaseProgress, windGatesUnlocked));
+    drawWindBaitProgress(b);
   }
   if (b.mode === 'resonance') {
     if (b.codaActive) {
@@ -5958,7 +6334,7 @@ function drawBoss() {
       b.truthTargets.forEach((target, index) => drawFinalMemoryTarget(target, index === b.truthProgress, index < b.truthProgress));
       ctx.save(); ctx.fillStyle = '#ffe4ef'; ctx.font = '800 10px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText('PHASE 2 · TRACK AND SHOOT THE MOVING TRUE MEMORY', W / 2, 54); ctx.restore();
     } else if (finalPhase === 4 && b.voiceGate) {
-      drawDreamGate(b.voiceGate, activeTechniques().resonance && overlaps(game.player, b.voiceGate), false, 'resonance', true);
+      drawFinalVoiceAltar(b.voiceGate, activeTechniques().resonance && overlaps(game.player, b.voiceGate), b.voiceProgress / Math.max(.01, b.voiceDuration));
       ctx.save(); ctx.fillStyle = '#fff4c4'; ctx.font = '800 10px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText('PHASE 4 · NO ATTACK · LET HER VOICE REACH HIM', W / 2, 54); ctx.restore();
     }
   }
@@ -5983,6 +6359,18 @@ function drawBoss() {
           : shot.kind === 'memory' ? '#7be9ff' : '#ff5a83';
     if (shot.kind === 'dissonant-note') {
       drawDissonantNoteShot(shot);
+      continue;
+    }
+    if (shot.kind === 'wind') {
+      drawHaneulWindShot(shot);
+      continue;
+    }
+    if (shot.kind === 'shard') {
+      drawDaughterMirrorShardShot(shot);
+      continue;
+    }
+    if (shot.kind === 'memory') {
+      drawScientistDreamCoreShot(shot);
       continue;
     }
     ctx.save(); ctx.shadowBlur = 16; ctx.shadowColor = shotColor; ctx.fillStyle = frozenTime() ? '#9e9ab5' : shotColor;
@@ -6071,7 +6459,7 @@ restartButton.addEventListener('click', () => {
   else if (game.phase === 'truth') newGame();
 });
 ruleCards.forEach((card) => {
-  const keyForRule = { bridge: 'KeyO', time: 'ShiftLeft', resonance: 'KeyL' }[card.dataset.rule];
+  const keyForRule = { time: 'ShiftLeft', resonance: 'KeyL' }[card.dataset.rule];
   card.addEventListener('pointerdown', () => {
     if (hasSkill(card.dataset.rule)) {
       if (card.dataset.rule === 'dash') triggerDash();
@@ -6116,10 +6504,10 @@ window.addEventListener('keydown', (event) => {
     if (event.code === 'ArrowLeft' || event.code === 'KeyA') game.player.facing = -1;
     if (event.code === 'ArrowRight' || event.code === 'KeyD') game.player.facing = 1;
   }
-  const skillByKey = { KeyO: 'bridge', ShiftLeft: 'time', ShiftRight: 'time', KeyL: 'resonance', Space: 'dash' };
+  const skillByKey = { ShiftLeft: 'time', ShiftRight: 'time', KeyL: 'resonance', Space: 'dash' };
   const requestedSkill = skillByKey[event.code];
   if (!event.repeat && requestedSkill && isSkillBlocked(requestedSkill)) say(currentStage().blockedHint || '이 구역의 꿈 규칙 때문에 이 상상력 기술은 사용할 수 없습니다.');
-  if (event.code === 'Digit3' && !event.repeat) say(hasSkill('time') ? 'O·Shift·L은 누르고 있는 동안 상상력을 계속 소모합니다.' : '이 기술은 다음 스테이지에서 배웁니다.');
+  if (event.code === 'Digit3' && !event.repeat) say(hasSkill('time') ? 'Shift·L은 누르고 있는 동안 상상력을 계속 소모합니다.' : '이 기술은 다음 스테이지에서 배웁니다.');
   if (!event.repeat && event.code === 'KeyK') toggleMemoryRecording();
   if (!event.repeat && event.code === 'KeyJ') triggerBossShot();
   if (!event.repeat && event.code === 'KeyI') removeLatestEcho();
