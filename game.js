@@ -2454,6 +2454,14 @@ function setupPuzzle(layout, echoGoal) {
       { x: 730, y: 350, w: 90, h: 18, carouselArtCollider: true, label: 'EAST EXIT LANDING' },
       { x: 800, y: 350, w: 160, h: 18, dropThrough: false, carouselArtCollider: true, carouselSurface: 'ground', label: 'EAST EXIT FLOOR' },
     ];
+    // 중앙 K 발판에 도착한 직후 기록을 바로 시작할 수 있도록
+    // 첫 원형벽 구멍은 북서쪽 기억길에 맞춘 상태로 연다.
+    const memoryPhaseIndex = CAROUSEL_PHASES.findIndex((phase) => phase.id === 'memory');
+    game.carouselPhase = memoryPhaseIndex;
+    game.carouselTargetPhase = memoryPhaseIndex;
+    game.carouselOrbitPose = 'memory';
+    game.carouselOrbitFromPose = 'memory';
+    game.carouselOrbitTargetPose = 'memory';
     Object.assign(game.player, { x: 468, y: 316, vx: 0, vy: 0, grounded: true });
     game.carouselSwitches = [
       { id: 'star', x: 752, y: 62, w: 38, h: 38, label: '별빛 잠금 장치', color: '#8ff5e8' },
