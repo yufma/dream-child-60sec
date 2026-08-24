@@ -26,7 +26,8 @@ const HARIN_STAGE_MUSIC_PATHS = Object.freeze([
   'assets/audio/harin-stage-themes-v11/stage-05-darkened-harin-theme-60s-v11.wav',
   'assets/audio/harin-stage-themes-v12-flute-test/stage-06-resolved-harin-theme-loop-soft-flute-v12.wav',
 ]);
-const CHARACTER_BGM_TRIM = Object.freeze({ harin: .88, yuna: 1.15, haneul: 1 });
+// 원본 음원의 평균 음량을 오디오 자산 단계에서 통일했으므로, 챕터별 임의 보정은 최소화한다.
+const CHARACTER_BGM_TRIM = Object.freeze({ harin: .98, yuna: .98, haneul: .98, daughter: .98, scientist: .98 });
 const YUNA_BACKGROUND_PATHS = Object.freeze(
   [
     'assets/backgrounds/yuna-stage-07.png',
@@ -47,6 +48,26 @@ const HANEUL_BACKGROUND_PATHS = Object.freeze(
     'assets/backgrounds/haneul-stage-18.png',
   ],
 );
+const DAUGHTER_BACKGROUND_PATHS = Object.freeze([
+  'assets/backgrounds/daughter-stage-19-perfect-garden-v1.png',
+  'assets/backgrounds/daughter-stage-20-fractured-classroom-v1.png',
+  'assets/backgrounds/daughter-stage-21-mirror-court-v1.png',
+]);
+const SCIENTIST_BACKGROUND_PATH = 'assets/backgrounds/scientist-stage-22-dream-lab-v1.png';
+const FINAL_CHAPTER_STAGE_MUSIC_PATHS = Object.freeze([
+  'assets/audio/daughter-perfect-garden-v1.wav',
+  'assets/audio/daughter-fractured-classroom-v1.wav',
+  'assets/audio/daughter-mirror-guardian-v1.wav',
+  'assets/audio/scientist-true-imagination-final-v1.wav',
+]);
+const HANEUL_STAGE_MUSIC_PATHS = Object.freeze([
+  'assets/audio/haneul-wind-path-v1.wav',
+  'assets/audio/haneul-wind-path-v1.wav',
+  'assets/audio/haneul-headwind-cliff-v1.wav',
+  'assets/audio/haneul-headwind-cliff-v1.wav',
+  'assets/audio/haneul-black-kite-boss-v1.wav',
+  'assets/audio/haneul-clear-sky-v1.wav',
+]);
 const HARIN_STAGE_02_GATE_PATHS = Object.freeze({
   blocked: 'assets/backgrounds/harin-stage-02-wall-ruined-structural-side10-clean-dark-outline-alpha-v15.png',
   open: 'assets/backgrounds/harin-stage-02-wall-restored-side10-clean-dark-outline-alpha-v15.png',
@@ -114,10 +135,25 @@ const PLAYER_RUN_CYCLE_MS = PLAYER_RUN_FRAME_DURATIONS.reduce((total, duration) 
 const PLAYER_SPRITE_SIZE = Object.freeze({ width: 48, height: 72, feetY: 70 });
 const PLAYER_SPRITE_SOURCE_FACING = -1;
 const DASH_VISUAL_DURATION = .24;
+const spriteSources = new WeakMap();
+
 function loadSprite(source) {
   const image = new Image();
-  image.src = source;
+  // 모든 챕터의 대형 일러스트를 제목 화면에서 한꺼번에 받지 않는다.
+  // 실제 꿈에 들어갈 때 해당 챕터의 이미지에만 src를 붙여 첫 접속을 가볍게 만든다.
+  spriteSources.set(image, source);
   return image;
+}
+
+function ensureSprite(image) {
+  if (!image || image.src) return image;
+  const source = spriteSources.get(image);
+  if (source) image.src = source;
+  return image;
+}
+
+function ensureSprites(items) {
+  items.flat(Infinity).forEach(ensureSprite);
 }
 const playerSprites = Object.freeze({
   idle: loadSprite(PLAYER_IDLE_SPRITE_PATH),
@@ -127,6 +163,8 @@ const playerSprites = Object.freeze({
 const harinBackgrounds = Object.freeze(HARIN_BACKGROUND_PATHS.map(loadSprite));
 const yunaBackgrounds = Object.freeze(YUNA_BACKGROUND_PATHS.map(loadSprite));
 const haneulBackgrounds = Object.freeze(HANEUL_BACKGROUND_PATHS.map(loadSprite));
+const daughterBackgrounds = Object.freeze(DAUGHTER_BACKGROUND_PATHS.map(loadSprite));
+const scientistBackground = loadSprite(SCIENTIST_BACKGROUND_PATH);
 const harinStage02GateSprites = Object.freeze({
   blocked: loadSprite(HARIN_STAGE_02_GATE_PATHS.blocked),
   open: loadSprite(HARIN_STAGE_02_GATE_PATHS.open),
@@ -147,7 +185,59 @@ const harinStage03StructureSprites = Object.freeze({
 });
 const failureArt = Object.freeze(Object.fromEntries(Object.entries(FAILURE_ART_PATHS).map(([key, source]) => [key, loadSprite(source)])));
 const bossSprites = Object.freeze({
+  harinClown: loadSprite('assets/bosses/harin-laugh-thief-clown-sprite-v1.png'),
   yunaChoir: loadSprite('assets/bosses/yuna-silent-choir-sprite-v1.png'),
+  haneulKite: loadSprite('assets/bosses/haneul-black-kite-sprite-v1.png'),
+  daughterGuardian: loadSprite('assets/bosses/daughter-perfect-guardian-sprite-v1.png'),
+  scientistGuardian: loadSprite('assets/bosses/scientist-dream-guardian-sprite-v1.png'),
+  scientistGuardianAwakened: loadSprite('assets/bosses/scientist-dream-guardian-awakened-v1.png'),
+});
+const platformSprites = Object.freeze({
+  harinCarouselPlatform: loadSprite('assets/platforms/harin-carousel-platform-v1.png'),
+  harinEchoBridge: loadSprite('assets/platforms/harin-echo-bridge-v1.png'),
+  haneulWindLedge: loadSprite('assets/platforms/haneul-wind-ledge-v1.png'),
+  yunaResonancePad: loadSprite('assets/platforms/yuna-resonance-pad-v1.png'),
+  daughterGarden: loadSprite('assets/platforms/daughter-garden-platform-v1.png'),
+  daughterFracturedClassroom: loadSprite('assets/platforms/daughter-fractured-classroom-platform-v1.png'),
+});
+const gateSprites = Object.freeze({
+  harin: loadSprite('assets/gates/harin-carousel-gate-v1.png'),
+  yuna: loadSprite('assets/gates/yuna-piano-gate-v1.png'),
+  haneul: loadSprite('assets/gates/haneul-wind-gate-v1.png'),
+  daughter: loadSprite('assets/gates/daughter-mirror-gate-v1.png'),
+  scientist: loadSprite('assets/gates/scientist-core-gate-v1.png'),
+});
+const memoryPadSprites = Object.freeze({
+  harin: loadSprite('assets/memory-pads/harin-carousel-memory-pad-v1.png'),
+  harinRelay: loadSprite('assets/memory-pads/harin-laugh-relay-memory-pad-v1.png'),
+  distortion: loadSprite('assets/memory-pads/harin-distorted-memory-trap-v1.png'),
+  yuna: loadSprite('assets/memory-pads/yuna-piano-memory-pad-v1.png'),
+  haneul: loadSprite('assets/memory-pads/haneul-wind-memory-pad-v1.png'),
+  daughter: loadSprite('assets/memory-pads/daughter-photo-memory-pad-v1.png'),
+  scientist: loadSprite('assets/memory-pads/scientist-core-memory-pad-v1.png'),
+});
+// 배경에 섞이지 않으면서도 각 꿈의 고유 소재를 바로 읽게 하는 핵심 기믹 일러스트.
+const objectSprites = Object.freeze({
+  harinLaughCollector: loadSprite('assets/objects/harin-laugh-collector-v1.png'),
+  harinCarouselWall: loadSprite('assets/objects/harin-carousel-wall-v1.png'),
+  yunaSilentKey: loadSprite('assets/objects/yuna-silent-key-pillar-v1.png'),
+  haneulTrueSignpost: loadSprite('assets/objects/haneul-true-signpost-v1.png'),
+  haneulHeadwindPillar: loadSprite('assets/objects/haneul-headwind-pillar-v1.png'),
+  haneulDashRiftGate: loadSprite('assets/objects/haneul-dash-rift-gate-v1.png'),
+  daughterTrueCrack: loadSprite('assets/objects/daughter-true-crack-v1.png'),
+});
+const finalTruthPortraits = Object.freeze({
+  harin: loadSprite('assets/portraits/harin.png'),
+  yuna: loadSprite('assets/portraits/yuna.png'),
+  haneul: loadSprite('assets/portraits/haneul.png'),
+});
+const endingCinematicSprites = Object.freeze({
+  promise: loadSprite('assets/cinematics/ending-promise-v1.png'),
+  hospital: loadSprite('assets/cinematics/ending-hospital-v1.png'),
+  machine: loadSprite('assets/cinematics/ending-machine-v1.png'),
+  cost: loadSprite('assets/cinematics/ending-cost-v1.png'),
+  choice: loadSprite('assets/cinematics/ending-choice-v1.png'),
+  morning: loadSprite('assets/cinematics/ending-morning-v2.png'),
 });
 
 const startScreen = document.querySelector('#start-screen');
@@ -207,6 +297,15 @@ const ruleStates = {
 };
 const stageMenuCopy = document.querySelector('#stage-menu-copy');
 const routeModeButton = document.querySelector('#route-mode-button');
+const loadingSplash = document.querySelector('#loading-splash');
+const loadingTitle = document.querySelector('#loading-title');
+const loadingFill = document.querySelector('#loading-fill');
+const loadingCopy = document.querySelector('#loading-copy');
+const contextControls = document.querySelector('#context-controls');
+const friendReaction = document.querySelector('#friend-reaction');
+const friendReactionImage = document.querySelector('#friend-reaction-image');
+const friendReactionSpeaker = document.querySelector('#friend-reaction-speaker');
+const friendReactionLine = document.querySelector('#friend-reaction-line');
 
 disconnectIllustrationImage.addEventListener('error', () => disconnectIllustration.classList.remove('has-art'));
 
@@ -250,14 +349,14 @@ const STAGES = [
   },
   {
     chapter: '유나 · 사라진 노래', name: '별빛 합창의 문', type: 'puzzle', skills: ['resonance'], teaches: ['resonance'], objective: '끊어지는 건반 계단을 공명으로 올라가라',
-    intro: '두 번째 친구 유나는 숨은 소리를 듣는 아이야. 꿈 추출기는 그 아이의 노래를 접어 숨겨 버렸어. L을 누르면 공명이 퍼져, 보이지 않던 건반이 드러난다. 하지만 공명을 멈추면 길도 다시 희미해져. 짧은 숨은 건반 사이에서 점프하고, 밝은 흰 건반에 닿았을 때만 잠시 숨을 고르자.',
-    layout: 'chorus', echoGoal: 1, hint: 'L을 짧게 유지해 끊어진 건반 계단을 잇고, 중간의 밝은 건반에서 호흡을 고르며 기억 문양까지 올라가세요.',
+    intro: '두 번째 친구 유나는 숨은 소리를 듣는 아이야. 꿈 추출기는 그 아이의 노래를 접어 숨겨 버렸어. L을 누르면 공명이 퍼져, 보이지 않던 건반이 드러난다. 하지만 공명을 멈추면 길도 다시 희미해져. 짧은 숨은 건반 사이에서 점프하고, 밝은 흰 건반에 닿았을 때만 잠시 숨을 고르자. 마지막에는 공명하던 순간 자체를 기억의 나에게 맡겨, 첫 음이 사라지지 않게 해야 해.',
+    layout: 'chorus', echoGoal: 1, hint: 'L을 유지해 끊어진 건반 계단을 잇고, 공명 중에 K로 기록을 시작해 기억 문양까지 이동한 뒤 되감으세요. 기억의 내가 첫 음을 계속 울립니다.',
   },
   {
     chapter: '유나 · 사라진 노래', name: '유나의 빈 의자', type: 'puzzle', skills: ['bridge', 'time', 'resonance'], objective: '갈라진 옥타브를 올라 두 빈자리를 연결하라',
     blockedSkills: ['bridge'],
-    intro: '유나는 늘 누군가의 자리를 기억하던 아이였어. 꿈 추출기는 교실의 낮은 자리와 가장 높은 합창 발코니를 멀리 갈라 놓았어. 이 교실에서는 잔상 발판도 닿지 않아. 낮은 건반 길을 오른 뒤 한 번 내려서, 다시 높은 옥타브까지 올라가 두 빈자리를 연결하자.',
-    layout: 'choir-balcony', echoGoal: 2, hint: '첫 번째 빈자리를 채운 뒤, 내려가는 숨은 건반과 다시 솟는 옥타브 계단을 이어 가장 높은 자리까지 올라가세요.',
+    intro: '유나는 늘 누군가의 자리를 기억하던 아이였어. 꿈 추출기는 교실의 낮은 자리와 가장 높은 합창 발코니를 멀리 갈라 놓았어. 이 교실에서는 잔상 발판도 닿지 않아. 낮은 건반 길을 오른 뒤 한 번 내려서, 다시 높은 옥타브까지 올라가 두 빈자리를 연결하자. 두 자리의 기억은 서로를 바라볼 때만 하나의 화음이 된다.',
+    layout: 'choir-balcony', echoGoal: 2, hint: '두 빈자리에 기억을 남긴 뒤, 각 발판 위에서 서로를 향해 방향을 돌리고 K로 되감으세요. 그 다음 M자 건반길을 끝까지 이어가세요.',
   },
   {
     chapter: '유나 · 사라진 노래', name: '지워진 악보의 계단', type: 'puzzle', skills: ['resonance'], objective: '오르내리는 반음계 길을 공명으로 되돌려라',
@@ -266,8 +365,8 @@ const STAGES = [
   },
   {
     chapter: '유나 · 사라진 노래', name: '두 사람의 화음', type: 'puzzle', skills: ['resonance'], objective: '침묵의 기둥을 넘어 두 사람의 화음을 완성하라',
-    intro: '마지막 한 소절은 직선이 아니라, 위아래로 감긴 악보에 숨어 있어. 길 한가운데에는 소리를 삼키는 검은 건반 기둥이 서 있어. 낮은 화음에서 위쪽 길로 올라 기둥 위를 넘은 뒤, 반대편의 두 번째 화음까지 정확히 이어 가자.',
-    layout: 'harmony-spiral', echoGoal: 2, hint: '낮은 화음에 기억을 남긴 뒤, L로 위쪽 건반을 드러내 검은 기둥 위를 넘고 반대편 화음까지 도달하세요.',
+    intro: '마지막 한 소절은 직선이 아니라, 위아래로 감긴 악보에 숨어 있어. 길 한가운데에는 소리를 삼키는 검은 건반 기둥이 서 있어. 낮은 화음과 높은 화음의 기억이 모두 그 침묵을 바라볼 때, 기둥 너머의 선율이 돌아온다. 두 자리에서 방향까지 맞춘 뒤 길을 이어 가자.',
+    layout: 'harmony-spiral', echoGoal: 2, hint: '낮은·높은 화음의 기억이 모두 검은 기둥을 향하게 K로 다시 기록한 뒤, L로 위쪽 건반을 드러내 기둥 위를 넘으세요.',
   },
   {
     chapter: '유나 · 사라진 노래', name: '침묵을 삼킨 합창단', type: 'boss', skills: ['resonance'], objective: '여섯 음을 되찾고 20초간 불협화음을 버텨라',
@@ -308,8 +407,8 @@ const STAGES = [
   },
   {
     chapter: '하늘 · 멈춰 버린 발걸음', name: '역풍의 높은 벽', type: 'puzzle', skills: ['bridge', 'dash'], objective: '절벽의 낮은 길과 높은 길을 이어 역풍을 통과하라',
-    intro: '하늘의 길은 이제 벽 하나가 아니라 여러 높이로 갈라진 절벽이 되었어. 기억의 나가 붙잡은 잔상 발판으로 첫 틈을 넘고, 점프로 높은 바람 선반을 따라가 거대한 역풍 기둥을 피해 가자. 마지막 좁은 틈은 Space 질주로 가른다.',
-    layout: 'wind-cliff', echoGoal: 1, hint: '① 기억의 나를 출발 약속에 남기기 ② O로 첫 틈 건너기 ③ 점프로 높은 바람 선반 오르기 ④ Space로 마지막 틈 돌파.',
+    intro: '하늘의 길은 이제 벽 하나가 아니라 여러 높이로 갈라진 절벽이 되었어. 기억의 나가 붙잡은 잔상 발판으로 첫 틈을 넘고, 점프로 높은 바람 선반을 따라가 거대한 역풍 기둥을 피해 가자. 출발 약속에 남긴 기억의 나는 도망치지 않고 역풍을 바라봐야 길이 흔들리지 않아. 마지막 좁은 틈은 Space 질주로 가른다.',
+    layout: 'wind-cliff', echoGoal: 1, hint: '① 출발 약속 위에서 왼쪽을 바라본 채 K로 기억 남기기 ② O로 첫 틈 건너기 ③ 점프로 높은 바람 선반 오르기 ④ Space로 마지막 틈 돌파.',
   },
   {
     chapter: '하늘 · 멈춰 버린 발걸음', name: '되돌아오는 표지판', type: 'puzzle', skills: ['resonance', 'dash'], objective: '층마다 다른 표지판을 지나 진짜 출발점에 닿아라',
@@ -343,13 +442,13 @@ const STAGES = [
   },
   {
     chapter: '딸 · 완벽한 꿈의 균열', name: '완벽한 정원', type: 'puzzle', skills: ['resonance'], objective: '정원의 뿌리 사이 숨은 균열을 찾아라',
-    intro: '수면 과학자의 딸은 이 정원을 완벽한 집이라고 믿고 있어. 하지만 꽃들이 너무 같은 방향만 보고 있고, 땅 아래에는 친구들의 기억이 갇혀 있어. L을 누르면 지상 길이 아니라 뿌리 사이의 층층 길이 드러나. 그 균열을 따라 내려가 보자.',
-    layout: 'garden-roots', echoGoal: 1, hint: 'L로 뿌리 사이 숨은 발판을 드러내며 높은 기억 표식까지 올라가세요.',
+    intro: '수면 과학자의 딸은 이 정원을 완벽한 집이라고 믿고 있어. 하지만 꽃들이 너무 같은 방향만 보고 있고, 땅 아래에는 친구들의 기억이 갇혀 있어. L을 누르면 지상 길이 아니라 뿌리 사이의 층층 길이 드러나. 그 균열을 따라 내려가 보자. 마지막에는 뿌리 아래에서 들은 목소리를 기억의 나에게 맡겨, 가짜 정원이 듣지 못한 노래를 계속 울려야 해.',
+    layout: 'garden-roots', echoGoal: 1, hint: 'L 공명 중에 뿌리 사이 숨은 발판을 따라 기억 표식까지 기록하세요. 되감긴 기억의 나가 뿌리 아래의 목소리를 이어 줍니다.',
   },
   {
     chapter: '딸 · 완벽한 꿈의 균열', name: '금이 간 교실', type: 'puzzle', skills: ['resonance'], objective: '갈라진 교실의 서로 다른 층에 있는 친구 자리를 되돌려라',
-    intro: '딸의 꿈속 교실에는 친구들이 모두 있지만, 그 모습은 기억을 빼앗긴 뒤의 빈 껍질처럼 조용하다. 교실 바닥은 금이 가며 위·아래 두 층으로 갈라졌어. L로 균열 사이의 책상 길을 보고, 두 층에 흩어진 친구들의 자리를 기억의 나로 채우자.',
-    layout: 'classroom-fracture', echoGoal: 2, hint: 'L로 균열 사이 책상 길을 보며 낮은 자리와 높은 자리에 기억의 나를 하나씩 남기세요.',
+    intro: '딸의 꿈속 교실에는 친구들이 모두 있지만, 그 모습은 기억을 빼앗긴 뒤의 빈 껍질처럼 조용하다. 교실 바닥은 금이 가며 위·아래 두 층으로 갈라졌어. L로 균열 사이의 책상 길을 보고, 두 층에 흩어진 친구들의 자리를 기억의 나로 채우자. 두 기억이 서로를 바라봐야 조용했던 친구들이 다시 서로를 부를 수 있어.',
+    layout: 'classroom-fracture', echoGoal: 2, hint: 'L로 책상 길을 보며 낮은·높은 자리에 기억을 남기고, 두 기억이 서로 마주보게 방향을 맞춘 뒤 K로 되감으세요.',
   },
   {
     chapter: '딸 · 완벽한 꿈의 균열', name: '완벽한 꿈의 수호자', type: 'boss', skills: ['resonance', 'dash'], objective: '진짜 기억으로 가짜 풍경을 지우고 수호자의 거울을 깨워라',
@@ -384,9 +483,9 @@ const STAGES = [
         { x: 534, y: 356, w: 42, h: 42, label: '하늘의 발걸음' },
       ],
       truthTargets: [
-        { x: 234, y: 386, w: 44, h: 44, label: '하린의 진짜 웃음', color: '#ffcf88', motion: { xRange: 90, yRange: 0, speed: 1.75, phase: 0 } },
-        { x: 438, y: 112, w: 44, h: 44, label: '유나의 진짜 노래', color: '#9effd7', motion: { xRange: 0, yRange: 75, speed: 1.45, phase: 1.1 } },
-        { x: 610, y: 278, w: 44, h: 44, label: '하늘의 진짜 길', color: '#a6efff', motion: { xRange: 70, yRange: 45, speed: 1.8, phase: 2.2 } },
+        { x: 234, y: 386, w: 44, h: 44, label: '하린의 진짜 웃음', art: 'harin', color: '#ffcf88', motion: { xRange: 90, yRange: 0, speed: 1.75, phase: 0 } },
+        { x: 438, y: 112, w: 44, h: 44, label: '유나의 진짜 노래', art: 'yuna', color: '#9effd7', motion: { xRange: 0, yRange: 75, speed: 1.45, phase: 1.1 } },
+        { x: 610, y: 278, w: 44, h: 44, label: '하늘의 진짜 길', art: 'haneul', color: '#a6efff', motion: { xRange: 70, yRange: 45, speed: 1.8, phase: 2.2 } },
       ],
       voiceGate: { x: 662, y: 408, w: 58, h: 44, label: '딸의 목소리' },
     },
@@ -394,8 +493,237 @@ const STAGES = [
   },
 ];
 
+// 몇 개의 핵심 퍼즐은 기억 발판의 개수를 채우는 데서 끝나지 않는다.
+// 과거의 내가 어느 방향을 바라보며 장면을 재생하는지가 현재 길의 규칙을 바꾼다.
+const PUZZLE_ROLE_RULES = Object.freeze({
+  chorus: Object.freeze({
+    title: '첫 음을 남기는 기억',
+    prompt: 'L 공명 중에 K로 기록해, 기억의 나에게 첫 음을 맡기세요',
+    requiredTechnique: 'resonance',
+    readyText: '기억의 나가 첫 음을 계속 울립니다. 끊어진 건반이 화음으로 이어졌어요.',
+  }),
+  'choir-balcony': Object.freeze({
+    title: '마주 보는 듀엣',
+    prompt: '두 빈자리의 기억이 서로를 바라보게 하세요',
+    directions: Object.freeze([1, -1]),
+    readyText: '두 목소리가 서로를 향합니다. 끊어진 옥타브가 화음으로 이어졌어요.',
+  }),
+  'harmony-spiral': Object.freeze({
+    title: '침묵을 향한 화음',
+    prompt: '두 기억이 검은 침묵 기둥을 향하게 하세요',
+    directions: Object.freeze([1, -1]),
+    readyText: '두 화음이 침묵을 마주 봅니다. 기둥 너머의 선율이 돌아왔어요.',
+  }),
+  'wind-cliff': Object.freeze({
+    title: '역풍을 바라보는 약속',
+    prompt: '기억의 내가 역풍 쪽을 바라보게 하세요',
+    directions: Object.freeze([-1]),
+    readyText: '과거의 네가 역풍을 바라봅니다. 현재의 길이 흔들리지 않아요.',
+  }),
+  'classroom-fracture': Object.freeze({
+    title: '서로를 부르는 두 자리',
+    prompt: '두 친구 자리에 남은 기억이 서로를 바라보게 하세요',
+    directions: Object.freeze([1, -1]),
+    readyText: '두 자리가 서로를 부릅니다. 가짜 교실의 균열이 열렸어요.',
+  }),
+  'garden-roots': Object.freeze({
+    title: '뿌리 아래의 목소리',
+    prompt: 'L 공명 중에 K로 기록해, 기억의 나에게 뿌리 아래의 노래를 맡기세요',
+    requiredTechnique: 'resonance',
+    readyText: '기억의 나가 뿌리 아래의 목소리를 되풀이합니다. 완벽한 잔디에 진짜 균열이 생겼어요.',
+  }),
+});
+
+// 기억이 실제로 친구의 감정을 되돌리는 순간을, 긴 대사 대신 짧은 인게임 반응으로 남긴다.
+const FRIEND_REACTION_EVENTS = Object.freeze({
+  2: Object.freeze([
+    Object.freeze({ id: 'first-relay', active: 1, portrait: 'harin', speaker: '하린의 기억', line: '어딘가에서… 내가 웃었던 소리가 들렸어.' }),
+    Object.freeze({ id: 'all-relays', active: 3, portrait: 'harin', speaker: '하린의 기억', line: '세 개의 불빛이 이어졌어. 나 혼자가 아니었구나.' }),
+  ]),
+  3: Object.freeze([
+    Object.freeze({ id: 'carousel-turns', active: 1, portrait: 'harin', speaker: '하린의 기억', line: '회전목마가 다시 움직여. 누군가 내 손을 잡아 준 것 같아.' }),
+  ]),
+  6: Object.freeze([
+    Object.freeze({ id: 'first-note', role: true, portrait: 'yuna', speaker: '유나의 기억', line: '내가 남긴 첫 음이… 아직 여기에서 울리고 있어.' }),
+  ]),
+  9: Object.freeze([
+    Object.freeze({ id: 'silent-key', role: true, portrait: 'yuna', speaker: '유나의 기억', line: '침묵이 나를 삼킨 게 아니야. 내가 서로의 목소리를 잊고 있었어.' }),
+  ]),
+  14: Object.freeze([
+    Object.freeze({ id: 'headwind-promise', role: true, portrait: 'haneul', speaker: '하늘의 기억', line: '바람이 불어도, 뒤돌아보지 않아도 되는 길이 생겼어.' }),
+  ]),
+  18: Object.freeze([
+    Object.freeze({ id: 'roots-sing', role: true, portrait: 'daughter', speaker: '수면 과학자의 딸', line: '정원 아래에서 친구들 목소리가 들려. 꽃들이 왜 울고 있었는지 알 것 같아.' }),
+  ]),
+  19: Object.freeze([
+    Object.freeze({ id: 'desks-call', role: true, portrait: 'daughter', speaker: '수면 과학자의 딸', line: '친구들이 서로를 보고 있어. 이 교실은 처음부터 완벽하지 않았어.' }),
+  ]),
+});
+
+function puzzleRoleRule(layout = game?.layout) {
+  return PUZZLE_ROLE_RULES[layout] || null;
+}
+
+function echoHoldingPad(pad) {
+  return (game.echoes || []).find((echo) => echoOverlapsPad(echo, pad)) || null;
+}
+
+function puzzleRoleState() {
+  const rule = puzzleRoleRule();
+  if (!rule) return { ready: true, rule: null, matched: 0, total: 0 };
+  const echoes = (game.memoryPads || []).map(echoHoldingPad);
+  const total = rule.directions?.length || game.memoryPads.length;
+  const matched = echoes.reduce((count, echo, index) => {
+    if (!echo?.holding) return count;
+    if (rule.directions) return count + Number(echo.facing === rule.directions[index]);
+    if (rule.requiredTechnique) return count + Number(echo.frames?.some((frame) => frame.techniques?.[rule.requiredTechnique]));
+    return count + 1;
+  }, 0);
+  return { ready: matched === total, rule, matched, total, echoes };
+}
+
+function puzzleObjectiveReady() {
+  const padsReady = game.echoGoal === 0 || activeMemoryPads(game.memoryPads || []) >= game.echoGoal;
+  return padsReady && puzzleRoleState().ready;
+}
+
+function decoratePuzzleRolePads() {
+  const rule = puzzleRoleRule();
+  if (!rule) return;
+  game.memoryPads.forEach((pad, index) => {
+    pad.roleDirection = rule.directions?.[index] || 0;
+    pad.roleTechnique = rule.requiredTechnique || '';
+    pad.rolePrompt = rule.prompt;
+  });
+}
+
+let friendReactionTimer = 0;
+
+function hideFriendReaction() {
+  clearTimeout(friendReactionTimer);
+  friendReaction.classList.remove('visible');
+}
+
+function showFriendReaction(event) {
+  friendReactionImage.src = `assets/portraits/${event.portrait}.png`;
+  friendReactionImage.alt = `${event.speaker} 반응 일러스트`;
+  friendReactionSpeaker.textContent = event.speaker;
+  friendReactionLine.textContent = event.line;
+  friendReaction.classList.add('visible');
+  clearTimeout(friendReactionTimer);
+  friendReactionTimer = setTimeout(() => friendReaction.classList.remove('visible'), 4200);
+}
+
+function updateFriendReactions(stage = currentStage()) {
+  if (stage?.type !== 'puzzle') return;
+  const events = FRIEND_REACTION_EVENTS[game.stageIndex] || [];
+  if (!events.length) return;
+  const active = activeMemoryPads(game.memoryPads || []);
+  const roleReady = puzzleRoleState().ready;
+  events.forEach((event) => {
+    const reactionId = `${game.stageIndex}:${event.id}`;
+    const ready = event.role ? roleReady && active >= game.echoGoal : active >= event.active;
+    if (!ready || game.reactionSeen?.has(reactionId)) return;
+    game.reactionSeen.add(reactionId);
+    showFriendReaction(event);
+  });
+}
+
+function stageSpriteSet(stageIndex = game?.stageIndex || 0) {
+  const stage = STAGES[Math.max(0, Math.min(STAGES.length - 1, stageIndex))] || STAGES[0];
+  const sprites = [playerSprites.idle, playerSprites.run, playerSprites.jump];
+  if (stageIndex < 6) {
+    sprites.push(harinBackgrounds[stageIndex], gateSprites.harin, memoryPadSprites.harin);
+    if (stageIndex === 1) sprites.push(harinStage02GateSprites.blocked, harinStage02GateSprites.open);
+    if (stageIndex === 2) sprites.push(objectSprites.harinLaughCollector, memoryPadSprites.harinRelay, platformSprites.harinEchoBridge);
+    if (stageIndex === 3) sprites.push(objectSprites.harinCarouselWall, platformSprites.harinCarouselPlatform);
+    if (stage.type === 'boss') sprites.push(bossSprites.harinClown, memoryPadSprites.distortion);
+  } else if (stageIndex < 12) {
+    sprites.push(yunaBackgrounds[stageIndex - 6], gateSprites.yuna, memoryPadSprites.yuna, platformSprites.yunaResonancePad);
+    if (stageIndex === 9) sprites.push(objectSprites.yunaSilentKey);
+    if (stage.type === 'boss') sprites.push(bossSprites.yunaChoir);
+  } else if (stageIndex < 18) {
+    sprites.push(haneulBackgrounds[stageIndex - 12], gateSprites.haneul, memoryPadSprites.haneul, platformSprites.haneulWindLedge);
+    if (stageIndex === 14) sprites.push(objectSprites.haneulHeadwindPillar);
+    if (stageIndex === 15) sprites.push(objectSprites.haneulTrueSignpost);
+    if (stage.type === 'boss') sprites.push(bossSprites.haneulKite, objectSprites.haneulDashRiftGate);
+  } else if (stageIndex < 21) {
+    sprites.push(daughterBackgrounds[stageIndex - 18], gateSprites.daughter, memoryPadSprites.daughter, platformSprites.daughterGarden, platformSprites.daughterFracturedClassroom, objectSprites.daughterTrueCrack);
+    if (stage.type === 'boss') sprites.push(bossSprites.daughterGuardian);
+  } else {
+    sprites.push(scientistBackground, gateSprites.scientist, memoryPadSprites.scientist, bossSprites.scientistGuardian, bossSprites.scientistGuardianAwakened, finalTruthPortraits.harin, finalTruthPortraits.yuna, finalTruthPortraits.haneul);
+  }
+  return sprites.flat(Infinity).filter(Boolean);
+}
+
+function ensureStageVisualAssets(stageIndex = game?.stageIndex || 0) {
+  ensureSprites(stageSpriteSet(stageIndex));
+}
+
+function waitForSprite(image) {
+  ensureSprite(image);
+  if (image.complete) return Promise.resolve();
+  return new Promise((resolve) => {
+    image.addEventListener('load', resolve, { once: true });
+    image.addEventListener('error', resolve, { once: true });
+  });
+}
+
+let loadingRun = 0;
+
+async function establishFirstDreamLink(onReady) {
+  const run = ++loadingRun;
+  const initialSprites = stageSpriteSet(0);
+  const portraitSources = ['assets/portraits/assistant.png', 'assets/portraits/protagonist.png'];
+  const portraitPreloads = portraitSources.map((source) => {
+    const image = new Image();
+    image.src = source;
+    return image;
+  });
+  const assets = [...initialSprites, ...portraitPreloads];
+  let loaded = 0;
+  loadingTitle.textContent = '첫 번째 꿈을 불러오는 중';
+  loadingCopy.textContent = '하린의 기억과 연결하고 있어요. 잠시만 기다려 주세요.';
+  loadingFill.style.width = '4%';
+  loadingSplash.classList.remove('hidden');
+  await Promise.all(assets.map((image) => new Promise((resolve) => {
+    const done = () => {
+      loaded += 1;
+      loadingFill.style.width = `${Math.round(8 + loaded / assets.length * 92)}%`;
+      loadingCopy.textContent = `꿈의 장면 ${loaded} / ${assets.length} 준비 완료`;
+      resolve();
+    };
+    ensureSprite(image);
+    if (image.complete) done();
+    else {
+      image.addEventListener('load', done, { once: true });
+      image.addEventListener('error', done, { once: true });
+    }
+  })));
+  if (run !== loadingRun) return;
+  loadingTitle.textContent = '연결 준비 완료';
+  loadingCopy.textContent = '하린의 꿈이 너의 상상을 기다리고 있어요.';
+  await new Promise((resolve) => setTimeout(resolve, 220));
+  if (run !== loadingRun) return;
+  loadingSplash.classList.add('hidden');
+  onReady();
+}
+
 // 완료한 스테이지 번호(0부터 시작)를 키로 쓰는 대화 장면들.
 // portrait 값은 나중에 assets/portraits/<portrait>.png 를 넣으면 바로 해당 픽셀 일러스트를 표시한다.
+const PROLOGUE_STORY = Object.freeze({
+  tag: 'DREAM LINK · PROLOGUE',
+  title: '꿈을 빼앗긴 밤',
+  finishLabel: '하린의 꿈으로',
+  lines: [
+    { speaker: '하린', portrait: 'harin', text: '어제도 웃는 꿈을 꿨는데… 깨어나니까 왜 웃었는지 기억이 안 나. 요즘은 웃는 게 조금 무서워.' },
+    { speaker: '전 조수', portrait: 'assistant', text: '하린뿐만이 아니야. 누군가 아이들의 꿈과 감정을 빼앗아, 한 아이만을 위한 완벽한 꿈을 유지하고 있어.' },
+    { speaker: '주인공', portrait: 'protagonist', text: '그 아이도 우리 친구잖아요. 누군가의 행복 때문에 다른 친구가 울면 안 돼요.' },
+    { speaker: '전 조수', portrait: 'assistant', text: '내 장치로 하린의 꿈에 들어가. 꿈속에서는 네가 믿는 상상력이 규칙을 바꿀 수 있어. 부수는 게 아니라, 빼앗긴 기억을 돌려주는 거야.' },
+    { speaker: '주인공', portrait: 'protagonist', text: '그럼 하린의 웃음부터 찾아올게요. 모두가 다시 자기 꿈을 꾸게 될 때까지.' },
+  ],
+});
+
 const STORY_BEATS = {
   0: {
     tag: 'DREAM LINK · A SMALL PROMISE', title: '처음으로 닿은 꿈', artId: 'story-00-first-link',
@@ -656,10 +984,11 @@ function loadCampaignProgress() {
       skills: new Set(Array.isArray(saved.skills) ? saved.skills.filter((skill) => skill !== 'gravity') : []),
       cleared: new Set(Array.isArray(saved.cleared) ? saved.cleared.map(Number).filter(Number.isInteger) : []),
       bossRecords: saved.bossRecords && typeof saved.bossRecords === 'object' ? saved.bossRecords : {},
+      puzzleRecords: saved.puzzleRecords && typeof saved.puzzleRecords === 'object' ? saved.puzzleRecords : {},
       routeMode: saved.routeMode === 'campaign' ? 'campaign' : 'development',
     };
   } catch {
-    return { unlocked: 0, memories: new Set(), skills: new Set(), cleared: new Set(), bossRecords: {}, routeMode: 'development' };
+    return { unlocked: 0, memories: new Set(), skills: new Set(), cleared: new Set(), bossRecords: {}, puzzleRecords: {}, routeMode: 'development' };
   }
 }
 
@@ -671,6 +1000,7 @@ function saveCampaignProgress() {
       skills: [...campaign.skills],
       cleared: [...campaign.cleared],
       bossRecords: campaign.bossRecords,
+      puzzleRecords: campaign.puzzleRecords,
       routeMode: campaign.routeMode,
     }));
   } catch {
@@ -694,16 +1024,42 @@ function renderCampaignRoute() {
   }).join('');
 }
 
+function freshGameState(phase = 'intro') {
+  return {
+    phase, stageIndex: 0, imagination: 100, elapsed: 0, bridge: false,
+    player: freshPlayer(), platforms: [], boss: null, dreamShots: [], nightmareShots: [], fireCooldown: 0,
+    nextAttack: 1.2, message: '', completed: [], memories: new Set(campaign.memories), learnedSkills: new Set(campaign.skills), fragments: [], echoes: [], recording: null, memoryRecordsUsed: 0, reactionSeen: new Set(), rewindExpressionTimer: 0, dreamTrails: [], dashTrailClock: 0, dashVisualTimer: 0, memoryPads: [], fallZones: [], transition: 'start', stageIntroTimer: null, dashCooldown: 0, dashTimer: 0, dashDirection: 1, watcherResolved: false,
+    stageRealElapsed: 0, challenge: null, bossGuideKey: '', bossGuideUntil: 0, bossGuideStarted: 0,
+  };
+}
+
 function newGame() {
   stopStageBgm();
   gameHud.classList.remove('hidden');
-  game = {
-    phase: 'intro', stageIndex: 0, imagination: 100, elapsed: 0, bridge: false,
-    player: freshPlayer(), platforms: [], boss: null, dreamShots: [], nightmareShots: [], fireCooldown: 0,
-    nextAttack: 1.2, message: '', completed: [], memories: new Set(campaign.memories), learnedSkills: new Set(campaign.skills), fragments: [], echoes: [], recording: null, rewindExpressionTimer: 0, dreamTrails: [], dashTrailClock: 0, dashVisualTimer: 0, memoryPads: [], fallZones: [], transition: 'start', stageIntroTimer: null, dashCooldown: 0, dashTimer: 0, dashDirection: 1, watcherResolved: false,
-    stageRealElapsed: 0, challenge: null,
-  };
-  showStageIntro();
+  game = freshGameState();
+  establishFirstDreamLink(() => showStoryBeat(PROLOGUE_STORY));
+}
+
+function showTitleScreen() {
+  loadingRun += 1;
+  loadingSplash.classList.add('hidden');
+  contextControls.classList.add('hidden');
+  hideFriendReaction();
+  stopStageBgm();
+  game = freshGameState('title');
+  gameHud.classList.add('hidden');
+  bossHud.classList.add('hidden');
+  storyDialogue.classList.add('hidden');
+  startScreen.classList.remove('story-mode', 'boss-intro');
+  startScreen.classList.add('title-mode');
+  startTag.textContent = 'DREAM LINK · 60-SECOND MEMORY LAB';
+  startTitle.innerHTML = '꿈을 되돌리는 아이<br /><span>60초 수정실</span>';
+  startCopy.textContent = '빼앗긴 친구들의 꿈을 되돌리기 위한 첫 번째 접속. 하린의 웃음이 사라지기 전에, 꿈의 문을 열어주세요.';
+  startButton.innerHTML = '게임 시작 <span>↵</span>';
+  startScreen.classList.remove('hidden');
+  stageMenu.classList.add('hidden');
+  endScreen.classList.add('hidden');
+  renderCampaignRoute();
 }
 
 function clearStageIntroTimer() {
@@ -741,9 +1097,20 @@ function saveBgmMasterVolume() {
 function stageBgmKey(stage = currentStage()) {
   const chapter = stage?.chapter || '';
   if (chapter.includes('하린') && HARIN_STAGE_MUSIC_PATHS[game.stageIndex]) return `harin-${game.stageIndex + 1}`;
+  if (chapter.includes('하늘') && HANEUL_STAGE_MUSIC_PATHS[game.stageIndex - 12]) return `haneul-${game.stageIndex + 1}`;
+  // 22스테이지는 PAGE 02 챕터명이라 인물 이름이 제목에 없더라도, 최종장 음악은 스테이지 번호로 확정한다.
+  if (game.stageIndex >= 18 && FINAL_CHAPTER_STAGE_MUSIC_PATHS[game.stageIndex - 18]) return `final-${game.stageIndex + 1}`;
   if (!chapter.includes('유나')) return null;
   if (stage.type === 'boss') return 'resonance';
   return ({ 7: 'tide', 8: 'glass', 9: 'silent', 10: 'glass', 12: 'tide' })[game.stageIndex + 1] || 'tide';
+}
+
+function normalizedBgmSource(source) {
+  // Work files stay as WAV in `normalized`; the shipped build uses the
+  // matching compressed MP3 files so the first dream can begin promptly.
+  return source
+    ?.replace(/^assets\/audio\//, 'assets/audio/compressed/')
+    .replace(/\.wav$/i, '.mp3');
 }
 
 function stageBgmConfig(key) {
@@ -751,10 +1118,22 @@ function stageBgmConfig(key) {
     const stageNumber = Number(key.slice('harin-'.length));
     const source = HARIN_STAGE_MUSIC_PATHS[stageNumber - 1];
     if (!source) return null;
-    return { family: 'harin', source, volume: CHARACTER_BGM_TRIM.harin, loop: stageNumber !== 5 };
+    return { family: 'harin', source: normalizedBgmSource(source), volume: CHARACTER_BGM_TRIM.harin, loop: stageNumber !== 5 };
+  }
+  if (key?.startsWith('haneul-')) {
+    const stageNumber = Number(key.slice('haneul-'.length));
+    const source = HANEUL_STAGE_MUSIC_PATHS[stageNumber - 13];
+    return source ? { family: 'haneul', source: normalizedBgmSource(source), volume: CHARACTER_BGM_TRIM.haneul, loop: true } : null;
+  }
+  if (key?.startsWith('final-')) {
+    const stageNumber = Number(key.slice('final-'.length));
+    const source = FINAL_CHAPTER_STAGE_MUSIC_PATHS[stageNumber - 19];
+    if (!source) return null;
+    const family = stageNumber === 22 ? 'scientist' : 'daughter';
+    return { family, source: normalizedBgmSource(source), volume: CHARACTER_BGM_TRIM[family], loop: true };
   }
   const source = YUNA_BGM_PATHS[key];
-  return source ? { family: 'yuna', source, volume: CHARACTER_BGM_TRIM.yuna, loop: true } : null;
+  return source ? { family: 'yuna', source: normalizedBgmSource(source), volume: CHARACTER_BGM_TRIM.yuna, loop: true } : null;
 }
 
 function updateBgmVolumeControl() {
@@ -772,7 +1151,7 @@ function setBgmMasterVolume(value, persist = false) {
   if (config) stageBgm.targetVolume = Math.min(1, config.volume * stageBgm.masterVolume);
   if (stageBgm.audio) {
     cancelStageBgmFade();
-    stageBgm.audio.volume = stageBgm.enabled ? stageBgm.targetVolume : 0;
+    stageBgm.audio.volume = stageBgm.enabled ? (game.phase === 'story' ? storyBgmVolume() : stageBgm.targetVolume) : 0;
     if (stageBgm.enabled && stageBgm.audio.paused && !stageBgm.frozen && game.phase === 'playing') playStageBgm();
   }
   updateBgmVolumeControl();
@@ -814,7 +1193,7 @@ function fadeStageBgm(targetVolume, duration = 260, onComplete = null) {
   stageBgm.fadeFrame = requestAnimationFrame(tick);
 }
 
-function playStageBgm() {
+function playStageBgm(volume = stageBgm.targetVolume) {
   if (!stageBgm.enabled || !stageBgm.audio || stageBgm.frozen) return;
   const audio = stageBgm.audio;
   audio.muted = false;
@@ -823,7 +1202,7 @@ function playStageBgm() {
     if (stageBgm.audio !== audio) return;
     stageBgm.playBlocked = false;
     updateBgmToggle(stageBgm.key);
-    fadeStageBgm(stageBgm.targetVolume, 260);
+    fadeStageBgm(volume, 260);
   };
   const markBlocked = () => {
     if (stageBgm.audio !== audio) return;
@@ -909,7 +1288,7 @@ function createStageBgmAudio(key, config = stageBgmConfig(key)) {
   return audio;
 }
 
-function startStageBgm(stage = currentStage()) {
+function startStageBgm(stage = currentStage(), { storyMode = false } = {}) {
   const key = stageBgmKey(stage);
   const config = stageBgmConfig(key);
   if (!key || !config) {
@@ -939,7 +1318,24 @@ function startStageBgm(stage = currentStage()) {
     if (key !== 'resonance') setupYunaLoopMix();
     startYunaLoopStation(stage);
   } else stopYunaLoopStation();
-  playStageBgm();
+  playStageBgm(storyMode ? storyBgmVolume(key) : stageBgm.targetVolume);
+}
+
+function storyBgmVolume(key = stageBgm.key) {
+  return stageBgm.enabled ? bgmVolume(key) * .48 : 0;
+}
+
+function continueStoryBgm() {
+  if (!stageBgm.enabled) return;
+  if (!stageBgm.audio) {
+    // 첫 프롤로그에는 아직 이전 스테이지가 없으므로, 첫 꿈의 음악을 잔잔하게 연다.
+    startStageBgm(currentStage(), { storyMode: true });
+    return;
+  }
+  if (stageBgm.frozen) return;
+  if (stageBgm.audio.ended) stageBgm.audio.currentTime = 0;
+  if (stageBgm.audio.paused) playStageBgm(storyBgmVolume());
+  else fadeStageBgm(storyBgmVolume(), 420);
 }
 
 function pauseStageBgm() {
@@ -953,7 +1349,8 @@ function pauseStageBgm() {
 }
 
 function resumeStageBgm() {
-  if (stageBgmKey()) playStageBgm();
+  if (game.phase === 'story') continueStoryBgm();
+  else if (stageBgmKey()) playStageBgm();
 }
 
 function stopStageBgm() {
@@ -1301,6 +1698,60 @@ function dreamTheme(stage = currentStage()) {
   return { id: 'harin', label: "HARIN'S DREAM · THE MOONLIGHT FAIR", top: '#10143d', mid: '#17275e', bottom: '#0b163a', line: '#665ba8', accent: '#78cfff', soft: '#9183d5', gold: '#ffd65a', platform: '#292c60', edge: '#ffd65a' };
 }
 
+function bossEntryLine(stage = currentStage()) {
+  const mode = stage?.bossConfig?.mode;
+  if (mode === 'calm') return '하린의 “혼자 남을까 봐”라는 두려움이 광대가 되었습니다. 쓰러뜨리지 말고, 함께했던 기억을 보여 주세요.';
+  if (mode === 'resonance') return '침묵의 합창단이 유나의 목소리를 삼키고 있습니다. 박자를 듣고 화음을 되찾으세요.';
+  if (mode === 'chase') return '검은 연이 하늘의 발걸음을 출발점으로 되돌립니다. 기억에게 바람을 맡기고, 현재의 너는 끝까지 달리세요.';
+  if (mode === 'mirror') return '수호자는 딸을 지키려 가짜 풍경을 만들었습니다. 진짜 사진을 재생해 균열을 구분하세요.';
+  if (mode === 'final') return '꿈이 무너지자 과학자가 직접 수호자가 되었습니다. 이 싸움의 끝은 승리가 아니라, 놓아주는 선택입니다.';
+  return stage?.intro || '';
+}
+
+function bossBriefForStage(stage = currentStage()) {
+  const mode = stage?.bossConfig?.mode;
+  if (mode === 'calm') return '① K로 진짜 기억 두 곳 재생  ② 가짜 기억은 I로 삭제  ③ 마지막 빛에서 Shift 2.1초 유지\n공격은 필요 없습니다.';
+  if (mode === 'resonance') return '① K로 화음 앵커 두 곳 재생  ② 별빛 박자에 맞춰 L을 짧게 6회  ③ 마지막 불협화음 20초 회피';
+  if (mode === 'chase') return '① K로 두 기억 미끼 준비  ② 돌풍이 기억을 세 번 따라가게 유도  ③ Space 질주로 바람 고리 연속 통과';
+  if (mode === 'mirror') return '① K로 진짜 사진 재생  ② L로 진짜 균열만 드러내기  ③ Space 질주로 균열 네 곳 통과';
+  if (mode === 'final') return '① K로 세 친구의 봉인 완성  ② L로 꿈 에너지 분리  ③ J로 첫 기억 반환\n④ 움직이는 TRUE 기억 추적  ⑤ 부서진 수호자 체력 모두 해체  ⑥ 마지막에는 딸의 목소리에 L 유지';
+  return '기억의 역할을 완성해 공포의 규칙을 바꾸세요.';
+}
+
+function guideKeyHints() {
+  const stage = currentStage() || STAGES[0];
+  const boss = game.boss;
+  if (stage.type !== 'boss') {
+    const basics = [{ key: '← →', label: '이동' }, { key: '↑', label: '점프' }];
+    if (game.recording) return [...basics, { key: 'K', label: '되감기' }, { key: 'I', label: '기록 취소' }];
+    if (stage.layout === 'carousel') return [...basics, { key: 'K', label: '회전목마 기억' }];
+    if ((stage.chapter || '').includes('유나')) return [...basics, { key: 'L', label: '공명 길' }, { key: 'K', label: '기억 역할' }];
+    if ((stage.chapter || '').includes('하늘')) return [...basics, { key: 'Space', label: '질주' }, { key: 'K', label: '출발 기억' }];
+    if ((stage.chapter || '').includes('딸')) return [...basics, { key: 'L', label: '숨은 균열' }, { key: 'K', label: '친구 기억' }];
+    return [...basics, ...(stage.echoGoal ? [{ key: 'K', label: '기억 기록' }] : [])];
+  }
+  if (!boss) return [{ key: '← →', label: '이동' }, { key: '↑ ↓', label: '회피' }];
+  if (boss.mode === 'calm') return boss.activePads < boss.memoryPads.length
+    ? [{ key: 'K', label: '진짜 기억' }, { key: 'I', label: '가짜 기억 삭제' }]
+    : [{ key: 'Shift', label: '안심의 순간 유지' }];
+  if (boss.mode === 'resonance') return boss.codaActive
+    ? [{ key: '↑ ↓', label: '음표 회피' }, { key: 'Space', label: '긴급 질주' }]
+    : boss.activePads < boss.memoryPads.length
+      ? [{ key: 'K', label: '화음 앵커' }]
+      : [{ key: 'L', label: '별빛 박자 공명' }];
+  if (boss.mode === 'chase') return boss.echoHits < boss.requiredEchoHits
+    ? [{ key: 'K', label: '바람 미끼' }, { key: '↑ ↓', label: '돌풍 회피' }]
+    : [{ key: 'Space', label: '바람 고리 질주' }];
+  if (boss.mode === 'mirror') return boss.mirrorProgress < boss.mirrorGates.length && boss.activePads >= boss.memoryPads.length
+    ? [{ key: 'L', label: '진짜 균열' }, { key: 'Space', label: '균열 질주' }]
+    : [{ key: 'K', label: '진짜 사진' }];
+  if (!boss.attackUnlocked) return [{ key: 'K', label: '세 기억 봉인' }, { key: 'L', label: '공명 해제' }];
+  if (finalBossPhase(boss) === 2) return [{ key: 'J', label: 'TRUE 기억 발사' }, { key: '↑ ↓', label: '탄막 회피' }];
+  if (finalBossPhase(boss) === 4) return [{ key: 'L', label: '딸의 목소리 전달' }];
+  if (finalBossPhase(boss) === 3) return [{ key: 'J', label: '수호자 해체' }, { key: 'Space', label: '탄막 질주' }];
+  return [{ key: 'J', label: '기억 탄환' }, { key: 'Space', label: '탄막 질주' }];
+}
+
 function phaseGuide() {
   const stage = currentStage() || STAGES[0];
   const boss = game.boss;
@@ -1322,7 +1773,25 @@ function phaseGuide() {
       if (goal > active) return { step: `MEMORY RELAY · ${active} / ${goal}`, text: '중앙 기억 교차로에서 K 기록을 시작해 낮은 길·높은 길·오른쪽 길의 웃음 중계기에 기억의 나를 하나씩 남기세요.', compact: `진짜 웃음 중계기 ${active} / ${goal}` };
       return { step: 'RELAY COMPLETE', text: '세 갈래 기억이 수집탑의 흡입을 멈췄습니다. 열린 셔터 너머의 꿈의 문으로 가세요.', compact: '멈춘 수집탑을 통과하라' };
     }
-    if (goal > active) return { step: `STEP 1 / 2 · ${active} / ${goal}`, text: 'K로 길을 기록해 과거의 나를 기억 발판에 남기세요.', compact: `기억 발판 ${active} / ${goal}을 채워라` };
+    const roleState = puzzleRoleState();
+    if (goal > active) {
+      const roleText = roleState.rule
+        ? roleState.rule.requiredTechnique
+          ? ` ${roleState.rule.prompt} L을 누른 채 이동·점프한 기록이어야 합니다.`
+          : ` ${roleState.rule.prompt} 발판 위에서 방향키로 얼굴을 돌린 뒤 K로 되감으세요.`
+        : '';
+      return { step: `STEP 1 / 2 · ${active} / ${goal}`, text: `K로 길을 기록해 과거의 나를 기억 발판에 남기세요.${roleText}`, compact: `기억 역할 ${active} / ${goal} 준비` };
+    }
+    if (!roleState.ready) {
+      const correction = roleState.rule.requiredTechnique
+        ? 'I로 기존 기억을 지운 뒤, L 공명을 유지한 채 길을 다시 기록하세요.'
+        : 'I로 잘못된 기억을 지우고, 발판 위에서 방향키로 얼굴을 돌린 뒤 K를 눌러 다시 기록하세요.';
+      return {
+        step: `MEMORY ROLE · ${roleState.matched} / ${roleState.total}`,
+        text: `${roleState.rule.prompt} ${correction}`,
+        compact: `기억의 나 ${roleState.matched} / ${roleState.total} 역할 완성`,
+      };
+    }
     if (goal > 0) return { step: 'STEP 2 / 2', text: '기억의 나가 길을 지키는 동안 꿈의 문으로 가세요.', compact: '열린 꿈의 문으로 가라' };
     return { step: 'EXPLORE', text: stage.hint, compact: stage.objective };
   }
@@ -1359,12 +1828,13 @@ function phaseGuide() {
   }
   const finalPhase = finalBossPhase(boss);
   if (finalPhase === 2) {
-    return { step: 'PHASE 2 / 3', text: '과학자가 친구들의 기억을 가짜로 복제했습니다. 움직이는 “TRUE” 기억을 추적해 J 기억 탄환으로 맞히세요.', compact: `진짜 기억 ${boss.truthProgress} / ${boss.truthTargets.length}` };
+    return { step: 'PHASE 2 / 4', text: '과학자가 친구들의 기억을 가짜로 복제했습니다. 움직이는 “TRUE” 기억을 추적해 J 기억 탄환으로 맞히세요.', compact: `진짜 기억 ${boss.truthProgress} / ${boss.truthTargets.length}` };
   }
   if (finalPhase === 3) {
-    return { step: 'PHASE 3 / 3', text: '공격을 멈추세요. 딸의 목소리 곁에서 L을 유지해 아버지에게 진짜 선택을 들려주세요.', compact: `딸의 목소리 ${boss.voiceProgress.toFixed(1)} / ${boss.voiceDuration.toFixed(1)}초` };
+    return { step: 'PHASE 3 / 4', text: '진짜 기억이 수호자를 깨웠습니다. 부서진 수호자에게 J 기억 탄환을 끝까지 돌려주어 남은 체력을 모두 비우세요.', compact: `수호자 해체 ${boss.maxHp - boss.hp} / ${boss.maxHp}` };
   }
-  return { step: 'STEP 3 / 3', text: 'J 기억 탄환으로 행복을 돌려주세요. 진실의 기억 방패는 공포를 되돌립니다.', compact: `기억 반환 ${boss.maxHp - boss.hp} / ${boss.maxHp}` };
+  if (finalPhase === 4) return { step: 'PHASE 4 / 4', text: '수호자는 멈췄지만 아버지는 아직 놓지 못하고 있어요. 딸의 목소리 곁에서 L을 유지해 진짜 선택을 전하세요.', compact: `딸의 목소리 ${boss.voiceProgress.toFixed(1)} / ${boss.voiceDuration.toFixed(1)}초` };
+  return { step: 'PHASE 1 / 4', text: 'J 기억 탄환으로 빼앗긴 행복을 돌려주세요. 네 발을 맞히면 가짜 기억이 모습을 드러냅니다.', compact: `기억 반환 ${boss.maxHp - boss.hp} / ${boss.maxHp}` };
 }
 
 function showStoryPortrait(line) {
@@ -1391,14 +1861,17 @@ function renderStoryLine() {
   storyProgress.textContent = `${String(game.storyLineIndex + 1).padStart(2, '0')} / ${String(lines.length).padStart(2, '0')}`;
   showStoryPortrait(line);
   const lastLine = game.storyLineIndex >= lines.length - 1;
-  const finishLabel = beat.pageBreak ? '2페이지 시작' : '다음 스테이지로';
+  const finishLabel = beat.finishLabel || (beat.pageBreak ? '2페이지 시작' : '다음 스테이지로');
   startButton.innerHTML = `${lastLine ? finishLabel : '다음 대사'} <span>↵</span>`;
 }
 
 function showStoryBeat(beat) {
   clearStageIntroTimer();
-  pauseStageBgm();
+  ensureStageVisualAssets();
+  contextControls.classList.add('hidden');
+  hideFriendReaction();
   game.phase = 'story';
+  continueStoryBgm();
   game.storyBeat = beat;
   game.storyLineIndex = 0;
   startTag.textContent = beat.tag;
@@ -1406,6 +1879,7 @@ function showStoryBeat(beat) {
   startCopy.textContent = '';
   storyDialogue.classList.remove('hidden');
   renderStoryLine();
+  startScreen.classList.remove('title-mode', 'boss-intro');
   startScreen.classList.add('story-mode');
   startScreen.classList.remove('hidden');
   stageMenu.classList.add('hidden');
@@ -1430,7 +1904,11 @@ function continueStoryBeat() {
 function showStageIntro() {
   const stage = currentStage();
   clearStageIntroTimer();
-  startScreen.classList.remove('story-mode');
+  ensureStageVisualAssets();
+  contextControls.classList.add('hidden');
+  hideFriendReaction();
+  startScreen.classList.remove('story-mode', 'title-mode');
+  startScreen.classList.toggle('boss-intro', stage.type === 'boss');
   storyDialogue.classList.add('hidden');
   // 보스 스테이지는 인트로 화면이 떠 있는 동안에도 전투 장면을 준비한다.
   // 자동 전환 타이머와 렌더 루프가 엇갈려도 빈 캔버스가 보이지 않게 한다.
@@ -1440,18 +1918,13 @@ function showStageIntro() {
   startTag.textContent = `${pagePrefix} · STAGE ${String(game.stageIndex + 1).padStart(2, '0')} / ${String(totalStages()).padStart(2, '0')}`;
   startTitle.textContent = stage.name;
   startCopy.textContent = stage.type === 'boss'
-    ? `${stage.intro}  이 전투는 60초 안에 기억의 역할을 완성해야 합니다.`
+    ? `${bossEntryLine(stage)}\n\n[ 60초 전투 순서 ]\n${bossBriefForStage(stage)}`
     : stage.intro;
   startButton.innerHTML = `${stage.type === 'boss' ? '악몽에 맞서기' : '꿈속으로 들어가기'} <span>↵</span>`;
   startScreen.classList.remove('hidden');
   stageMenu.classList.add('hidden');
   endScreen.classList.add('hidden');
-  if (stage.type === 'boss') {
-    const stageIndex = game.stageIndex;
-    game.stageIntroTimer = setTimeout(() => {
-      if (game.phase === 'intro' && game.stageIndex === stageIndex && currentStage()?.type === 'boss') startStage();
-    }, 950);
-  }
+  // 보스전은 읽을 시간 없이 자동 시작하지 않는다. Enter/버튼으로 준비가 끝난 뒤에만 60초가 흐른다.
   renderCampaignRoute();
   updateHud();
 }
@@ -1468,11 +1941,13 @@ function renderStageMenu() {
     const current = index === game.stageIndex;
     const locked = !developmentMode && index > campaign.unlocked;
     const cleared = campaign.cleared.has(index) || index < campaign.unlocked;
-    const record = campaign.bossRecords[index];
+    const record = stage.type === 'boss' ? campaign.bossRecords[index] : campaign.puzzleRecords[index];
     const status = locked
       ? 'LOCKED · 이전 꿈을 먼저 회복하세요'
       : record
-        ? `${record.rank} · BEST ${record.bestRemaining.toFixed(1)}s LEFT`
+        ? stage.type === 'boss'
+          ? `${record.rank} · BEST ${record.bestRemaining.toFixed(1)}s LEFT`
+          : `${record.rank} · ${record.bestTime.toFixed(1)}s · IMAGINATION ${record.bestImagination} · ECHO ${record.bestRecords}`
         : cleared ? 'CLEAR · 재도전 가능' : 'CURRENT · 도전 가능';
     return `<button class="stage-select-button${current ? ' current' : ''}${locked ? ' locked' : ''}" data-stage="${index}"${locked ? ' disabled' : ''}>
       <b>${stagePage(stage) === 2 ? 'PAGE 02 · ' : ''}STAGE ${String(index + 1).padStart(2, '0')}</b>
@@ -1551,6 +2026,8 @@ function removeLatestEcho() {
 
 function startStage() {
   const stage = currentStage();
+  ensureStageVisualAssets();
+  hideFriendReaction();
   if (stage.type === 'boss' && stage.bossConfig?.mode === 'resonance') primeGameSfx();
   clearStageIntroTimer();
   gameHud.classList.remove('hidden');
@@ -1564,6 +2041,7 @@ function startStage() {
   game.nightmareShots = [];
   game.echoes = [];
   game.recording = null;
+  game.memoryRecordsUsed = 0;
   game.rewindExpressionTimer = 0;
   game.dreamTrails = [];
   game.dashTrailClock = 0;
@@ -1580,6 +2058,9 @@ function startStage() {
   game.carouselGateOpened = false;
   game.carouselRideProgress = 0;
   game.stageRealElapsed = 0;
+  game.bossGuideKey = '';
+  game.bossGuideUntil = stage.type === 'boss' ? 4.8 : 0;
+  game.bossGuideStarted = 0;
   game.challenge = stage.type === 'boss' ? {
     duration: BOSS_MEMORY_COLLAPSE_SECONDS,
     remaining: BOSS_MEMORY_COLLAPSE_SECONDS,
@@ -1591,6 +2072,7 @@ function startStage() {
     setupPuzzle(stage.layout, stage.echoGoal || 0);
   } else ensureBossStage(true);
   bossHud.classList.toggle('hidden', stage.type !== 'boss');
+  contextControls.classList.remove('hidden');
   startScreen.classList.add('hidden');
   stageMenu.classList.add('hidden');
   endScreen.classList.add('hidden');
@@ -1738,10 +2220,12 @@ function setupPuzzle(layout, echoGoal) {
       { x: 0, y: 500, w: 212, h: 40, label: 'CLIFF START' },
       { x: 430, y: 432, w: 106, h: 18, label: 'LOW WIND SHELF' },
       { x: 556, y: 360, w: 92, h: 18, label: 'HIGH WIND SHELF' },
+      // 충돌 범위는 넘을 수 있게 좁게 유지하지만, 시각적으로는 배경의 거대한 역풍 기둥과 이어진다.
       { x: 670, y: 360, w: 52, h: 140, wall: true, persistentWall: true, label: 'HEADWIND PILLAR' },
       { x: 802, y: 420, w: 158, h: 18, label: 'CLIFF END' },
     ];
-    game.exit = { x: 876, y: 418, w: 36, h: 82, label: 'CLIFF GATE' };
+    // 문 하단이 절벽 발판의 윗면(420)에 정확히 닿도록 배치한다.
+    game.exit = { x: 876, y: 338, w: 36, h: 82, label: 'CLIFF GATE' };
     game.fallZones = [];
   } else if (layout === 'signpost-maze') {
     game.platforms = [
@@ -1872,6 +2356,7 @@ function setupPuzzle(layout, echoGoal) {
   };
   game.memoryPads = padsByLayout[layout] || [];
   game.echoGoal = echoGoal;
+  decoratePuzzleRolePads();
 }
 
 function setupBoss(name, config = {}) {
@@ -1902,7 +2387,7 @@ function setupBoss(name, config = {}) {
       homeX: target.x,
       homeY: target.y,
       motion: target.motion ? { ...target.motion } : null,
-    })), truthProgress: 0,
+    })), truthProgress: 0, truthResolved: false, defeated: false,
     voiceGate: config.voiceGate ? { ...config.voiceGate } : null, voiceProgress: 0, voiceDuration: Number(config.voiceDuration) || 1.7,
     finalChargeNeeded: Number(config.finalChargeNeeded) || 1.4, finalCharge: 0,
     releaseReady: false, releaseProgress: 0, releaseDuration: Number(config.releaseDuration) || 2.6, memoryReplay: 0,
@@ -1922,7 +2407,7 @@ function isStageFiveBossBattle() {
 }
 
 function triggerBossShot() {
-  if (game.phase !== 'playing' || currentStage()?.type !== 'boss' || game.boss?.mode !== 'final' || !game.boss?.attackUnlocked || game.boss?.releaseReady || game.fireCooldown > 0) return;
+  if (game.phase !== 'playing' || currentStage()?.type !== 'boss' || game.boss?.mode !== 'final' || !game.boss?.attackUnlocked || game.boss?.releaseReady || finalBossPhase(game.boss) === 4 || game.fireCooldown > 0) return;
   if (!spend(4)) return;
   const p = game.player;
   const direction = p.facing >= 0 ? 1 : -1;
@@ -1965,6 +2450,7 @@ function captureMemoryFrame(player, time = 0) {
     grounded: Boolean(player.grounded),
     bossMode,
     motionState: { ...motion },
+    techniques: { ...activeTechniques() },
   };
 }
 
@@ -2017,6 +2503,7 @@ function finishMemoryRecording() {
     game.echoes.shift();
   }
   game.echoes.push(echo);
+  game.memoryRecordsUsed = (game.memoryRecordsUsed || 0) + 1;
   Object.assign(game.player, { ...recording.start, vx: 0, vy: 0, grounded: false });
   game.recording = null;
   game.rewindExpressionTimer = .55;
@@ -2267,7 +2754,7 @@ function updatePuzzle(dt) {
     p.facing = game.dashDirection;
     p.vx = game.dashDirection * 340;
   }
-  const memoryPadsReadyAtFrameStart = game.echoGoal === 0 || activeMemoryPads(game.memoryPads) >= game.echoGoal;
+  const memoryPadsReadyAtFrameStart = puzzleObjectiveReady();
   const memoryGateOpen = memoryPadsReadyAtFrameStart && (stage.layout !== 'watcher' || game.watcherResolved);
   const solidWalls = game.platforms.filter((item) => item.wall && (item.persistentWall || !memoryGateOpen));
   solidWalls.forEach((wall) => resolveWallHorizontal(p, wall, oldX));
@@ -2300,7 +2787,8 @@ function updatePuzzle(dt) {
     p.y = H - p.h; p.vy = 0; p.grounded = true;
   }
   updateMemoryLoops(dt);
-  const memoryPadsReady = activeMemoryPads(game.memoryPads) >= game.echoGoal;
+  updateFriendReactions(stage);
+  const memoryPadsReady = puzzleObjectiveReady();
   updateYunaPuzzleMusic(techniques);
   if (stage.layout === 'watcher' && !game.watcherResolved) {
     const watcher = getWatcher();
@@ -2316,7 +2804,16 @@ function updatePuzzle(dt) {
   const watcherReady = stage.layout !== 'watcher' || game.watcherResolved;
   if (overlaps(p, game.exit)) {
     if (!watcherReady) say('먼저 과거의 나를 감시선 앞으로 기록하고, 그 기억이 지나갈 때 Shift로 시간을 멈추세요.');
-    else if (!memoryPadsReady) say(stage.layout === 'wall' ? '낮은 길·높은 길·오른쪽 길의 추억등 세 곳에 기억의 나를 하나씩 남기세요.' : '먼저 기억의 나를 모든 기억 발판에 남겨야 합니다.');
+    else if (!memoryPadsReady) {
+      const roleState = puzzleRoleState();
+      say(stage.layout === 'wall'
+        ? '낮은 길·높은 길·오른쪽 길의 추억등 세 곳에 기억의 나를 하나씩 남기세요.'
+        : roleState.rule && activeMemoryPads(game.memoryPads) >= game.echoGoal
+          ? roleState.rule.requiredTechnique
+            ? `${roleState.rule.prompt} I로 기존 기억을 지우고, L 공명 중에 다시 기록하세요.`
+            : `${roleState.rule.prompt} I로 잘못된 기억을 지우고, 발판 위에서 방향을 바꿔 다시 기록하세요.`
+          : '먼저 기억의 나를 모든 기억 발판에 남겨야 합니다.');
+    }
     else completeStage();
   }
 }
@@ -2374,13 +2871,19 @@ function launchNightmareRing(origin, count, options = {}) {
 
 function finalBossPhase(b) {
   if (!b.attackUnlocked) return 1;
+  if (b.defeated) return 4;
+  // 진짜 기억을 되찾은 뒤에는 수호자의 모습이 무너진 채 남은 체력을 끝까지 돌려줘야 한다.
+  if (b.truthResolved) return 3;
   if (b.hp <= Math.ceil(b.maxHp / 3)) return 3;
   if (b.hp <= Math.ceil(b.maxHp * 2 / 3)) return 2;
   return 1;
 }
 
 function nextBossAttackDelay(b) {
-  if (b.mode === 'final') return b.phase === 3 ? 99 : b.phase === 2 ? .68 : .82;
+  if (b.mode === 'final') {
+    const phase = finalBossPhase(b);
+    return phase === 4 ? 99 : phase === 3 ? .58 : phase === 2 ? .68 : .82;
+  }
   if (b.mode === 'mirror') return .94;
   if (b.mode === 'resonance') return b.codaActive ? .48 : .92;
   if (b.mode === 'chase') return .88;
@@ -2435,8 +2938,16 @@ function spawnNightmarePattern() {
   } else if (b.phase === 2) {
     if (attackNumber % 2) launchNightmareFan(origin, p, 5, .76, { speed: 300, r: 10, kind: 'memory' });
     else launchNightmareRing(origin, 9, { speed: 235, r: 8, kind: 'memory', offset: game.elapsed * .85 });
+  } else if (b.phase === 3) {
+    // 진짜 기억 이후에는 거대한 수호자가 무너진 모습으로도 마지막 저항을 한다.
+    if (attackNumber % 3 === 0) launchNightmareRing(origin, 11, { speed: 245, r: 9, kind: 'memory', offset: game.elapsed * 1.1 });
+    else if (attackNumber % 3 === 1) launchNightmareFan(origin, p, 6, .92, { speed: 325, r: 10, kind: 'memory' });
+    else {
+      launchNightmareRing(origin, 6, { speed: 205, r: 8, kind: 'memory', offset: game.elapsed * .35 });
+      launchNightmareFan(origin, p, 3, .3, { speed: 355, r: 9, kind: 'memory' });
+    }
   } else {
-    // 마지막에는 탄막을 늘리는 대신, 딸의 목소리를 듣는 선택으로 전환한다.
+    // 수호자의 체력이 모두 비면, 마지막에는 딸의 목소리를 듣는 선택으로 전환한다.
     game.nightmareShots = [];
   }
 }
@@ -2483,6 +2994,35 @@ function bossRankFromRemaining(remaining) {
   if (remaining >= 35) return { rank: 'DAWN', stars: 3 };
   if (remaining >= 15) return { rank: 'MOON', stars: 2 };
   return { rank: 'STAR', stars: 1 };
+}
+
+function puzzleParTime(stage = currentStage()) {
+  const roleBonus = puzzleRoleRule(stage?.layout)?.requiredTechnique ? 8 : puzzleRoleRule(stage?.layout) ? 5 : 0;
+  return 20 + (stage?.echoGoal || 0) * 9 + (stage?.skills?.length || 0) * 4 + roleBonus;
+}
+
+function puzzleRankFromRun(stage, elapsed, imagination, recordsUsed) {
+  const target = puzzleParTime(stage);
+  const leanPlan = recordsUsed <= (stage.echoGoal || 0) + 1;
+  if (elapsed <= target && imagination >= 65 && leanPlan) return { rank: 'DAWN', stars: 3 };
+  if (elapsed <= target * 1.7 && imagination >= 35) return { rank: 'MOON', stars: 2 };
+  return { rank: 'STAR', stars: 1 };
+}
+
+function savePuzzleMemoryRecord() {
+  const stage = currentStage();
+  if (stage?.type !== 'puzzle') return null;
+  const elapsed = Math.max(.1, Number((game.stageRealElapsed || 0).toFixed(1)));
+  const imagination = Math.max(0, Math.ceil(game.imagination || 0));
+  const recordsUsed = Math.max(0, Number(game.memoryRecordsUsed || 0));
+  const next = { ...puzzleRankFromRun(stage, elapsed, imagination, recordsUsed), bestTime: elapsed, bestImagination: imagination, bestRecords: recordsUsed };
+  const previous = campaign.puzzleRecords[game.stageIndex];
+  const improved = !previous
+    || next.stars > previous.stars
+    || (next.stars === previous.stars && next.bestTime < previous.bestTime)
+    || (next.stars === previous.stars && next.bestTime === previous.bestTime && next.bestRecords < previous.bestRecords);
+  if (improved) campaign.puzzleRecords[game.stageIndex] = next;
+  return { record: campaign.puzzleRecords[game.stageIndex], improved, target: puzzleParTime(stage) };
 }
 
 function saveBossMemoryRecord() {
@@ -2650,7 +3190,7 @@ function updateBoss(dt) {
         ? 76 + Math.sin(game.elapsed * 1.45) * 16
         : 160 + Math.sin(game.elapsed * 1.45) * 56;
     if (b.mode === 'final' && b.attackUnlocked && finalBossPhase(b) === 2) updateFinalTruthTargets(b);
-    const listeningToDaughter = b.mode === 'final' && b.attackUnlocked && finalBossPhase(b) === 3;
+    const listeningToDaughter = b.mode === 'final' && b.attackUnlocked && finalBossPhase(b) === 4;
     if (b.mode !== 'calm' && !b.releaseReady && !listeningToDaughter && b.memoryReplay <= 0) {
       game.nextAttack -= dt;
       if (game.nextAttack <= 0) { spawnNightmarePattern(); game.nextAttack = nextBossAttackDelay(b); }
@@ -2717,10 +3257,11 @@ function updateBoss(dt) {
             b.truthProgress += 1;
             b.flash = .3;
             if (finalTruthReady(b)) {
-              b.hp = Math.ceil(b.maxHp / 3);
+              b.truthResolved = true;
               b.phase = 3;
               game.nightmareShots = [];
-              say('세 친구의 진짜 기억이 복제를 지웠습니다. 이제 공격을 멈추고 딸의 목소리를 전하세요.');
+              game.nextAttack = .56;
+              say('세 친구의 진짜 기억이 복제를 지웠습니다. 수호자의 모습이 무너졌지만, 아직 남은 꿈 에너지를 모두 돌려줘야 합니다.');
             } else {
               say(`진짜 기억을 찾았습니다. ${b.truthProgress} / ${b.truthTargets.length} · 다음 기억을 찾아보세요.`);
             }
@@ -2734,7 +3275,7 @@ function updateBoss(dt) {
           return false;
         }
       }
-      if (b.mode === 'final' && b.attackUnlocked && finalPhase === 3 && overlaps(rect, b)) {
+      if (b.mode === 'final' && b.attackUnlocked && finalPhase === 4 && overlaps(rect, b)) {
         say('이제는 공격할 때가 아닙니다. 딸의 목소리를 전해 주세요.');
         return false;
       }
@@ -2745,7 +3286,12 @@ function updateBoss(dt) {
         if (b.mode === 'final') {
           b.phase = finalBossPhase(b);
           if (b.phase > previousPhase && b.hp > 0) say('연구실이 뒤틀리며 친구들의 기억을 복제했습니다. 진짜 기억만 찾아야 합니다.');
-          if (b.hp <= 0) beginFinalRelease(b);
+          if (b.hp <= 0 && b.truthResolved && !b.defeated) {
+            b.defeated = true;
+            b.phase = 4;
+            game.nightmareShots = [];
+            say('수호자의 체력이 모두 비었습니다. 이제 공격을 멈추고 딸의 목소리를 아버지에게 전하세요.');
+          }
         }
         game.nextAttack = Math.min(game.nextAttack + .16, b.mode === 'final' ? 1.12 : 1.0);
         return false;
@@ -2813,8 +3359,8 @@ function updateBoss(dt) {
     if (b.mirrorProgress >= b.mirrorGates.length) resolveBoss(b, '완벽한 꿈의 수호자가 멈췄습니다. 딸은 균열 너머의 친구들을 바라봅니다.');
     return;
   }
-  if (b.mode === 'final' && b.attackUnlocked && finalBossPhase(b) === 3) {
-    // 세 번째 단계는 체력을 더 깎는 전투가 아니라, 딸의 선택을 아버지에게 들려주는 순간이다.
+  if (b.mode === 'final' && b.attackUnlocked && finalBossPhase(b) === 4) {
+    // 마지막 단계는 체력을 더 깎는 전투가 아니라, 딸의 선택을 아버지에게 들려주는 순간이다.
     game.nightmareShots = [];
     updateDaughterVoice(b, techniques, dt);
     return;
@@ -2833,19 +3379,29 @@ function updateBoss(dt) {
     b.phase = 1;
     say('세 개의 봉인이 공명했습니다. 이제 J로 빼앗긴 기억을 돌려주세요.');
   }
-  if (b.attackUnlocked && b.hp <= 0 && !b.resolving) {
-    beginFinalRelease(b);
+  if (b.attackUnlocked && b.hp <= 0 && b.truthResolved && !b.defeated && !b.resolving) {
+    b.defeated = true;
+    b.phase = 4;
+    game.nightmareShots = [];
+    say('수호자의 체력이 모두 비었습니다. 딸의 목소리를 전해 마지막 연결을 풀어주세요.');
   }
 }
 
 function completeStage() {
   if (game.phase !== 'playing') return;
-  stopStageBgm();
+  const completedStageIndex = game.stageIndex;
+  const storyBeat = STORY_BEATS[completedStageIndex];
+  // 스토리가 이어지는 구간은 방금 지나온 꿈의 음악을 낮은 볼륨으로 남긴다.
+  // 다음 스테이지를 시작할 때만 새 꿈의 BGM으로 자연스럽게 교체된다.
+  if (!storyBeat) stopStageBgm();
   game.completed.push(game.stageIndex);
   const stage = currentStage();
-  const memoryRecord = saveBossMemoryRecord();
+  const memoryRecord = stage.type === 'boss' ? saveBossMemoryRecord() : savePuzzleMemoryRecord();
   if (memoryRecord?.improved) {
-    say(`${memoryRecord.record.rank} MEMORY · ${memoryRecord.record.bestRemaining.toFixed(1)}초를 남기고 공포를 풀었습니다.`);
+    const recordLine = stage.type === 'boss'
+      ? `${memoryRecord.record.rank} MEMORY · ${memoryRecord.record.bestRemaining.toFixed(1)}초를 남기고 공포를 풀었습니다.`
+      : `${memoryRecord.record.rank} MEMORY · ${memoryRecord.record.bestTime.toFixed(1)}초 · 상상력 ${memoryRecord.record.bestImagination} · 기록 ${memoryRecord.record.bestRecords}회`;
+    say(recordLine);
   }
   if (Array.isArray(stage?.teaches)) {
     stage.teaches.forEach((skill) => {
@@ -2858,9 +3414,7 @@ function completeStage() {
   saveCampaignProgress();
   game.challenge = null;
   if (game.stageIndex < STAGES.length - 1) {
-    const completedStageIndex = game.stageIndex;
     game.stageIndex += 1;
-    const storyBeat = STORY_BEATS[completedStageIndex];
     if (storyBeat) showStoryBeat(storyBeat);
     else showStageIntro();
   } else showChapterEnd();
@@ -2932,6 +3486,7 @@ function drawDisconnectWakeUp(presentation, progress) {
 }
 
 function drawFailureArt(image, opacity = 1) {
+  ensureSprite(image);
   if (!image?.complete || !image.naturalWidth) return false;
   ctx.save(); ctx.globalAlpha = Math.max(0, Math.min(1, opacity)); ctx.drawImage(image, 0, 0, W, H); ctx.restore();
   return true;
@@ -2980,6 +3535,7 @@ function disconnect() {
   game.phase = 'disconnecting';
   pauseStageBgm();
   game.disconnect = { elapsed: 0, duration: 4.5, theme: disconnectPresentation() };
+  ensureSprites([failureArt[game.disconnect.theme.key], failureArt.wakeup]);
   keys.clear();
   pressed.clear();
   gameHud.classList.add('hidden');
@@ -3061,6 +3617,55 @@ function showFinalTruth() {
   endScreen.classList.remove('hidden');
 }
 
+function bossPhaseNodes(boss = game.boss) {
+  if (!boss) return [];
+  if (boss.mode === 'calm') return [
+    { label: '진짜 기억', done: boss.activePads >= boss.memoryPads.length },
+    { label: '안심', done: boss.calmProgress >= boss.calmDuration },
+  ];
+  if (boss.mode === 'resonance') return [
+    { label: '화음 앵커', done: boss.activePads >= boss.memoryPads.length },
+    { label: '박자', done: boss.resonanceProgress >= boss.resonanceGates.length },
+    { label: '불협화음', done: boss.codaElapsed >= boss.codaDuration },
+  ];
+  if (boss.mode === 'chase') return [
+    { label: '바람 유인', done: boss.echoHits >= boss.requiredEchoHits },
+    { label: '용기 질주', done: boss.chaseProgress >= boss.windGates.length },
+  ];
+  if (boss.mode === 'mirror') return [
+    { label: '진짜 사진', done: boss.activePads >= boss.memoryPads.length },
+    { label: '진짜 균열', done: boss.mirrorProgress >= boss.mirrorGates.length },
+  ];
+  return [
+    { label: '봉인', done: boss.attackUnlocked },
+    { label: '첫 반환', done: boss.attackUnlocked && finalBossPhase(boss) >= 2 },
+    { label: '진짜 기억', done: boss.truthResolved },
+    { label: '수호자 해체', done: boss.defeated },
+    { label: '딸의 목소리', done: boss.releaseReady },
+  ];
+}
+
+function refreshBossGuide() {
+  if (currentStage()?.type !== 'boss' || !game.boss) return;
+  const guide = phaseGuide();
+  const key = `${guide.step}|${guide.compact}`;
+  if (game.bossGuideKey !== key) {
+    game.bossGuideKey = key;
+    game.bossGuideUntil = game.elapsed + 3.8;
+    game.bossGuideStarted = game.elapsed;
+  }
+}
+
+function renderContextControls() {
+  const visible = game.phase === 'playing';
+  contextControls.classList.toggle('hidden', !visible);
+  if (!visible) return;
+  contextControls.innerHTML = guideKeyHints()
+    .map(({ key, label }) => `<span><b>${key}</b>${label}</span>`)
+    .concat('<span><b>ESC</b>꿈의 경로</span>')
+    .join('');
+}
+
 function updateHud() {
   const stage = currentStage() || STAGES[0];
   const guide = phaseGuide();
@@ -3116,12 +3721,12 @@ function updateHud() {
       if (game.boss.mode === 'final' && finalPhase === 2) {
         bossFill.style.width = `${game.boss.truthProgress / Math.max(1, game.boss.truthTargets.length) * 100}%`;
         bossHealthEl.textContent = `진짜 기억 ${game.boss.truthProgress} / ${game.boss.truthTargets.length}`;
-      } else if (game.boss.mode === 'final' && finalPhase === 3) {
+      } else if (game.boss.mode === 'final' && finalPhase === 4) {
         bossFill.style.width = `${game.boss.voiceProgress / game.boss.voiceDuration * 100}%`;
         bossHealthEl.textContent = `딸의 목소리 ${game.boss.voiceProgress.toFixed(1)} / ${game.boss.voiceDuration.toFixed(1)}초`;
       } else {
         bossFill.style.width = `${(game.boss.maxHp - Math.max(0, game.boss.hp)) / Math.max(1, game.boss.maxHp) * 100}%`;
-        bossHealthEl.textContent = `기억 반환 ${game.boss.maxHp - Math.max(0, game.boss.hp)} / ${game.boss.maxHp}`;
+        bossHealthEl.textContent = `${game.boss.truthResolved ? '수호자 해체' : '기억 반환'} ${game.boss.maxHp - Math.max(0, game.boss.hp)} / ${game.boss.maxHp}`;
       }
     } else {
       bossFill.style.width = `${game.boss.finalCharge / game.boss.finalChargeNeeded * 100}%`;
@@ -3142,6 +3747,7 @@ function updateHud() {
     card.classList.toggle('active', active || (rule === 'dash' && game.dashCooldown > 0));
     card.classList.toggle('locked', !hasSkill(rule));
   });
+  renderContextControls();
   updateMemoryLoopUI();
 }
 
@@ -3180,8 +3786,9 @@ function updateMemoryLoopUI() {
     } else if (boss.attackUnlocked) {
       const finalPhase = finalBossPhase(boss);
       if (finalPhase === 2) memoryStatus.textContent = `진짜 기억 ${boss.truthProgress} / ${boss.truthTargets.length} · 움직이는 “TRUE” 빛을 추적해 J 기억 탄환으로 맞히세요. COPY는 가짜 복제입니다.`;
-      else if (finalPhase === 3) memoryStatus.textContent = `딸의 목소리 ${boss.voiceProgress.toFixed(1)} / ${boss.voiceDuration.toFixed(1)}초 · 공격을 멈추고 “딸의 목소리” 원 안에서 L을 유지하세요.`;
-      else memoryStatus.textContent = `기억 반환 ${boss.maxHp - boss.hp} / ${boss.maxHp} · J로 빼앗긴 꿈 에너지를 돌려주세요. 진실의 기억이 탄막을 받으면 연구실 과거가 재생되어 공포가 잠시 멈춥니다.`;
+      else if (finalPhase === 3) memoryStatus.textContent = `수호자 해체 ${boss.maxHp - boss.hp} / ${boss.maxHp} · 진짜 기억이 기계를 깨웠습니다. 남은 꿈 에너지도 J로 모두 되돌려 주세요.`;
+      else if (finalPhase === 4) memoryStatus.textContent = `딸의 목소리 ${boss.voiceProgress.toFixed(1)} / ${boss.voiceDuration.toFixed(1)}초 · 공격을 멈추고 “딸의 목소리” 원 안에서 L을 유지하세요.`;
+      else memoryStatus.textContent = `기억 반환 ${boss.maxHp - boss.hp} / ${boss.maxHp} · J로 빼앗긴 꿈 에너지를 돌려주세요. 네 발을 되돌리면 진짜 기억이 모습을 드러냅니다.`;
     } else {
       memoryStatus.textContent = active < boss.memoryPads.length
         ? `봉인 위치 ${active} / ${boss.memoryPads.length} · 기억의 나 둘과 현재의 나를 세 봉인에 맞추세요.`
@@ -3190,7 +3797,16 @@ function updateMemoryLoopUI() {
   } else {
     const active = activeMemoryPads(game.memoryPads || []);
     const goal = game.echoGoal || 0;
-    memoryStatus.textContent = goal ? `기억 발판 ${active} / ${goal} · K를 눌러 과거의 나를 남기세요.` : 'K로 이동을 기록하면, 다음 스테이지에서 과거의 나와 협동할 수 있습니다.';
+    const roleState = puzzleRoleState();
+    memoryStatus.textContent = !goal
+      ? 'K로 이동을 기록하면, 다음 스테이지에서 과거의 나와 협동할 수 있습니다.'
+      : active < goal
+        ? `기억 발판 ${active} / ${goal} · K를 눌러 과거의 나를 남기세요.${roleState.rule ? ` ${roleState.rule.prompt}` : ''}`
+        : roleState.rule && !roleState.ready
+          ? `${roleState.rule.title} ${roleState.matched} / ${roleState.total} · I로 잘못된 기억을 지우고, 발판 위에서 방향을 바꿔 다시 기록하세요.`
+          : roleState.rule
+            ? roleState.rule.readyText
+            : `기억 발판 ${active} / ${goal} · 기억의 나가 길을 지키고 있습니다.`;
   }
 }
 
@@ -3274,6 +3890,35 @@ function drawHaneulPixelBackground(stageIndex, boss) {
   return true;
 }
 
+function drawDaughterPixelBackground(stageIndex, boss) {
+  const daughterStageIndex = stageIndex - 18;
+  const image = daughterBackgrounds[daughterStageIndex];
+  if (!image?.complete || image.naturalWidth === 0) return false;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#251b43';
+  ctx.fillRect(0, 0, W, H);
+  drawCoverImage(image);
+  const shade = boss ? .1 : daughterStageIndex === 1 ? .06 : .04;
+  ctx.fillStyle = `rgba(21, 14, 47, ${shade})`;
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+  return true;
+}
+
+function drawScientistPixelBackground(boss) {
+  if (!scientistBackground?.complete || scientistBackground.naturalWidth === 0) return false;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#0a142c';
+  ctx.fillRect(0, 0, W, H);
+  drawCoverImage(scientistBackground);
+  ctx.fillStyle = `rgba(4, 9, 26, ${boss ? .1 : .04})`;
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+  return true;
+}
+
 function getHarinStage02GateSprite(gateOpen) {
   const state = gateOpen ? 'open' : 'blocked';
   const image = harinStage02GateSprites[state];
@@ -3306,7 +3951,9 @@ function drawBackground(boss = false, bossLabel = '') {
   const theme = dreamTheme();
   const bitmapDrawn = (theme.id === 'harin' && drawHarinPixelBackground(game.stageIndex, boss))
     || (theme.id === 'yuna' && drawYunaPixelBackground(game.stageIndex, boss))
-    || (theme.id === 'haneul' && drawHaneulPixelBackground(game.stageIndex, boss));
+    || (theme.id === 'haneul' && drawHaneulPixelBackground(game.stageIndex, boss))
+    || (theme.id === 'daughter' && drawDaughterPixelBackground(game.stageIndex, boss))
+    || (theme.id === 'scientist' && drawScientistPixelBackground(boss));
   if (!bitmapDrawn) {
     const g = ctx.createLinearGradient(0, 0, W, H);
     g.addColorStop(0, theme.top);
@@ -3426,9 +4073,47 @@ function drawYunaScorePlatform(item) {
   ctx.restore();
 }
 
+function drawHarinLaughCollector(item) {
+  const { x, y, w, h } = item;
+  const image = objectSprites.harinLaughCollector;
+  const relayReady = activeMemoryPads(game.memoryPads || []) >= game.echoGoal;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.globalAlpha = relayReady ? .24 : 1;
+  ctx.shadowBlur = relayReady ? 10 : 30;
+  ctx.shadowColor = relayReady ? '#9effea' : '#ffb85c';
+  if (image?.complete && image.naturalWidth > 0) {
+    // 충돌 폭은 좁게 두되, 화면상 수집탑은 한눈에 알아볼 수 있게 그린다.
+    const visualH = h + 24;
+    const visualW = visualH * image.naturalWidth / image.naturalHeight;
+    ctx.drawImage(image, x + w / 2 - visualW / 2, y - 12, visualW, visualH);
+  } else {
+    ctx.fillStyle = '#202956'; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = '#6b70bf'; ctx.fillRect(x + 8, y, 4, h);
+  }
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = relayReady ? '#baffeb' : '#fff0b1'; ctx.font = '800 8px ui-monospace, monospace'; ctx.textAlign = 'center';
+  ctx.fillText(relayReady ? 'LAUGH FLOW STOPPED' : 'LAUGH COLLECTOR', x + w / 2, y - 10);
+  ctx.restore();
+}
+
 function drawYunaSilentKeyWall(item) {
   const { x, y, w, h } = item;
+  const image = objectSprites.yunaSilentKey;
   ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  if (image?.complete && image.naturalWidth > 0) {
+    ctx.shadowBlur = 24; ctx.shadowColor = '#67ead5';
+    ctx.drawImage(image, x - 14, y - 7, w + 28, h + 14);
+    ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .2;
+    ctx.fillStyle = '#9effd7'; ctx.fillRect(x + 3, y + 2, w - 6, h - 4);
+    ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+    ctx.strokeStyle = '#9effd7'; ctx.lineWidth = 2; ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+    ctx.fillStyle = '#e8fff5'; ctx.font = '800 8px ui-monospace, monospace'; ctx.textAlign = 'center';
+    ctx.fillText('SILENT KEY', x + w / 2, y - 10);
+    ctx.restore();
+    return;
+  }
   ctx.shadowBlur = 24; ctx.shadowColor = '#67ead5';
   const body = ctx.createLinearGradient(x, y, x + w, y);
   body.addColorStop(0, '#08162a'); body.addColorStop(.52, '#1c3042'); body.addColorStop(1, '#07101e');
@@ -3447,11 +4132,179 @@ function drawYunaSilentKeyWall(item) {
   ctx.restore();
 }
 
+function drawHarinCarouselWall(item) {
+  const { x, y, w, h } = item;
+  const image = objectSprites.harinCarouselWall;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.shadowBlur = 30; ctx.shadowColor = '#ffca6d';
+  if (image?.complete && image.naturalWidth > 0) {
+    const visualH = h + 30;
+    const visualW = visualH * image.naturalWidth / image.naturalHeight;
+    ctx.drawImage(image, x + w / 2 - visualW / 2, y - 15, visualW, visualH);
+  } else {
+    const fallback = ctx.createLinearGradient(x, y, x + w, y);
+    fallback.addColorStop(0, '#171a48'); fallback.addColorStop(.5, '#4b3f7c'); fallback.addColorStop(1, '#171a48');
+    ctx.fillStyle = fallback; ctx.fillRect(x, y, w, h);
+  }
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = '#ffd97c'; ctx.lineWidth = 2; ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+  ctx.fillStyle = '#fff0b7'; ctx.font = '800 8px ui-monospace, monospace'; ctx.textAlign = 'center';
+  ctx.fillText('MOONLIGHT CAROUSEL WALL', x + w / 2, y - 10);
+  ctx.restore();
+}
+
+function drawHaneulHeadwindPillar(item) {
+  const { x, y, w, h } = item;
+  const image = objectSprites.haneulHeadwindPillar;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.shadowBlur = 28; ctx.shadowColor = '#68e9ff';
+  if (image?.complete && image.naturalWidth > 0) {
+    // 충돌 폭은 유지하되, 배경의 거대한 첨탑과 이어지는 규모로 보이게 한다.
+    const visualH = Math.max(360, h + 220);
+    const visualW = visualH * image.naturalWidth / image.naturalHeight;
+    ctx.drawImage(image, x + w / 2 - visualW / 2, y + h - visualH, visualW, visualH);
+  } else {
+    ctx.fillStyle = '#16365d'; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = '#76efff'; ctx.fillRect(x + 3, y + 3, w - 6, h - 6);
+  }
+  ctx.restore();
+}
+
+function drawHaneulWindPlatform(item) {
+  const image = platformSprites.haneulWindLedge;
+  const x = Math.round(item.x);
+  const y = Math.round(item.y);
+  const w = Math.round(item.w);
+  const h = Math.round(item.h);
+  const visualHeight = Math.max(28, Math.min(68, h + 25));
+  const sourceX = 214;
+  const sourceY = 104;
+  const sourceW = 1744;
+  const sourceH = 526;
+  const tileWidth = Math.max(72, Math.min(176, w));
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.shadowBlur = item.hidden ? 22 : 14;
+  ctx.shadowColor = '#55dfff';
+  ctx.fillStyle = '#142e5a';
+  ctx.fillRect(x, y, w, Math.max(h, 14));
+  if (image?.complete && image.naturalWidth > 0) {
+    for (let offset = 0; offset < w; offset += tileWidth) {
+      const width = Math.min(tileWidth, w - offset);
+      ctx.drawImage(image, sourceX, sourceY, sourceW, sourceH, x + offset, y - 5, width, visualHeight);
+    }
+  } else {
+    ctx.fillStyle = '#245071';
+    ctx.fillRect(x, y, w, Math.max(h, 16));
+  }
+  ctx.shadowBlur = 10;
+  ctx.fillStyle = item.hidden ? '#a4fff0' : '#9eeeff';
+  ctx.fillRect(x + 2, y, Math.max(0, w - 4), 2);
+  ctx.fillStyle = 'rgba(228, 250, 255, .32)';
+  for (let marker = x + 16; marker < x + w - 8; marker += 34) ctx.fillRect(marker, y + 6, 12, 1);
+  ctx.restore();
+}
+
+function drawHarinCarouselPlatform(item) {
+  const image = platformSprites.harinCarouselPlatform;
+  const x = Math.round(item.x);
+  const y = Math.round(item.y);
+  const w = Math.round(item.w);
+  const h = Math.round(item.h);
+  const floating = h < 28;
+  const visualHeight = floating ? 48 : 88;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.shadowBlur = item.hidden ? 22 : 13;
+  ctx.shadowColor = item.hidden ? '#9effea' : '#ffcc6b';
+  if (image?.complete && image.naturalWidth > 0) {
+    // 원본의 투명 여백을 제외한 무대 부분만 사용해, 길이에 따라 자연스럽게 늘어난다.
+    const sourceY = Math.round(image.naturalHeight * .19);
+    const sourceH = Math.round(image.naturalHeight * .61);
+    ctx.drawImage(image, 0, sourceY, image.naturalWidth, sourceH, x, y - 8, w, visualHeight);
+  } else {
+    const fallback = ctx.createLinearGradient(x, y, x, y + h);
+    fallback.addColorStop(0, '#69578c'); fallback.addColorStop(1, '#211c48');
+    ctx.fillStyle = fallback; ctx.fillRect(x, y, w, Math.max(h, 16));
+  }
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = item.hidden ? 'rgba(157, 255, 234, .72)' : 'rgba(255, 234, 161, .78)';
+  ctx.fillRect(x + 3, y, Math.max(0, w - 6), 2);
+  if (item.carouselRide) {
+    // 4스테이지의 이동 발판은 같은 회전목마 그림을 쓰되, 실제로 회전 중이라는 빛의 흐름을 겹친다.
+    const pulse = .55 + Math.sin(game.elapsed * 5) * .3;
+    ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = pulse;
+    ctx.fillStyle = '#fff1aa';
+    for (let lamp = x + 13; lamp < x + w - 8; lamp += 24) ctx.fillRect(lamp, y - 4, 4, 4);
+    ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+  }
+  if (item.hidden) {
+    ctx.strokeStyle = 'rgba(158, 255, 234, .84)'; ctx.lineWidth = 1;
+    ctx.strokeRect(x + .5, y - 1.5, w - 1, Math.max(12, h + 2));
+  }
+  ctx.restore();
+}
+
+function drawDaughterDreamPlatform(item) {
+  const classroom = game.layout === 'classroom-fracture';
+  const image = classroom ? platformSprites.daughterFracturedClassroom : platformSprites.daughterGarden;
+  const x = Math.round(item.x);
+  const y = Math.round(item.y);
+  const w = Math.round(item.w);
+  const h = Math.round(item.h);
+  const visualHeight = h >= 28 ? Math.min(90, h + 45) : 56;
+  const glow = classroom ? '#ff87ca' : '#8eefff';
+  const edge = classroom ? '#ffb0dc' : '#b9ffe1';
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.shadowBlur = item.hidden ? 24 : 16;
+  ctx.shadowColor = glow;
+  if (image?.complete && image.naturalWidth > 0) {
+    // 양 끝 장식이 작은 발판마다 찌그러지지 않도록 중앙의 반복 가능한 ledge 부분만 이어 붙인다.
+    const sourceX = Math.round(image.naturalWidth * .14);
+    const sourceW = Math.round(image.naturalWidth * .72);
+    const tileWidth = Math.max(74, Math.min(186, w));
+    for (let offset = 0; offset < w; offset += tileWidth) {
+      const width = Math.min(tileWidth, w - offset);
+      ctx.drawImage(image, sourceX, 0, sourceW, image.naturalHeight, x + offset, y - 9, width, visualHeight);
+    }
+  } else {
+    const fallback = ctx.createLinearGradient(x, y, x, y + Math.max(h, 18));
+    fallback.addColorStop(0, classroom ? '#4b356a' : '#8b6c95');
+    fallback.addColorStop(1, classroom ? '#171d4a' : '#292448');
+    ctx.fillStyle = fallback;
+    ctx.fillRect(x, y, w, Math.max(h, 18));
+  }
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = edge;
+  ctx.globalAlpha = item.hidden ? .72 : .92;
+  ctx.fillRect(x + 3, y, Math.max(0, w - 6), 2);
+  if (classroom) {
+    ctx.fillStyle = 'rgba(255, 172, 220, .45)';
+    for (let marker = x + 16; marker < x + w - 6; marker += 33) ctx.fillRect(marker, y + 5, 14, 1);
+  }
+  ctx.restore();
+}
+
 function drawPlatform(item) {
   if (item.wall) {
+    if (item.label === 'LAUGH COLLECTOR') {
+      drawHarinLaughCollector(item);
+      return;
+    }
     if (item.persistentWall) {
       if (dreamTheme().id === 'yuna') {
         drawYunaSilentKeyWall(item);
+        return;
+      }
+      if (dreamTheme().id === 'haneul') {
+        drawHaneulHeadwindPillar(item);
+        return;
+      }
+      if (game.layout === 'carousel') {
+        drawHarinCarouselWall(item);
         return;
       }
       const carouselWall = game.layout === 'carousel';
@@ -3485,8 +4338,20 @@ function drawPlatform(item) {
     ctx.save(); ctx.translate(item.x + 47, item.y + 190); ctx.rotate(-Math.PI / 2); ctx.fillStyle = '#a2afe1'; ctx.font = '700 10px ui-monospace, monospace'; ctx.fillText('DREAM EXTRACTOR', -52, 0); ctx.restore();
   } else {
     const theme = dreamTheme();
+    if (theme.id === 'harin') {
+      drawHarinCarouselPlatform(item);
+      return;
+    }
     if (theme.id === 'yuna') {
       drawYunaScorePlatform(item);
+      return;
+    }
+    if (theme.id === 'haneul') {
+      drawHaneulWindPlatform(item);
+      return;
+    }
+    if (theme.id === 'daughter' && (game.layout === 'garden-roots' || game.layout === 'classroom-fracture')) {
+      drawDaughterDreamPlatform(item);
       return;
     }
     const platformGradient = ctx.createLinearGradient(item.x, item.y, item.x, item.y + item.h);
@@ -3520,10 +4385,22 @@ function drawBridge(bridge) {
     return;
   }
   const label = game.bridge ? bridge.label : bridge.label.replace('PATH', 'ECHO').replace('LINK', 'ECHO');
+  const relayBridge = game.layout === 'wall';
+  const image = relayBridge ? platformSprites.harinEchoBridge : null;
   ctx.save(); ctx.translate(bridge.x + bridge.w / 2, bridge.y + bridge.h / 2); ctx.shadowBlur = game.bridge ? 24 : 10; ctx.shadowColor = game.bridge ? '#61faff' : '#ff6d90';
-  ctx.fillStyle = game.bridge ? '#2b8da7' : 'rgba(196,54,106,.34)'; ctx.fillRect(-bridge.w / 2, -bridge.h / 2, bridge.w, bridge.h);
-  ctx.strokeStyle = game.bridge ? '#8fffff' : '#ff7895'; ctx.lineWidth = 2; ctx.strokeRect(-bridge.w / 2 + 1, -bridge.h / 2 + 1, bridge.w - 2, bridge.h - 2);
-  ctx.fillStyle = game.bridge ? '#d2ffff' : '#ffbbc8'; ctx.font = '800 9px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText(label, 0, 4); ctx.restore();
+  if (image?.complete && image.naturalWidth > 0) {
+    ctx.imageSmoothingEnabled = false;
+    ctx.globalAlpha = game.bridge ? 1 : .26;
+    const visualHeight = Math.max(36, bridge.h * 2.7);
+    ctx.drawImage(image, -bridge.w / 2 - 11, -visualHeight * .46, bridge.w + 22, visualHeight);
+    ctx.globalAlpha = 1;
+  } else {
+    ctx.fillStyle = game.bridge ? '#2b8da7' : 'rgba(196,54,106,.34)'; ctx.fillRect(-bridge.w / 2, -bridge.h / 2, bridge.w, bridge.h);
+  }
+  // 하린의 웃음 중계 잔상길은 전용 일러스트 자체가 발판의 경계를 갖기 때문에 데모형 사각 테두리를 겹치지 않는다.
+  if (!relayBridge) { ctx.strokeStyle = game.bridge ? '#8fffff' : '#ff7895'; ctx.lineWidth = 2; ctx.strokeRect(-bridge.w / 2 + 1, -bridge.h / 2 + 1, bridge.w - 2, bridge.h - 2); }
+  if (!relayBridge) { ctx.fillStyle = game.bridge ? '#d2ffff' : '#ffbbc8'; ctx.font = '800 9px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText(label, 0, 4); }
+  ctx.restore();
 }
 
 function harinStage03PlatformArtReady() {
@@ -3649,8 +4526,6 @@ function drawLaughRelayNetwork() {
   const pads = game.memoryPads || [];
   if (!collector || pads.length !== 3) return;
   const activeStates = pads.map((pad) => activeMemoryPads([pad]) > 0);
-  const activeCount = activeStates.filter(Boolean).length;
-  const open = activeCount >= game.echoGoal;
   const colors = ['#ffe37d', '#9effea', '#ffb5d7'];
   ctx.save();
   ctx.imageSmoothingEnabled = false;
@@ -3668,40 +4543,10 @@ function drawLaughRelayNetwork() {
     for (let y = fromY; y < toY; y += 13) ctx.fillRect(pipeX, y, 3, 8);
     for (let x = pipeX; x < collector.x + 5; x += 9) ctx.fillRect(x, collector.y + 60 + index * 28, 6, 3);
 
-    ctx.shadowBlur = active ? 18 : 0; ctx.shadowColor = color;
-    ctx.fillStyle = '#111a35'; ctx.fillRect(pad.x - 5, pad.y - 18, pad.w + 10, pad.h + 24);
-    ctx.fillStyle = color; ctx.fillRect(pad.x - 1, pad.y - 14, pad.w + 2, 4);
-    ctx.fillRect(pad.x + 4, pad.y + pad.h + 1, pad.w - 8, 4);
-    if (index === 0) {
-      ctx.fillRect(centerX - 8, pad.y - 32, 13, 4); ctx.fillRect(centerX - 8, pad.y - 29, 4, 12);
-    } else if (index === 1) {
-      ctx.fillRect(centerX - 2, pad.y - 35, 4, 16); ctx.fillRect(centerX - 8, pad.y - 29, 16, 4);
-      ctx.fillRect(centerX - 5, pad.y - 32, 10, 10);
-    } else {
-      ctx.fillRect(centerX - 9, pad.y - 33, 18, 4); ctx.fillRect(centerX - 5, pad.y - 29, 10, 7);
-      ctx.fillRect(centerX - 2, pad.y - 22, 4, 8);
-    }
-    ctx.shadowBlur = 0;
+    // 상호작용 발판은 drawMemoryPad의 전용 일러스트가 담당한다.
+    // 이 레이어는 수집탑으로 향하는 에너지 흐름만 그린다.
   });
 
-  ctx.globalAlpha = open ? .34 : 1;
-  ctx.fillStyle = open ? '#315f6b' : '#221b42'; ctx.fillRect(collector.x + 5, collector.y + 14, collector.w - 10, collector.h - 20);
-  ctx.fillStyle = open ? '#8fffff' : '#ff7895'; ctx.fillRect(collector.x + 8, collector.y + 20, 4, collector.h - 30); ctx.fillRect(collector.x + collector.w - 12, collector.y + 20, 4, collector.h - 30);
-  if (!open) {
-    ctx.fillStyle = '#613157';
-    for (let y = collector.y + 78; y < collector.y + collector.h - 18; y += 25) ctx.fillRect(collector.x + 13, y, collector.w - 26, 8);
-  }
-  ctx.globalAlpha = 1;
-  activeStates.forEach((active, index) => {
-    ctx.fillStyle = active ? colors[index] : '#4a526f';
-    ctx.fillRect(collector.x + 9 + index * 11, collector.y + 36, 8, 8);
-  });
-  ctx.fillStyle = open ? '#ffe37d' : '#ff7895';
-  ctx.fillRect(collector.x + 13, collector.y + 56, 7, 5); ctx.fillRect(collector.x + collector.w - 20, collector.y + 56, 7, 5);
-  ctx.fillRect(collector.x + 18, collector.y + 66, collector.w - 36, 4);
-  if (open) { ctx.fillStyle = '#fff4b5'; ctx.fillRect(collector.x + collector.w / 2 - 2, collector.y + 52, 4, 22); }
-  ctx.fillStyle = open ? '#fff1a8' : '#d3e3ff'; ctx.font = '800 8px ui-monospace, monospace'; ctx.textAlign = 'center';
-  ctx.fillText(`MEMORY RELAY ${activeCount} / ${game.echoGoal}`, collector.x + collector.w / 2, collector.y - 8);
   ctx.restore();
 }
 
@@ -3713,8 +4558,30 @@ function drawWatcher(watcher, frozen, resolved = false) {
 }
 
 function drawExit() {
-  const x = game.exit.x, y = game.exit.y;
-  ctx.save(); ctx.shadowBlur = 27; ctx.shadowColor = '#55f6ff'; ctx.fillStyle = '#153d57'; ctx.fillRect(x, y, 36, 82); ctx.fillStyle = '#4af3fb'; ctx.fillRect(x + 4, y + 5, 28, 73); ctx.fillStyle = '#0d2045'; ctx.fillRect(x + 8, y + 10, 20, 63); ctx.fillStyle = '#ffe88c'; ctx.beginPath(); ctx.arc(x + 18, y + 37, 7, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#d7ffff'; ctx.font = '800 8px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText(game.exit.label, x + 18, y - 10); ctx.restore();
+  const { x, y, w, h, label } = game.exit;
+  const theme = dreamTheme();
+  const sprite = gateSprites[theme.id];
+  const exitColors = {
+    harin: '#ffe27e', yuna: '#9effd7', haneul: '#9eeeff', daughter: '#ffb5df', scientist: '#8ceeff',
+  };
+  const glow = exitColors[theme.id] || '#55f6ff';
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.shadowBlur = 24; ctx.shadowColor = glow;
+  if (sprite?.complete && sprite.naturalWidth > 0) {
+    const visualHeight = Math.max(118, h * 1.5);
+    const visualWidth = Math.max(70, Math.round(visualHeight * (sprite.naturalWidth / sprite.naturalHeight)));
+    ctx.drawImage(sprite, x + w / 2 - visualWidth / 2, y + h - visualHeight, visualWidth, visualHeight);
+  } else {
+    ctx.fillStyle = '#153d57'; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = '#4af3fb'; ctx.fillRect(x + 4, y + 5, w - 8, h - 9);
+    ctx.fillStyle = '#0d2045'; ctx.fillRect(x + 8, y + 10, w - 16, h - 19);
+    ctx.fillStyle = '#ffe88c'; ctx.beginPath(); ctx.arc(x + w / 2, y + h * .45, 7, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = 'rgba(5, 12, 31, .72)'; ctx.fillRect(x + w / 2 - 43, y - 17, 86, 11);
+  ctx.fillStyle = glow; ctx.font = '800 8px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText(label, x + w / 2, y - 9);
+  ctx.restore();
 }
 
 function drawFallZone(zone) {
@@ -3751,61 +4618,109 @@ function drawMemoryFragment(fragment) {
 function drawMemoryPad(pad, active, index, role = 'normal') {
   const colors = ['#ffe37d', '#9effea', '#ffb5d7'];
   const roleStyles = {
-    normal: { fill: 'rgba(21, 26, 59, .8)', icon: '○' },
-    echo: { label: '기억', badge: '기억', badgeFill: 'rgba(30, 74, 88, .9)', badgeStroke: '#9effea', fill: 'rgba(18, 57, 72, .9)', icon: '✦' },
-    present: { label: '현재', badge: '현재', badgeFill: 'rgba(102, 73, 38, .95)', badgeStroke: '#ffe37d', fill: 'rgba(76, 56, 18, .9)', icon: '◆' },
-    truth: { label: '공명', badge: '진실', badgeFill: 'rgba(106, 67, 20, .96)', badgeStroke: '#ffd56d', fill: 'rgba(95, 55, 9, .92)', icon: '✦' },
-    distortion: { label: '왜곡', badge: '가짜', badgeFill: 'rgba(91, 22, 61, .96)', badgeStroke: '#ff88ba', fill: 'rgba(74, 20, 54, .92)', icon: '×' },
+    normal: { title: 'K · 기억 발판', prompt: '기록 루프가 이곳을 지나가게 하세요' },
+    echo: { title: '기억의 나 · 발판', prompt: 'K 기록으로 과거의 나를 이곳에 남기세요', color: '#9effea' },
+    present: { title: '현재의 나 · 발판', prompt: '현재의 내가 이 자리에 서세요', color: '#ffe37d' },
+    truth: { title: '진실의 기억 · 발판', prompt: '진짜 기억을 이곳에서 재생하세요', color: '#ffd56d' },
+    distortion: { title: '✕ 가짜 기억 · 함정', prompt: '기록 금지 · 실수했으면 I로 삭제', color: '#ff537b' },
   };
   const style = roleStyles[role] || roleStyles.normal;
   const color = colors[index % colors.length];
   const radius = Math.max(pad.w, pad.h) / 2;
+  const themedSprite = game.layout === 'wall' ? memoryPadSprites.harinRelay : memoryPadSprites[dreamTheme().id];
+  const sprite = ensureSprite(role === 'distortion' ? memoryPadSprites.distortion : themedSprite);
+  const hasSprite = sprite?.complete && sprite.naturalWidth > 0;
+  const displayColor = style.color || color;
+  const visualWidth = Math.max(role === 'distortion' ? 64 : 50, radius * (role === 'distortion' ? 3.02 : 2.48));
+  const visualHeight = Math.max(role === 'distortion' ? 68 : 56, radius * (role === 'distortion' ? 3.14 : 2.68));
+  const padCenterX = pad.x + pad.w / 2;
+  const padCenterY = pad.y + pad.h / 2;
+  const playerCenterX = game.player.x + game.player.w / 2;
+  const playerCenterY = game.player.y + game.player.h / 2;
+  const playerNear = Math.hypot(playerCenterX - padCenterX, playerCenterY - padCenterY) < 116;
+
+  // 예전 데모의 원형 아이콘·하트·테두리는 완전히 제거한다.
+  // 발판 그 자체가 챕터별 일러스트이고, 상단 명찰이 상호작용 지점임을 알려 준다.
   ctx.save();
-  ctx.translate(pad.x + pad.w / 2, pad.y + pad.h / 2);
-  ctx.shadowBlur = active ? 27 : 9;
-  ctx.shadowColor = role === 'present' ? '#ffe37d' : color;
-  ctx.fillStyle = active ? 'rgba(255, 244, 181, .28)' : style.fill;
-  ctx.beginPath(); ctx.arc(0, 0, radius, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = role === 'present' ? '#ffe37d' : color;
-  ctx.lineWidth = active ? 3 : role === 'present' ? 2.2 : 1.5;
-  ctx.beginPath(); ctx.arc(0, 0, radius - 2, 0, Math.PI * 2); ctx.stroke();
-  if (role === 'present') {
-    ctx.strokeStyle = 'rgba(255, 231, 140, .34)';
-    ctx.lineWidth = 1.2;
-    ctx.beginPath(); ctx.arc(0, 0, radius + 6, 0, Math.PI * 2); ctx.stroke();
-  }
-  ctx.fillStyle = role === 'present' ? '#fff4c4' : color;
-  ctx.font = '800 16px "Segoe UI Symbol", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(active ? '♥' : style.icon, 0, 6);
-  ctx.restore();
-  if (role !== 'normal') {
-    ctx.save();
-    ctx.fillStyle = style.badgeFill;
-    ctx.strokeStyle = style.badgeStroke;
-    ctx.lineWidth = 1;
-    const badgeWidth = 34;
-    const badgeHeight = 15;
-    const badgeX = pad.x + pad.w / 2 - badgeWidth / 2;
-    const badgeY = pad.y - 25;
-    ctx.beginPath();
-    ctx.moveTo(badgeX + 5, badgeY);
-    ctx.lineTo(badgeX + badgeWidth - 5, badgeY);
-    ctx.quadraticCurveTo(badgeX + badgeWidth, badgeY, badgeX + badgeWidth, badgeY + 5);
-    ctx.lineTo(badgeX + badgeWidth, badgeY + badgeHeight - 5);
-    ctx.quadraticCurveTo(badgeX + badgeWidth, badgeY + badgeHeight, badgeX + badgeWidth - 5, badgeY + badgeHeight);
-    ctx.lineTo(badgeX + 5, badgeY + badgeHeight);
-    ctx.quadraticCurveTo(badgeX, badgeY + badgeHeight, badgeX, badgeY + badgeHeight - 5);
-    ctx.lineTo(badgeX, badgeY + 5);
-    ctx.quadraticCurveTo(badgeX, badgeY, badgeX + 5, badgeY);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = role === 'present' ? '#fff4c4' : role === 'truth' ? '#ffe48b' : role === 'distortion' ? '#ffb2cf' : '#b9ffef';
-    ctx.font = '700 8px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(style.badge, pad.x + pad.w / 2, badgeY + badgeHeight / 2 + 0.5);
-    ctx.restore();
+  ctx.translate(padCenterX, padCenterY);
+  if (hasSprite) {
+    ctx.imageSmoothingEnabled = false;
+    ctx.globalAlpha = active ? 1 : .86;
+    ctx.drawImage(sprite, -visualWidth / 2, -visualHeight / 2 - 3, visualWidth, visualHeight);
+    ctx.globalAlpha = 1;
   } else {
-    ctx.fillStyle = active ? color : '#a9b6d4'; ctx.font = '700 9px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(pad.label, pad.x + pad.w / 2, pad.y - 10);
+    // 이미지 로딩 중에도 발판이 배경으로 오인되지 않도록, 원이 아닌 사각 받침으로만 표시한다.
+    ctx.fillStyle = '#13254b';
+    ctx.fillRect(-radius, -radius * .62, radius * 2, radius * 1.24);
+    ctx.fillStyle = displayColor;
+    ctx.fillRect(-radius + 3, -radius * .62 + 3, radius * 2 - 6, 3);
   }
+  ctx.shadowBlur = active ? 27 : 9;
+  ctx.shadowColor = displayColor;
+  ctx.strokeStyle = displayColor;
+  ctx.lineWidth = active ? 2.6 : 1.6;
+  const bracket = Math.max(17, radius - 2);
+  const corner = 8;
+  [[-bracket, -bracket, corner, 0, 0, corner], [bracket, -bracket, -corner, 0, 0, corner], [-bracket, bracket, corner, 0, 0, -corner], [bracket, bracket, -corner, 0, 0, -corner]].forEach(([x, y, dx1, dy1, dx2, dy2]) => {
+    ctx.beginPath(); ctx.moveTo(x, y + dy1); ctx.lineTo(x + dx1, y + dy1); ctx.moveTo(x + dx2, y); ctx.lineTo(x + dx2, y + dy2); ctx.stroke();
+  });
+  if (active) {
+    const pulse = 25 + Math.sin((game.elapsed || 0) * 7 + index) * 4;
+    ctx.globalAlpha = .55;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.arc(0, 0, pulse, 0, Math.PI * 2); ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  if (pad.roleDirection || pad.roleTechnique) {
+    const echo = echoHoldingPad(pad);
+    const directionReady = pad.roleDirection
+      ? Boolean(echo && echo.holding && echo.facing === pad.roleDirection)
+      : Boolean(echo && echo.holding && echo.frames?.some((frame) => frame.techniques?.[pad.roleTechnique]));
+    const arrow = pad.roleTechnique ? '≈' : pad.roleDirection > 0 ? '→' : '←';
+    ctx.save();
+    ctx.translate(padCenterX, pad.y - 23);
+    ctx.fillStyle = directionReady ? 'rgba(107, 255, 215, .92)' : 'rgba(18, 31, 60, .9)';
+    ctx.strokeStyle = directionReady ? '#d7fff0' : displayColor;
+    ctx.lineWidth = 1;
+    ctx.fillRect(-19, -8, 38, 16); ctx.strokeRect(-18.5, -7.5, 37, 15);
+    ctx.fillStyle = directionReady ? '#083b38' : '#fff1b3';
+    ctx.font = '900 11px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(arrow, 0, 1);
+    ctx.restore();
+  }
+  ctx.restore();
+
+  ctx.save();
+  const label = active ? (role === 'distortion' ? '⚠ 왜곡에 갇힘' : '✓ 기억 연결됨') : style.title;
+  ctx.font = '800 8px "Segoe UI", sans-serif';
+  const labelWidth = Math.max(62, ctx.measureText(label).width + 15);
+  const labelHeight = 17;
+  const labelX = padCenterX - labelWidth / 2;
+  const labelY = padCenterY - visualHeight / 2 - 18;
+  ctx.fillStyle = active ? 'rgba(23, 72, 76, .94)' : 'rgba(9, 17, 42, .92)';
+  ctx.strokeStyle = displayColor;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(labelX, labelY, labelWidth, labelHeight, 5);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = active ? '#e8fff5' : displayColor;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(label, padCenterX, labelY + labelHeight / 2 + .5);
+  ctx.globalAlpha = .72;
+  ctx.strokeStyle = displayColor;
+  ctx.beginPath(); ctx.moveTo(padCenterX, labelY + labelHeight); ctx.lineTo(padCenterX, padCenterY - visualHeight / 2 - 4); ctx.stroke();
+  if (playerNear && !active) {
+    const prompt = style.prompt;
+    const promptWidth = Math.min(166, Math.max(106, ctx.measureText(prompt).width + 16));
+    const promptX = Math.max(6, Math.min(W - promptWidth - 6, padCenterX - promptWidth / 2));
+    const promptY = Math.min(H - 23, padCenterY + visualHeight / 2 + 5);
+    ctx.globalAlpha = .96;
+    ctx.fillStyle = 'rgba(5, 11, 31, .94)';
+    ctx.strokeStyle = displayColor;
+    ctx.beginPath(); ctx.roundRect(promptX, promptY, promptWidth, 18, 5); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#f5fbff'; ctx.font = '700 8px "Segoe UI", sans-serif'; ctx.fillText(prompt, padCenterX, promptY + 9.5);
+  }
+  ctx.restore();
 }
 
 function drawEcho(echo, index) {
@@ -4037,14 +4952,37 @@ function drawPhaseGuide() {
   if (game.phase !== 'playing') return;
   const guide = phaseGuide();
   const label = `${guide.step} · ${guide.compact}`;
+  const bossBriefVisible = currentStage()?.type === 'boss' && (game.elapsed || 0) < (game.bossGuideUntil || 0);
+  const keyLabel = guideKeyHints().map(({ key, label: action }) => `${key} ${action}`).join('  ·  ');
+  const phaseNodes = bossBriefVisible ? bossPhaseNodes() : [];
   ctx.save();
   ctx.font = '800 11px "Segoe UI", sans-serif';
-  const width = Math.min(430, Math.max(250, ctx.measureText(label).width + 38));
+  const width = bossBriefVisible ? Math.min(610, Math.max(330, ctx.measureText(label).width + 54)) : Math.min(430, Math.max(250, ctx.measureText(label).width + 38));
   const x = W / 2 - width / 2;
   const y = 96;
-  ctx.fillStyle = 'rgba(8, 17, 42, .83)'; ctx.fillRect(x, y, width, 28);
-  ctx.strokeStyle = `${dreamTheme().accent}88`; ctx.lineWidth = 1; ctx.strokeRect(x + .5, y + .5, width - 1, 27);
+  const height = bossBriefVisible ? 66 : 28;
+  ctx.fillStyle = 'rgba(8, 17, 42, .88)'; ctx.fillRect(x, y, width, height);
+  ctx.strokeStyle = `${dreamTheme().accent}aa`; ctx.lineWidth = 1; ctx.strokeRect(x + .5, y + .5, width - 1, height - 1);
   ctx.fillStyle = dreamTheme().accent; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, W / 2, y + 14);
+  if (bossBriefVisible) {
+    ctx.fillStyle = '#e8f7ff'; ctx.font = '800 9px ui-monospace, monospace';
+    ctx.fillText(keyLabel, W / 2, y + 35);
+    const gap = Math.min(128, (width - 48) / Math.max(1, phaseNodes.length));
+    const startX = W / 2 - gap * (phaseNodes.length - 1) / 2;
+    phaseNodes.forEach((node, index) => {
+      const x = startX + gap * index;
+      const previousDone = index === 0 || phaseNodes[index - 1].done;
+      const current = !node.done && previousDone;
+      ctx.fillStyle = node.done ? '#9effd7' : current ? '#ffe37d' : '#506282';
+      ctx.beginPath(); ctx.arc(x, y + 53, current ? 5 : 4, 0, Math.PI * 2); ctx.fill();
+      if (index < phaseNodes.length - 1) {
+        ctx.strokeStyle = phaseNodes[index].done ? '#9effd7aa' : '#506282aa'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x + 7, y + 53); ctx.lineTo(x + gap - 7, y + 53); ctx.stroke();
+      }
+      ctx.fillStyle = node.done ? '#cffff0' : current ? '#fff4bf' : '#9eabc3';
+      ctx.font = '700 7px ui-monospace, monospace'; ctx.fillText(node.label, x, y + 63);
+    });
+  }
   ctx.restore();
 }
 
@@ -4196,6 +5134,29 @@ function drawEndingCinematic() {
   const scene = ENDING_CINEMATIC_SCENES[game.endingScene] || ENDING_CINEMATIC_SCENES[0];
   const elapsed = game.endingSceneElapsed || 0;
   const progress = cinematicEase(elapsed / scene.duration);
+  const cinematicImage = ensureSprite(endingCinematicSprites[scene.kind]);
+  const hasSceneArt = cinematicImage?.complete && cinematicImage.naturalWidth > 0;
+  if (hasSceneArt) {
+    // 16:9 원화는 미세하게만 줌인해 정지 그림도 영화 컷처럼 느껴지게 한다.
+    const imageScale = Math.max(W / cinematicImage.naturalWidth, H / cinematicImage.naturalHeight) * (1.01 + progress * .024);
+    const imageW = cinematicImage.naturalWidth * imageScale;
+    const imageH = cinematicImage.naturalHeight * imageScale;
+    const panX = Math.sin(progress * Math.PI) * 7;
+    const imageX = (W - imageW) / 2 - panX;
+    const imageY = (H - imageH) / 2;
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.globalAlpha = Math.min(1, elapsed * 1.45);
+    ctx.drawImage(cinematicImage, imageX, imageY, imageW, imageH);
+    const vignette = ctx.createLinearGradient(0, 0, 0, H);
+    vignette.addColorStop(0, 'rgba(4, 9, 26, .30)');
+    vignette.addColorStop(.42, 'rgba(4, 9, 26, .04)');
+    vignette.addColorStop(.72, 'rgba(4, 9, 26, .16)');
+    vignette.addColorStop(1, 'rgba(3, 8, 22, .72)');
+    ctx.fillStyle = vignette; ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+    drawCinematicStars(scene.kind === 'morning' ? '#fff1bf' : '#d9eaff', 24, elapsed * 6);
+  } else {
   const palettes = {
     promise: ['#221347', '#193a68', '#0b1936'], hospital: ['#10182f', '#26314a', '#11162b'],
     machine: ['#171c4c', '#133f59', '#0a1831'], cost: ['#301738', '#25234d', '#100f2b'],
@@ -4260,6 +5221,7 @@ function drawEndingCinematic() {
     drawCinematicPixelChild(660, 382, { hair: '#6aa3c9', clothes: '#608ad0', detail: '#ecf9ff', glow: '#a6efff' }, 1.05);
     drawCinematicScientist(796, 388, 1.05, true);
   }
+  }
 
   ctx.save(); ctx.globalAlpha = Math.min(1, elapsed * 1.2); ctx.fillStyle = '#d9edff'; ctx.font = '800 10px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText(scene.tag, W / 2, 48);
   ctx.fillStyle = '#fff7dc'; ctx.font = '850 32px "Segoe UI", sans-serif'; ctx.fillText(scene.title, W / 2, 86); ctx.restore();
@@ -4272,7 +5234,7 @@ function drawPuzzle() {
   drawBackground(false);
   drawLayoutLandmarks();
   const techniques = activeTechniques();
-  const memoryPadsReady = game.echoGoal === 0 || activeMemoryPads(game.memoryPads) >= game.echoGoal;
+  const memoryPadsReady = puzzleObjectiveReady();
   const gateOpen = memoryPadsReady && (game.layout !== 'watcher' || game.watcherResolved);
   const stage03RelayArtReady = game.layout === 'wall' && harinStage03RelayArtReady();
   const stage02GateStructure = game.layout === 'bridge'
@@ -4325,6 +5287,30 @@ function drawPuzzle() {
   drawPhaseGuide();
 }
 
+function drawHaneulSignpost(x, groundY, scale = 1, trueDirection = false) {
+  const image = objectSprites.haneulTrueSignpost;
+  if (!image?.complete || !image.naturalWidth) return;
+  const width = 108 * scale;
+  const height = 156 * scale;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.globalAlpha = trueDirection ? 1 : .38;
+  ctx.shadowBlur = trueDirection ? 22 : 7;
+  ctx.shadowColor = trueDirection ? '#67e7ff' : '#ff9b73';
+  ctx.translate(x, groundY);
+  if (!trueDirection) ctx.scale(-1, 1);
+  ctx.drawImage(image, -width / 2, -height, width, height);
+  if (!trueDirection) {
+    ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = .52;
+    ctx.fillStyle = '#9c3f4f'; ctx.fillRect(-width / 2, -height, width, height);
+  }
+  ctx.restore();
+  if (trueDirection) {
+    ctx.save(); ctx.fillStyle = '#d9fbff'; ctx.font = '800 8px ui-monospace, monospace'; ctx.textAlign = 'center';
+    ctx.fillText('TRUE WIND PATH', x, groundY - height - 8); ctx.restore();
+  }
+}
+
 function drawLayoutLandmarks() {
   const layout = game.layout;
   const t = game.elapsed || 0;
@@ -4340,7 +5326,10 @@ function drawLayoutLandmarks() {
   } else if (layout === 'wind-cliff') {
     // 여러 높이의 절벽과 역풍 기둥은 실제 픽셀 배경에 포함되어 있다.
   } else if (layout === 'signpost-maze') {
-    // 되돌아가는 표지판과 지그재그 바람길은 실제 픽셀 배경에 포함되어 있다.
+    // 같은 자산을 희미한 가짜 방향과 선명한 진짜 방향으로 나눠, 배경 장식이 아닌 판단 대상임을 보인다.
+    drawHaneulSignpost(392, 350, .84, false);
+    drawHaneulSignpost(694, 330, 1.14, true);
+    drawHaneulSignpost(814, 380, .78, false);
   } else if (layout === 'starlight-ferry') {
     // 발자국 빛과 완벽한 정원으로 이어지는 전환은 실제 픽셀 배경에 포함되어 있다.
   } else if (layout === 'garden-roots') {
@@ -4357,6 +5346,7 @@ function drawLayoutLandmarks() {
 
 function drawWindGate(gate, index, active, cleared, unlocked) {
   const locked = !unlocked && !cleared;
+  const riftSprite = objectSprites.haneulDashRiftGate;
   ctx.save();
   ctx.translate(gate.x + gate.w / 2, gate.y + gate.h / 2);
   ctx.globalAlpha = locked ? .12 : cleared ? .22 : active ? 1 : .32;
@@ -4364,6 +5354,12 @@ function drawWindGate(gate, index, active, cleared, unlocked) {
   ctx.shadowBlur = active ? 24 : 0;
   ctx.shadowColor = '#a9f6ff';
   ctx.lineWidth = active ? 4 : 2;
+  if (riftSprite?.complete && riftSprite.naturalWidth > 0) {
+    ctx.imageSmoothingEnabled = false;
+    const visualHeight = Math.max(152, gate.h * 1.84);
+    const visualWidth = visualHeight * riftSprite.naturalWidth / riftSprite.naturalHeight;
+    ctx.drawImage(riftSprite, -visualWidth / 2, -visualHeight / 2, visualWidth, visualHeight);
+  }
   ctx.beginPath(); ctx.ellipse(0, 0, gate.w / 2, gate.h / 2, 0, 0, Math.PI * 2); ctx.stroke();
   ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.ellipse(0, 0, gate.w / 2 + WIND_GATE_OUTER_PADDING, gate.h / 2 + WIND_GATE_OUTER_PADDING, 0, 0, Math.PI * 2); ctx.stroke();
   ctx.restore();
@@ -4373,6 +5369,8 @@ function drawWindGate(gate, index, active, cleared, unlocked) {
 function drawDreamGate(gate, active, cleared, kind = 'resonance', revealed = true, heartbeat = 0) {
   const fakeMirror = kind === 'false-mirror';
   const mirror = kind === 'mirror' || fakeMirror;
+  const yunaResonancePad = kind === 'resonance' && game.boss?.mode === 'resonance';
+  const resonanceImage = platformSprites.yunaResonancePad;
   const color = fakeMirror ? '#ff789f' : mirror ? '#ffb5df' : '#9effea';
   ctx.save();
   ctx.translate(gate.x + gate.w / 2, gate.y + gate.h / 2);
@@ -4380,7 +5378,31 @@ function drawDreamGate(gate, active, cleared, kind = 'resonance', revealed = tru
   ctx.globalAlpha = cleared ? .2 : revealed ? active ? 1 : .5 : .08;
   ctx.shadowBlur = active ? 26 + heartbeat * 24 : 8; ctx.shadowColor = color;
   ctx.strokeStyle = color; ctx.lineWidth = active ? 4 : 2;
-  if (mirror) {
+  if (yunaResonancePad && resonanceImage?.complete && resonanceImage.naturalWidth > 0) {
+    // 유나 보스전의 음은 일반 원형 게이트가 아니라 실제로 올라서는 공명 악기 발판이다.
+    const spriteW = gate.w * 1.62;
+    const spriteH = gate.h * 1.78;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(resonanceImage, -spriteW / 2, -spriteH * .62, spriteW, spriteH);
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.ellipse(0, 4, gate.w / 2 + 8, gate.h / 2 + 8, 0, 0, Math.PI * 2); ctx.stroke();
+    if (heartbeat > 0) {
+      ctx.setLineDash([]);
+      ctx.globalAlpha = .46 + heartbeat * .5;
+      ctx.lineWidth = 2 + heartbeat * 3;
+      ctx.beginPath(); ctx.ellipse(0, 2, gate.w / 2 + 17 + heartbeat * 8, gate.h / 2 + 17 + heartbeat * 8, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = '#dffff5'; ctx.fillRect(-2, -6, 4, 12);
+    }
+  } else if (mirror && !fakeMirror && objectSprites.daughterTrueCrack?.complete && objectSprites.daughterTrueCrack.naturalWidth > 0) {
+    // 21스테이지의 진짜 균열은 배경의 장식과 확실히 구별되는 '통과 가능한 문'으로 보인다.
+    const crack = objectSprites.daughterTrueCrack;
+    const spriteW = Math.max(76, gate.w * 2.35);
+    const spriteH = Math.max(104, gate.h * 2.1);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(crack, -spriteW / 2, -spriteH / 2, spriteW, spriteH);
+    ctx.setLineDash([3, 4]); ctx.lineWidth = active ? 3 : 2;
+    ctx.beginPath(); ctx.ellipse(0, 3, gate.w / 2 + 10, gate.h / 2 + 14, 0, 0, Math.PI * 2); ctx.stroke();
+  } else if (mirror) {
     ctx.rotate(Math.PI / 4); ctx.strokeRect(-gate.w / 2, -gate.h / 2, gate.w, gate.h);
     ctx.beginPath(); ctx.moveTo(-14, -20); ctx.lineTo(4, -3); ctx.lineTo(-8, 7); ctx.lineTo(17, 22); ctx.stroke();
     if (fakeMirror) { ctx.beginPath(); ctx.moveTo(-18, 18); ctx.lineTo(18, -18); ctx.stroke(); }
@@ -4396,7 +5418,11 @@ function drawDreamGate(gate, active, cleared, kind = 'resonance', revealed = tru
     }
   }
   ctx.restore();
-  ctx.fillStyle = cleared ? '#8bc6c1' : active ? '#f4fff9' : '#a9c8c7'; ctx.font = '800 9px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(gate.label, gate.x + gate.w / 2, gate.y - 12);
+  const gateLabel = yunaResonancePad
+    ? cleared ? '✓ 음 되찾음' : active ? `L · ${gate.label}` : `공명 발판 · ${gate.label}`
+    : mirror ? fakeMirror ? 'FALSE CRACK · 가짜 균열' : active ? `TRUE CRACK · ${gate.label}` : `REAL CRACK · ${gate.label}`
+      : gate.label;
+  ctx.fillStyle = cleared ? '#8bc6c1' : active ? '#f4fff9' : '#a9c8c7'; ctx.font = '800 9px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(gateLabel, gate.x + gate.w / 2, gate.y - 12);
 }
 
 function drawYunaLoopStationMeter() {
@@ -4420,15 +5446,23 @@ function drawYunaLoopStationMeter() {
 
 function drawFinalMemoryTarget(target, active, resolved) {
   const color = target.color || '#ffe37d';
+  const portrait = finalTruthPortraits[target.art];
   ctx.save();
   ctx.translate(target.x + target.w / 2, target.y + target.h / 2);
   ctx.globalAlpha = resolved ? .18 : active ? 1 : .42;
   ctx.shadowBlur = active ? 26 : 8; ctx.shadowColor = color;
+  ctx.fillStyle = '#111d3a'; ctx.beginPath(); ctx.arc(0, 0, target.w / 2 - 3, 0, Math.PI * 2); ctx.fill();
+  if (portrait?.complete && portrait.naturalWidth > 0) {
+    ctx.save(); ctx.beginPath(); ctx.arc(0, 0, target.w / 2 - 3, 0, Math.PI * 2); ctx.clip();
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(portrait, -target.w * .44, -target.h * .48, target.w * .88, target.h * .88);
+    ctx.restore();
+  }
   ctx.strokeStyle = color; ctx.lineWidth = active ? 4 : 2;
   ctx.beginPath(); ctx.arc(0, 0, target.w / 2, 0, Math.PI * 2); ctx.stroke();
   ctx.setLineDash(active ? [] : [3, 4]);
   ctx.beginPath(); ctx.arc(0, 0, target.w / 2 + 7, 0, Math.PI * 2); ctx.stroke();
-  ctx.fillStyle = active ? color : '#dba5ba'; ctx.font = '800 14px "Segoe UI Symbol", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(active ? '♥' : '×', 0, 5);
+  ctx.fillStyle = active ? color : '#dba5ba'; ctx.font = '800 12px "Segoe UI Symbol", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(active ? '✦' : '×', 0, 18);
   ctx.restore();
   ctx.fillStyle = resolved ? '#7896a6' : active ? '#fff4c4' : '#e1a4b8'; ctx.font = '800 8px "Segoe UI", sans-serif'; ctx.textAlign = 'center';
   ctx.fillText(active ? `TRUE · ${target.label}` : resolved ? 'MEMORY RESTORED' : 'COPY · FALSE MEMORY', target.x + target.w / 2, target.y - 11);
@@ -4472,6 +5506,121 @@ function drawYunaSilentChoirSprite(b) {
   return true;
 }
 
+function drawHarinLaughThiefSprite(b) {
+  const image = bossSprites.harinClown;
+  if (!image?.complete || !image.naturalWidth) return false;
+  const calmRatio = b.calmProgress / Math.max(.01, b.calmDuration);
+  const pulse = .5 + Math.sin(game.elapsed * 4.5) * .5;
+  const coreX = b.x + b.w / 2;
+  const spriteW = 226 + pulse * 8;
+  const spriteH = 339 + pulse * 12;
+  const chestY = b.y + 112;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.shadowBlur = 30 + pulse * 14;
+  ctx.shadowColor = calmRatio > .7 ? '#ffe9a2' : b.flash > 0 ? '#fff3fa' : '#ff5d9b';
+  ctx.globalAlpha = .98 - calmRatio * .13;
+  ctx.drawImage(image, coreX - spriteW / 2, b.y - 34, spriteW, spriteH);
+  // 광대의 비어 있던 가슴에 별빛이 차오르면 공격 없이도 안심시키는 보스전임을 전달한다.
+  ctx.globalCompositeOperation = 'screen';
+  ctx.globalAlpha = .16 + pulse * .14 + calmRatio * .28;
+  ctx.strokeStyle = calmRatio > .55 ? '#ffe8a5' : '#ff9ac2';
+  ctx.lineWidth = 2;
+  for (let ring = 0; ring < 3; ring += 1) {
+    ctx.beginPath(); ctx.arc(coreX, chestY, 26 + ring * 17 + pulse * 4, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.fillStyle = '#ffe990';
+  for (let star = 0; star < 3; star += 1) {
+    const angle = game.elapsed * .9 + star * 2.1;
+    const x = coreX + Math.cos(angle) * (14 + star * 5);
+    const y = chestY + Math.sin(angle) * (11 + star * 4);
+    ctx.fillRect(Math.round(x - 2), Math.round(y - 2), 4, 4);
+  }
+  ctx.restore();
+  return true;
+}
+
+function drawHaneulBlackKiteSprite(b) {
+  const image = bossSprites.haneulKite;
+  if (!image?.complete || !image.naturalWidth) return false;
+  const pulse = .5 + Math.sin(game.elapsed * 4.2) * .5;
+  const coreX = b.x + b.w / 2;
+  const spriteW = 244 + pulse * 8;
+  const spriteH = 366 + pulse * 12;
+  const eyeY = b.y + 92;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.shadowBlur = 26 + pulse * 16;
+  ctx.shadowColor = b.flash > 0 ? '#e5ffff' : '#65ddff';
+  ctx.globalAlpha = b.flash > 0 ? .9 : 1;
+  ctx.drawImage(image, coreX - spriteW / 2, b.y - 42, spriteW, spriteH);
+  // 탄막이 나오는 중심을 눈과 맞춰 플레이어가 위협의 방향을 읽을 수 있게 한다.
+  ctx.globalCompositeOperation = 'screen';
+  ctx.globalAlpha = .22 + pulse * .17;
+  ctx.strokeStyle = '#a6efff';
+  ctx.lineWidth = 2;
+  for (let ring = 0; ring < 3; ring += 1) {
+    ctx.beginPath();
+    ctx.ellipse(coreX, eyeY, 24 + ring * 14 + pulse * 4, 10 + ring * 6 + pulse * 2, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.fillStyle = '#d7fbff';
+  ctx.beginPath(); ctx.ellipse(coreX, eyeY, 6 + pulse * 2, 12 + pulse * 2, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+  return true;
+}
+
+function drawDaughterPerfectGuardianSprite(b) {
+  const image = bossSprites.daughterGuardian;
+  if (!image?.complete || !image.naturalWidth) return false;
+  const pulse = .5 + Math.sin(game.elapsed * 4.8) * .5;
+  const coreX = b.x + b.w / 2;
+  const spriteW = 218 + pulse * 8;
+  const spriteH = 327 + pulse * 12;
+  const mirrorY = b.y + 106;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.shadowBlur = 24 + pulse * 14;
+  ctx.shadowColor = b.flash > 0 ? '#fff5ff' : '#ffacd9';
+  ctx.globalAlpha = b.flash > 0 ? .92 : 1;
+  ctx.drawImage(image, coreX - spriteW / 2, b.y - 34, spriteW, spriteH);
+  ctx.globalCompositeOperation = 'screen';
+  ctx.globalAlpha = .18 + pulse * .16;
+  ctx.strokeStyle = '#cffff0'; ctx.lineWidth = 2;
+  for (let ring = 0; ring < 3; ring += 1) {
+    ctx.beginPath(); ctx.ellipse(coreX, mirrorY, 26 + ring * 15, 38 + ring * 13, 0, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.restore();
+  return true;
+}
+
+function drawScientistDreamGuardianSprite(b) {
+  const awakened = Boolean(b.truthResolved);
+  const image = awakened ? bossSprites.scientistGuardianAwakened : bossSprites.scientistGuardian;
+  if (!image?.complete || !image.naturalWidth) return false;
+  const releaseRatio = b.releaseReady ? b.releaseProgress / Math.max(.01, b.releaseDuration) : 0;
+  const pulse = .5 + Math.sin(game.elapsed * 3.7) * .5;
+  const coreX = b.x + b.w / 2;
+  const baseWidth = awakened ? 282 : 352;
+  const spriteW = (baseWidth + pulse * 12) * (1 - releaseRatio * .18);
+  const spriteH = spriteW * image.naturalHeight / image.naturalWidth;
+  const coreY = b.y + 112;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.shadowBlur = 30 + pulse * 16;
+  ctx.shadowColor = b.releaseReady ? '#ffe8ad' : awakened ? '#ffc980' : '#73ddff';
+  ctx.globalAlpha = b.releaseReady ? Math.max(.25, .92 - releaseRatio * .58) : 1;
+  ctx.drawImage(image, coreX - spriteW / 2, b.y - (awakened ? 42 : 22), spriteW, spriteH);
+  ctx.globalCompositeOperation = 'screen';
+  ctx.globalAlpha = .18 + pulse * .2;
+  ctx.strokeStyle = b.releaseReady ? '#ffe6a7' : awakened ? '#ffd58d' : '#83efff'; ctx.lineWidth = 2;
+  for (let ring = 0; ring < 3; ring += 1) {
+    ctx.beginPath(); ctx.arc(coreX, coreY, 30 + ring * 19 + pulse * 5, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.restore();
+  return true;
+}
+
 function drawDissonantNoteShot(shot) {
   const size = Math.max(.75, shot.r / 10);
   const drift = Math.sin(game.elapsed * 12 + shot.x * .03) * .16;
@@ -4504,8 +5653,13 @@ function drawBoss() {
   const windFear = b.visual === 'wind';
   const choirFear = b.visual === 'choir';
   const mirrorFear = b.visual === 'mirror';
+  const harinIllustration = b.mode === 'calm' && drawHarinLaughThiefSprite(b);
   const choirIllustration = choirFear && drawYunaSilentChoirSprite(b);
-  if (!choirIllustration) {
+  const windIllustration = windFear && drawHaneulBlackKiteSprite(b);
+  const mirrorIllustration = mirrorFear && drawDaughterPerfectGuardianSprite(b);
+  const scientistIllustration = b.mode === 'final' && drawScientistDreamGuardianSprite(b);
+  const bossIllustration = harinIllustration || choirIllustration || windIllustration || mirrorIllustration || scientistIllustration;
+  if (!bossIllustration) {
     ctx.save(); ctx.fillStyle = 'rgba(255, 137, 176, .12)'; ctx.beginPath(); ctx.arc(b.x + 80, b.y + 102, 150, 0, Math.PI * 2); ctx.fill(); ctx.restore();
   }
   const releaseRatio = b.releaseReady ? b.releaseProgress / b.releaseDuration : 0;
@@ -4515,14 +5669,15 @@ function drawBoss() {
   const bossShadow = b.mode === 'final' ? b.releaseReady ? '#ffe27e' : '#7be9ff' : windFear ? '#9cdbff' : choirFear ? '#9effd7' : mirrorFear ? '#ffb5df' : '#ff4d7c';
   const bossBody = b.mode === 'final' ? b.releaseReady ? '#4e637c' : '#19475e' : windFear ? '#173857' : choirFear ? '#174c4c' : mirrorFear ? '#5f346b' : '#6e1745';
   const bossFace = b.mode === 'final' ? b.releaseReady ? '#fff0b5' : '#8adcf2' : windFear ? '#b4ecff' : choirFear ? '#bfffe8' : mirrorFear ? '#ffd5eb' : '#f6b2ca';
-  if (!choirIllustration) {
+  if (!bossIllustration) {
     ctx.save(); ctx.translate(b.x + b.w / 2, b.y + b.h / 2); ctx.scale(scale, scale); ctx.shadowBlur = 34; ctx.shadowColor = bossShadow; ctx.fillStyle = b.flash > 0 ? '#ffe4ef' : bossBody;
     if (windFear) { ctx.rotate(.78); ctx.fillRect(-62, -62, 124, 124); ctx.strokeStyle = '#d0f7ff'; ctx.lineWidth = 4; ctx.strokeRect(-62, -62, 124, 124); ctx.rotate(-.78); }
     else if (mirrorFear) { ctx.rotate(Math.PI / 4); ctx.fillRect(-66, -66, 132, 132); ctx.strokeStyle = '#ffe3f4'; ctx.lineWidth = 4; ctx.strokeRect(-66, -66, 132, 132); ctx.rotate(-Math.PI / 4); }
     else { ctx.beginPath(); ctx.ellipse(0, 0, 72, 92, 0, 0, Math.PI * 2); ctx.fill(); }
     ctx.fillStyle = bossFace; ctx.beginPath(); ctx.arc(-27, -12, 24, 0, Math.PI * 2); ctx.arc(27, -12, 24, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = b.mode === 'final' ? '#0f2432' : windFear ? '#102030' : '#1f1027'; ctx.fillRect(-41, -18, 22, 8); ctx.fillRect(19, -18, 22, 8); ctx.strokeStyle = windFear ? '#d0f7ff' : choirFear ? '#bfffe8' : mirrorFear ? '#ffe3f4' : b.mode === 'final' ? '#8cf0ff' : '#ffc4d9'; ctx.lineWidth = 7; ctx.beginPath(); ctx.arc(0, 29, 23, 0, Math.PI); ctx.stroke(); ctx.fillStyle = '#f8df77'; ctx.beginPath(); ctx.arc(0, -80, 12, 0, Math.PI * 2); ctx.fill(); ctx.restore();
   }
-  ctx.fillStyle = b.mode === 'final' ? b.releaseReady ? '#fff1b1' : '#aeefff' : windFear || choirFear ? '#aeefff' : mirrorFear ? '#ffe0f2' : '#ffc4d5'; ctx.font = '800 12px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(b.releaseReady ? '수면 과학자 · 아버지' : b.name, b.x + b.w / 2, b.y - 17);
+  const bossLabel = b.releaseReady ? '수면 과학자 · 아버지' : b.mode === 'final' && b.truthResolved ? '수면 과학자 · 부서진 수호자' : b.name;
+  ctx.fillStyle = b.mode === 'final' ? b.releaseReady ? '#fff1b1' : b.truthResolved ? '#ffd891' : '#aeefff' : windFear || choirFear ? '#aeefff' : mirrorFear ? '#ffe0f2' : '#ffc4d5'; ctx.font = '800 12px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(bossLabel, b.x + b.w / 2, b.y - 17);
   const bossPads = b.mode === 'chase' ? b.decoyPads : b.mode === 'resonance' || b.mode === 'calm' || b.mode === 'mirror' || b.mode === 'final' ? b.memoryPads : [];
   const presentCanFillPad = b.mode === 'calm' || b.mode === 'final';
   bossPads.forEach((pad, index) => {
@@ -4565,9 +5720,9 @@ function drawBoss() {
     if (finalPhase === 2) {
       b.truthTargets.forEach((target, index) => drawFinalMemoryTarget(target, index === b.truthProgress, index < b.truthProgress));
       ctx.save(); ctx.fillStyle = '#ffe4ef'; ctx.font = '800 10px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText('PHASE 2 · TRACK AND SHOOT THE MOVING TRUE MEMORY', W / 2, 54); ctx.restore();
-    } else if (finalPhase === 3 && b.voiceGate) {
+    } else if (finalPhase === 4 && b.voiceGate) {
       drawDreamGate(b.voiceGate, activeTechniques().resonance && overlaps(game.player, b.voiceGate), false, 'resonance', true);
-      ctx.save(); ctx.fillStyle = '#fff4c4'; ctx.font = '800 10px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText('PHASE 3 · NO ATTACK · LET HER VOICE REACH HIM', W / 2, 54); ctx.restore();
+      ctx.save(); ctx.fillStyle = '#fff4c4'; ctx.font = '800 10px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText('PHASE 4 · NO ATTACK · LET HER VOICE REACH HIM', W / 2, 54); ctx.restore();
     }
   }
   if (b.mode === 'final' && b.memoryReplay > 0) {
@@ -4621,6 +5776,7 @@ function update(dt) {
   game.stageRealElapsed = (game.stageRealElapsed || 0) + dt;
   if (currentStage().type === 'boss') {
     updateBoss(dt);
+    refreshBossGuide();
     updateMemoryCollapse(dt, frozenTime());
   } else updatePuzzle(dt);
   updateDreamTrails(dt);
@@ -4643,7 +5799,8 @@ function loop(time) {
 }
 
 startButton.addEventListener('click', () => {
-  if (game.phase === 'story') continueStoryBeat();
+  if (game.phase === 'title') newGame();
+  else if (game.phase === 'story') continueStoryBeat();
   else startStage();
 });
 canvas.addEventListener('click', () => {
@@ -4692,6 +5849,7 @@ ruleCards.forEach((card) => {
 function handleConfirmInput() {
   if (game.phase === 'disconnecting') skipDreamDisconnect();
   else if (game.phase === 'ending-cinematic') advanceEndingCinematic();
+  else if (game.phase === 'title') newGame();
   else if (game.phase === 'story') continueStoryBeat();
   else if (game.phase === 'intro' || game.phase === 'failed') startStage();
   else if (game.phase === 'chapter-complete') showFinalTruth();
@@ -4715,6 +5873,12 @@ window.addEventListener('keydown', (event) => {
   }
   if (!keys.has(event.code)) pressed.add(event.code);
   keys.add(event.code);
+  // 역할형 기억 퍼즐에서는 발판 위에서 바라보는 방향도 기록한다.
+  // 짧게 방향키를 누른 직후 K를 눌러도 의도가 즉시 반영되도록 방향을 먼저 갱신한다.
+  if (game.phase === 'playing' && game.player) {
+    if (event.code === 'ArrowLeft' || event.code === 'KeyA') game.player.facing = -1;
+    if (event.code === 'ArrowRight' || event.code === 'KeyD') game.player.facing = 1;
+  }
   const skillByKey = { KeyO: 'bridge', ShiftLeft: 'time', ShiftRight: 'time', KeyL: 'resonance', Space: 'dash' };
   const requestedSkill = skillByKey[event.code];
   if (!event.repeat && requestedSkill && isSkillBlocked(requestedSkill)) say(currentStage().blockedHint || '이 구역의 꿈 규칙 때문에 이 상상력 기술은 사용할 수 없습니다.');
@@ -4732,5 +5896,5 @@ window.addEventListener('blur', () => {
 });
 
 updateBgmVolumeControl();
-newGame();
+showTitleScreen();
 requestAnimationFrame(loop);
