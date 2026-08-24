@@ -1723,7 +1723,7 @@ function bossEntryLine(stage = currentStage()) {
 function bossBriefForStage(stage = currentStage()) {
   const mode = stage?.bossConfig?.mode;
   if (mode === 'calm') return '① 똑같이 보이는 기억 후보를 K 잔상으로 확인  ② 가짜가 잔상을 훔쳐 도망가면 J로 두 번 맞히기\n③ 진짜 기억 두 곳과 현재의 빛을 채우고 Shift 2.1초 유지';
-  if (mode === 'resonance') return '① K로 화음 앵커 두 곳 재생  ② 앵커가 불협화음 3회에 사라지기 전 다시 기록  ③ 별빛 박자에 맞춰 L을 짧게 6회  ④ 마지막 불협화음 20초 회피';
+  if (mode === 'resonance') return '① K로 화음 앵커 두 곳 재생  ② 앵커가 불협화음 3회에 사라지기 전 다시 기록  ③ 별빛 박자에 맞춰 L을 짧게 6회  ④ 앵커·잔상 없이 마지막 불협화음 20초 회피';
   if (mode === 'chase') return '① K로 두 기억 미끼 준비  ② 바람 탄환을 미끼에 맞혀 바람 표식 3개 채우기  ③ Space 질주로 바람 고리 연속 통과';
   if (mode === 'mirror') return '① K로 진짜 사진 재생  ② L로 진짜 균열만 드러내기  ③ Space 질주로 균열 네 곳 통과';
   if (mode === 'final') return '① K로 세 친구의 봉인 완성  ② L로 꿈 에너지 분리  ③ J로 첫 기억 반환\n④ 움직이는 TRUE 기억 추적  ⑤ 부서진 수호자 체력 모두 해체  ⑥ 마지막에는 딸의 목소리에 L 유지';
@@ -1877,7 +1877,7 @@ function phaseGuide() {
   if (boss.mode === 'resonance') {
     if (boss.codaActive) {
       const remaining = Math.max(0, boss.codaDuration - boss.codaElapsed);
-      return { step: 'FINAL CODA', text: '합창단이 무너진 불협화음을 쏟아냅니다. 잔상은 세 번 맞으면 흩어지지만 이미 되찾은 음은 유지됩니다. 20초 동안 음표 탄막을 피하세요.', compact: `불협화음 버티기 ${remaining.toFixed(1)}초` };
+      return { step: 'FINAL CODA', text: '박자 단계의 발판·게이트·잔상은 모두 사라졌고 잔상 유지 조건도 끝났습니다. 20초 동안 주인공으로 음표 탄막만 피하세요.', compact: `불협화음 버티기 ${remaining.toFixed(1)}초` };
     }
     return boss.activePads < boss.memoryPads.length
       ? { step: 'STEP 1 / 2', text: '두 기억의 나를 화음 앵커에 남기세요. 각 앵커는 불협화음 세 번을 맞으면 사라지니, 깨지면 K로 다시 기록하세요.', compact: `화음 앵커 ${boss.activePads} / ${boss.memoryPads.length} · 3회 방어` }
@@ -2823,6 +2823,12 @@ function finishMemoryRecording() {
 
 function toggleMemoryRecording() {
   if (game.phase !== 'playing') return;
+  if (game.boss?.mode === 'resonance' && game.boss.codaActive) {
+    game.recording = null;
+    say('20초 생존 단계에서는 잔상 유지 조건과 K 기록이 비활성화됩니다. 주인공으로 불협화음만 피하세요.');
+    updateHud();
+    return;
+  }
   if (game.layout === 'carousel' && !game.recording) {
     if (game.carouselRotationTimer > 0) {
       say('원형벽이 회전을 마칠 때까지 K 기록을 시작할 수 없습니다.');
@@ -3622,7 +3628,7 @@ function bossEchoPads(b) {
 }
 
 function damageBossEcho(echo, b) {
-  if (!echo || !b || !b.echoHitLimit) return false;
+  if (!echo || !b || !b.echoHitLimit || b.echoMaintenanceDisabled) return false;
   const pads = bossEchoPads(b);
   const pad = pads.find((candidate) => echoOverlapsPad(echo, candidate));
   const echoLabel = pad?.label || (echo.holding ? '기억의 나' : '재생 중인 잔상');
@@ -3633,12 +3639,7 @@ function damageBossEcho(echo, b) {
   if (echo.nightmareHits >= hitLimit) {
     game.echoes = game.echoes.filter((candidate) => candidate !== echo);
     b.activePads = activeMemoryPads(pads);
-    // 유나의 코다는 이미 여섯 음을 되찾은 뒤의 생존 단계다. 잔상이 사라져도 진행도와 시간은 유지한다.
-    if (b.mode === 'resonance' && b.codaActive) {
-      say(`코다의 불협화음이 “${echoLabel}” 잔상을 세 번 깨뜨렸습니다. 되찾은 음과 남은 시간은 유지됩니다.`);
-    } else {
-      say(`${b.name}의 공포 탄환이 “${echoLabel}” 잔상을 세 번 깨뜨렸습니다. 필요하면 K로 새 기억을 남기세요.`);
-    }
+    say(`${b.name}의 공포 탄환이 “${echoLabel}” 잔상을 세 번 깨뜨렸습니다. 필요하면 K로 새 기억을 남기세요.`);
   } else {
     const attackName = b.mode === 'resonance' ? '불협화음' : '공포 탄환';
     say(`${attackName}이 “${echoLabel}” 잔상을 흔듭니다. ${echo.nightmareHits} / ${hitLimit} · 세 번 맞으면 사라집니다.`);
@@ -3793,6 +3794,28 @@ function updateResonanceGates(b, techniques) {
   say(b.resonanceProgress >= b.resonanceGates.length ? '마지막 음이 돌아왔습니다!' : `공명 성공! 되찾은 음 ${b.resonanceProgress} / ${b.resonanceGates.length}`);
 }
 
+function beginResonanceCoda(b) {
+  if (b.codaActive) return;
+  b.codaActive = true;
+  b.echoMaintenanceDisabled = true;
+  b.codaElapsed = 0;
+  b.activePads = 0;
+  b.phase = 3;
+  b.flash = .6;
+  game.echoes = [];
+  game.recording = null;
+  game.memoryPads = [];
+  game.platforms = [];
+  game.fragments = [];
+  game.fallZones = [];
+  game.exit = null;
+  game.dreamShots = [];
+  game.nightmareShots = [];
+  game.dreamTrails = [];
+  game.nextAttack = .3;
+  say('마지막 음이 돌아왔습니다. 박자 오브젝트와 잔상 조건이 사라졌습니다. 주인공으로 불협화음을 20초 동안 피하세요!');
+}
+
 function updateMirrorGates(b, techniques) {
   const photoReady = activeMemoryPads(b.memoryPads || []) >= b.memoryPads.length;
   if (!photoReady) {
@@ -3890,7 +3913,9 @@ function updateBoss(dt) {
     for (const shot of game.nightmareShots) { shot.x += shot.vx * dt; shot.y += shot.vy * dt; }
     game.nightmareShots = game.nightmareShots.filter((shot) => {
       const rect = { x: shot.x - shot.r, y: shot.y - shot.r, w: shot.r * 2, h: shot.r * 2 };
-      const echoHit = game.echoes.find((echo) => overlaps(rect, echo));
+      const echoHit = b.mode === 'resonance' && b.codaActive
+        ? null
+        : game.echoes.find((echo) => overlaps(rect, echo));
       if (echoHit) {
         echoHit.flash = .24;
         damageBossEcho(echoHit, b);
@@ -4032,22 +4057,19 @@ function updateBoss(dt) {
     return;
   }
   if (b.mode === 'resonance') {
-    b.activePads = activeMemoryPads(b.memoryPads);
-    b.phase = b.codaActive ? 3 : Math.min(3, b.resonanceProgress + 1);
-    updateYunaBossMusic(b);
     if (b.codaActive) {
+      b.activePads = 0;
+      b.phase = 3;
       b.codaElapsed = Math.min(b.codaDuration, b.codaElapsed + dt);
       if (b.codaElapsed >= b.codaDuration) resolveBoss(b, '불협화음이 끝나고, 유나의 노래가 꿈 전체에 울려 퍼집니다.');
-    } else if (b.activePads >= b.memoryPads.length) {
-      updateResonanceBassCue(b);
-      updateResonanceGates(b, techniques);
-      if (b.resonanceProgress >= b.resonanceGates.length) {
-        b.codaActive = true;
-        b.codaElapsed = 0;
-        b.flash = .6;
-        game.nightmareShots = [];
-        game.nextAttack = .3;
-        say('마지막 음이 돌아왔습니다. 합창단의 불협화음을 20초 동안 피하세요!');
+    } else {
+      b.activePads = activeMemoryPads(b.memoryPads);
+      b.phase = Math.min(3, b.resonanceProgress + 1);
+      updateYunaBossMusic(b);
+      if (b.activePads >= b.memoryPads.length) {
+        updateResonanceBassCue(b);
+        updateResonanceGates(b, techniques);
+        if (b.resonanceProgress >= b.resonanceGates.length) beginResonanceCoda(b);
       }
     }
     return;
@@ -4328,7 +4350,7 @@ function bossPhaseNodes(boss = game.boss) {
     ];
   }
   if (boss.mode === 'resonance') return [
-    { label: '화음 앵커', done: boss.activePads >= boss.memoryPads.length },
+    { label: '화음 앵커', done: boss.codaActive || boss.activePads >= boss.memoryPads.length },
     { label: '박자', done: boss.resonanceProgress >= boss.resonanceGates.length },
     { label: '불협화음', done: boss.codaElapsed >= boss.codaDuration },
   ];
@@ -4409,13 +4431,13 @@ function updateHud() {
         bossFill.style.width = `${game.boss.calmProgress / game.boss.calmDuration * 100}%`;
         bossHealthEl.textContent = `안심의 순간 ${game.boss.calmProgress.toFixed(1)} / ${game.boss.calmDuration.toFixed(1)}초`;
       }
-    } else if (game.boss.mode === 'resonance' && game.boss.activePads < game.boss.memoryPads.length) {
-      bossFill.style.width = `${game.boss.activePads / Math.max(1, game.boss.memoryPads.length) * 100}%`;
-      bossHealthEl.textContent = `화음 앵커 ${game.boss.activePads} / ${game.boss.memoryPads.length}`;
     } else if (game.boss.mode === 'resonance' && game.boss.codaActive) {
       const remaining = Math.max(0, game.boss.codaDuration - game.boss.codaElapsed);
       bossFill.style.width = `${game.boss.codaElapsed / Math.max(1, game.boss.codaDuration) * 100}%`;
       bossHealthEl.textContent = `불협화음 버티기 ${remaining.toFixed(1)}초`;
+    } else if (game.boss.mode === 'resonance' && game.boss.activePads < game.boss.memoryPads.length) {
+      bossFill.style.width = `${game.boss.activePads / Math.max(1, game.boss.memoryPads.length) * 100}%`;
+      bossHealthEl.textContent = `화음 앵커 ${game.boss.activePads} / ${game.boss.memoryPads.length}`;
     } else if (game.boss.mode === 'resonance') {
       bossFill.style.width = `${game.boss.resonanceProgress / Math.max(1, game.boss.resonanceGates.length) * 100}%`;
       bossHealthEl.textContent = `되찾은 음 ${game.boss.resonanceProgress} / ${game.boss.resonanceGates.length}`;
@@ -4497,10 +4519,10 @@ function updateMemoryLoopUI() {
             ? '진짜 기억 두 곳을 찾았습니다. 금빛 현재의 빛에는 현재의 내가 직접 서세요.'
             : `안심의 순간 ${boss.calmProgress.toFixed(1)} / ${boss.calmDuration.toFixed(1)}초 · 현재의 빛 위에서 Shift를 유지하세요.`;
     } else if (boss.mode === 'resonance') {
-      memoryStatus.textContent = active < boss.memoryPads.length
-        ? `화음 앵커 ${active} / ${boss.memoryPads.length} · 두 기억의 나를 앵커에 남기세요. 앵커 하나는 불협화음 3회에 사라집니다.`
-        : boss.codaActive
-          ? `불협화음 버티기 ${Math.max(0, boss.codaDuration - boss.codaElapsed).toFixed(1)}초 · 잔상은 3회 피격 시 사라지지만, 되찾은 음과 시간은 유지됩니다.`
+      memoryStatus.textContent = boss.codaActive
+        ? `불협화음 버티기 ${Math.max(0, boss.codaDuration - boss.codaElapsed).toFixed(1)}초 · 박자 오브젝트와 잔상 유지 조건이 비활성화되었습니다. K 기록 없이 회피하세요.`
+        : active < boss.memoryPads.length
+          ? `화음 앵커 ${active} / ${boss.memoryPads.length} · 두 기억의 나를 앵커에 남기세요. 앵커 하나는 불협화음 3회에 사라집니다.`
           : `되찾은 음 ${boss.resonanceProgress} / ${boss.resonanceGates.length} · ${resonanceBeat(boss).open ? '지금은 별빛 박자입니다. L을 짧게 한 번 누르세요.' : '별빛 고리가 밝아질 때까지 다음 음 앞에서 기다리세요.'}`;
     } else if (boss.mode === 'chase' && boss.echoHits < boss.requiredEchoHits) {
       memoryStatus.textContent = `바람 표식 ${boss.echoHits} / ${boss.requiredEchoHits} · 검은 연의 바람 탄환을 “바람 미끼” 위 기억의 나에게 맞히면 표식이 하나씩 쌓입니다. 세 개를 채우세요.`;
@@ -7573,7 +7595,9 @@ function drawBoss() {
   }
   const bossLabel = b.releaseReady ? '수면 과학자 · 아버지' : b.mode === 'final' && b.truthResolved ? '수면 과학자 · 부서진 수호자' : b.name;
   ctx.fillStyle = b.mode === 'final' ? b.releaseReady ? '#fff1b1' : b.truthResolved ? '#ffd891' : '#aeefff' : windFear || choirFear ? '#aeefff' : mirrorFear ? '#ffe0f2' : '#ffc4d5'; ctx.font = '800 12px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(bossLabel, b.x + b.w / 2, b.y - 17);
-  const bossPads = b.mode === 'chase' ? b.decoyPads : b.mode === 'resonance' || b.mode === 'calm' || b.mode === 'mirror' || b.mode === 'final' ? b.memoryPads : [];
+  const bossPads = b.mode === 'resonance' && b.codaActive
+    ? []
+    : b.mode === 'chase' ? b.decoyPads : b.mode === 'resonance' || b.mode === 'calm' || b.mode === 'mirror' || b.mode === 'final' ? b.memoryPads : [];
   const calmState = b.mode === 'calm' ? calmMemoryState(b) : null;
   bossPads.forEach((pad, index) => {
     const role = b.mode === 'chase' || b.mode === 'mirror' || index < 2 ? 'echo' : 'present';
