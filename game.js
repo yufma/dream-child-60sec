@@ -323,15 +323,15 @@ const STAGES = [
     layout: 'carousel', echoGoal: 1, blockedHint: '이 회전목마에서는 Space 질주 대신 어디서든 P/Y로 원형벽의 구멍을 양방향 회전할 수 있습니다.', hint: 'K는 항상 원 중앙 보랏빛 발판에서 시작합니다. 남동 리본 길은 중앙 허브에서 ↓/S로 하단 방사로에 내려가세요. 어디서든 P/Y로 세 장치를 원하는 순서로 복구한 뒤 동쪽 출구 구멍을 맞추세요.',
   },
   {
-    chapter: '하린 · 잃어버린 웃음', name: '하린이 가장 두려워한 것', type: 'boss', skills: ['time'], objective: '세 기억을 완성하고 움직이는 가면을 광대에게 되돌려라',
-    intro: '하린은 모두가 웃는 곳에서 혼자 웃지 못하게 될까 봐 두려워했어. 그 두려움이 “웃음을 훔치는 광대”가 되었다. 처음에는 진짜와 가짜 기억이 똑같이 보여. K로 남긴 기억의 나가 가짜에 닿으면, 가짜 기억이 잔상을 훔쳐 달아나. 그때 J로 두 번 맞혀 훔쳐 간 잔상을 지우고 세 기억을 완성해. 그러면 무대가 비워지고 작아진 광대와 가면 셋이 전역을 떠돌아. 캐릭터-가면-광대 순서로 일직선에 가깝게 자리를 잡고 J를 누르면, 가면이 광대에게 날아가 두려움의 껍질을 깨뜨려.',
+    chapter: '하린 · 잃어버린 웃음', name: '하린이 가장 두려워한 것', type: 'boss', skills: ['time'], objective: '세 기억을 완성하고 움직이는 광대의 동선을 예측해 가면을 맞혀라',
+    intro: '하린은 모두가 웃는 곳에서 혼자 웃지 못하게 될까 봐 두려워했어. 그 두려움이 “웃음을 훔치는 광대”가 되었다. 처음에는 진짜와 가짜 기억이 똑같이 보여. K로 남긴 기억의 나가 가짜에 닿으면, 가짜 기억이 잔상을 훔쳐 달아나. 그때 J로 두 번 맞혀 훔쳐 간 잔상을 지우고 세 기억을 완성해. 그러면 무대가 비워지고 작아진 광대와 가면 셋이 전역을 떠돌아. 가면 가까이에서 발사 각도를 잡고 J를 누르면 가면이 캐릭터에서 가면을 향한 방향 그대로 직선 비행해. 광대의 다음 동선을 예상해서 앞을 노려 줘.',
     boss: '웃음을 훔치는 광대', bossConfig: {
       mode: 'calm', visual: 'carousel', calmDuration: 2.1,
       distortedMemoryPads: [
         { x: 128, y: 316, w: 42, h: 42, label: '혼자 웃기' },
         { x: 470, y: 132, w: 42, h: 42, label: '텅 빈 관람석' },
       ],
-    }, hint: '① 똑같은 기억 후보를 K 잔상으로 확인 ② 가짜가 잔상을 훔쳐 달아나면 J로 두 번 맞히기 ③ 세 기억 완성 ④ 캐릭터-가면-광대 순서로 정렬한 뒤 J로 가면 셋을 광대에게 날리세요.',
+    }, hint: '① 똑같은 기억 후보를 K 잔상으로 확인 ② 가짜가 잔상을 훔쳐 달아나면 J로 두 번 맞히기 ③ 세 기억 완성 ④ 가면 가까이에서 발사선을 정하고 광대의 동선을 예상해 J로 직선 발사하세요.',
     teaches: ['time'],
   },
   {
@@ -1723,7 +1723,7 @@ function bossEntryLine(stage = currentStage()) {
 
 function bossBriefForStage(stage = currentStage()) {
   const mode = stage?.bossConfig?.mode;
-  if (mode === 'calm') return '① 똑같이 보이는 기억 후보를 K 잔상으로 확인  ② 가짜가 잔상을 훔쳐 도망가면 J로 두 번 맞히기\n③ 세 기억 완성  ④ 캐릭터-가면-광대 순서로 정렬 → J로 가면 3개 되돌리기';
+  if (mode === 'calm') return '① 똑같이 보이는 기억 후보를 K 잔상으로 확인  ② 가짜가 잔상을 훔쳐 도망가면 J로 두 번 맞히기\n③ 세 기억 완성  ④ 가면 가까이에서 각도 조준 → 광대 동선을 예상해 J 직선 발사';
   if (mode === 'resonance') return '① K로 화음 앵커 두 곳 재생  ② 앵커가 불협화음 3회에 사라지기 전 다시 기록  ③ 별빛 박자에 맞춰 L을 짧게 6회  ④ 앵커·잔상 없이 마지막 불협화음 20초 회피';
   if (mode === 'chase') return '① K로 두 기억 미끼 준비  ② 바람 탄환을 미끼에 맞혀 바람 표식 3개 채우기  ③ Space 질주로 바람 고리 연속 통과';
   if (mode === 'mirror') return '① K로 진짜 사진 재생  ② L로 진짜 균열만 드러내기  ③ Space 질주로 균열 네 곳 통과';
@@ -1754,7 +1754,7 @@ function guideKeyHints() {
   }
   if (!boss) return [{ key: '← →', label: '이동' }, { key: '↑ ↓', label: '회피' }];
   if (boss.mode === 'calm') {
-    if (boss.calmReflectionActive) return [{ key: 'J', label: '정렬된 가면 공격' }, { key: 'Shift', label: '움직임 보조 정지' }];
+    if (boss.calmReflectionActive) return [{ key: 'J', label: '가면 직선 발사' }, { key: 'Shift', label: '움직임 보조 정지' }];
     const state = calmMemoryState(boss);
     if (activeCalmFakeMemories(boss).length) return [{ key: 'J', label: '도주 기억 공격' }, { key: 'K', label: '새 기억 기록' }];
     if (state.trueMemoryCount < state.memoryTargetCount) return [{ key: 'K', label: '기억 확인' }, { key: 'I', label: '최근 잔상 삭제' }];
@@ -1871,9 +1871,9 @@ function phaseGuide() {
       const broken = boss.calmReflectionBroken || 0;
       const required = boss.calmReflectionRequired || 3;
       return {
-        step: 'FINAL MASK STRIKE',
-        text: '캐릭터-가면-광대 순서로 일직선에 가깝게 정렬하세요. 연결선이 켜졌을 때 J를 누르면 가면이 광대에게 날아갑니다.',
-        compact: `가면 되돌리기 ${broken} / ${required}`,
+        step: 'FINAL FREE AIM',
+        text: '가면 가까이에서 조준선을 정하고 J를 누르세요. 가면은 표시된 방향으로만 직선 비행하므로 움직이는 광대의 다음 위치를 예상해야 합니다.',
+        compact: `자유 조준 명중 ${broken} / ${required}`,
       };
     }
     const fakeProgress = calmFakeProgress(boss);
@@ -2616,16 +2616,16 @@ function triggerBossShot() {
   const boss = game.boss;
   if (game.phase !== 'playing' || currentStage()?.type !== 'boss' || game.fireCooldown > 0) return;
   if (boss?.mode === 'calm' && boss.calmReflectionActive) {
-    const mask = calmReflectionStrikeCandidate(boss);
+    const mask = calmReflectionLaunchCandidate(boss);
     if (!mask) {
       game.fireCooldown = .12;
-      say('캐릭터-가면-광대 순서로 일직선에 가깝게 정렬하세요. 금빛 연결선이 켜지면 J 공격이 가능합니다.');
+      say('가면에서 너무 멀거나 너무 가깝습니다. 조준선이 표시되는 거리에서 각도를 잡고 J를 누르세요.');
       return;
     }
     if (!spend(4)) return;
     if (!launchCalmReflectionMask(boss, mask)) return;
     game.fireCooldown = .28;
-    say('정렬된 가면을 광대에게 되돌려 보냈습니다!');
+    say('가면을 현재 조준 방향으로 직선 발사했습니다! 광대의 동선과 맞는지 지켜보세요.');
     return;
   }
   const calmFakeIsFleeing = boss?.mode === 'calm' && activeCalmFakeMemories(boss).length > 0;
@@ -2831,47 +2831,37 @@ function beginCalmReflectionPhase(boss) {
   boss.memoryPads = [];
   boss.distortedMemoryPads = [];
   game.nextAttack = 99;
-  say('세 기억이 겹치자 무대의 오브젝트가 사라졌습니다. 캐릭터-가면-광대 순서로 정렬한 뒤 연결선이 켜지면 J를 눌러 가면을 되돌리세요.');
+  say('세 기억이 겹치자 무대의 오브젝트가 사라졌습니다. 가면 가까이에서 조준선을 정하고 광대의 이동 경로를 예상해 J로 직선 발사하세요.');
   updateHud();
 }
 
-function calmReflectionStrikeCandidate(boss = game.boss) {
+function calmReflectionLaunchCandidate(boss = game.boss) {
   if (!boss?.calmReflectionActive || !game.player) return null;
   const playerCenter = { x: game.player.x + game.player.w / 2, y: game.player.y + game.player.h / 2 };
-  const bossCenter = { x: boss.x + boss.w / 2, y: boss.y + boss.h / 2 };
-  const bossDx = bossCenter.x - playerCenter.x;
-  const bossDy = bossCenter.y - playerCenter.y;
-  const bossDistance = Math.hypot(bossDx, bossDy);
-  if (bossDistance < 92) return null;
-  const unitX = bossDx / bossDistance;
-  const unitY = bossDy / bossDistance;
   return boss.calmReflectionMasks
     .filter((mask) => !mask.broken && !mask.launched)
     .map((mask) => {
       const maskCenterX = mask.x + mask.w / 2;
       const maskCenterY = mask.y + mask.h / 2;
-      const maskDx = maskCenterX - playerCenter.x;
-      const maskDy = maskCenterY - playerCenter.y;
-      const projection = maskDx * unitX + maskDy * unitY;
-      const perpendicular = Math.abs(maskDx * unitY - maskDy * unitX);
-      return { mask, projection, perpendicular };
+      const distance = Math.hypot(maskCenterX - playerCenter.x, maskCenterY - playerCenter.y);
+      return { mask, distance };
     })
-    .filter(({ projection, perpendicular }) => projection > 30 && projection < bossDistance - 38 && perpendicular <= 36)
-    .sort((left, right) => left.perpendicular - right.perpendicular || left.projection - right.projection)[0]?.mask || null;
+    .filter(({ distance }) => distance >= 34 && distance <= 190)
+    .sort((left, right) => left.distance - right.distance)[0]?.mask || null;
 }
 
 function launchCalmReflectionMask(boss, mask) {
   if (!boss?.calmReflectionActive || !mask || mask.broken || mask.launched) return false;
   const maskCenterX = mask.x + mask.w / 2;
   const maskCenterY = mask.y + mask.h / 2;
-  const bossCenterX = boss.x + boss.w / 2;
-  const bossCenterY = boss.y + boss.h / 2;
-  const dx = bossCenterX - maskCenterX;
-  const dy = bossCenterY - maskCenterY;
+  const playerCenterX = game.player.x + game.player.w / 2;
+  const playerCenterY = game.player.y + game.player.h / 2;
+  const dx = maskCenterX - playerCenterX;
+  const dy = maskCenterY - playerCenterY;
   const distance = Math.max(1, Math.hypot(dx, dy));
   mask.launched = true;
   mask.launchSpeed = 590;
-  mask.launchTime = distance / mask.launchSpeed + .48;
+  mask.launchTime = 2.05;
   mask.launchSpin = 0;
   mask.vx = dx / distance * mask.launchSpeed;
   mask.vy = dy / distance * mask.launchSpeed;
@@ -2882,17 +2872,7 @@ function launchCalmReflectionMask(boss, mask) {
 function updateLaunchedCalmReflectionMask(boss, mask, dt) {
   mask.launchTime = Math.max(0, (mask.launchTime || 0) - dt);
   mask.launchSpin = (mask.launchSpin || 0) + dt * 20;
-  const maskCenterX = mask.x + mask.w / 2;
-  const maskCenterY = mask.y + mask.h / 2;
-  const bossCenterX = boss.x + boss.w / 2;
-  const bossCenterY = boss.y + boss.h / 2;
-  const dx = bossCenterX - maskCenterX;
-  const dy = bossCenterY - maskCenterY;
-  const distance = Math.max(1, Math.hypot(dx, dy));
-  const speed = mask.launchSpeed || 590;
-  const blend = Math.min(1, dt * 7.2);
-  mask.vx += (dx / distance * speed - mask.vx) * blend;
-  mask.vy += (dy / distance * speed - mask.vy) * blend;
+  mask.hitFlash = Math.max(0, (mask.hitFlash || 0) - dt);
   const travelX = mask.vx * dt;
   const travelY = mask.vy * dt;
   const travelSteps = Math.max(1, Math.ceil(Math.hypot(travelX, travelY) / 14));
@@ -2911,7 +2891,7 @@ function updateLaunchedCalmReflectionMask(boss, mask, dt) {
   mask.vx = 0;
   mask.vy = 0;
   setCalmReflectionRoamTarget(mask, mask.roamBounds, true);
-  say('가면이 광대를 빗나갔습니다. 다시 캐릭터-가면-광대 순서로 정렬하세요.');
+  say('가면이 광대의 동선을 빗나갔습니다. 이동 방향을 다시 예상해 발사 각도를 조정하세요.');
 }
 
 function updateCalmReflectionMotion(boss, dt) {
@@ -3050,7 +3030,7 @@ function toggleMemoryRecording() {
   if (game.phase !== 'playing') return;
   if (game.boss?.mode === 'calm' && game.boss.calmReflectionActive) {
     game.recording = null;
-    say('가면 되돌리기 단계에서는 기억 기록이 끝났습니다. 캐릭터-가면-광대를 정렬하고 J를 누르세요.');
+    say('자유 조준 단계에서는 기억 기록이 끝났습니다. 가면 가까이에서 광대의 동선을 예상해 J를 누르세요.');
     updateHud();
     return;
   }
@@ -4590,7 +4570,7 @@ function bossPhaseNodes(boss = game.boss) {
   if (boss.mode === 'calm') {
     if (boss.calmReflectionActive) return [
       { label: '세 기억', done: true },
-      { label: '가면 되돌리기', done: boss.calmReflectionBroken >= boss.calmReflectionRequired },
+      { label: '자유 조준', done: boss.calmReflectionBroken >= boss.calmReflectionRequired },
     ];
     const state = calmMemoryState(boss);
     return [
@@ -4670,7 +4650,7 @@ function updateHud() {
       const state = calmMemoryState(game.boss);
       if (game.boss.calmReflectionActive) {
         bossFill.style.width = `${game.boss.calmReflectionBroken / Math.max(1, game.boss.calmReflectionRequired) * 100}%`;
-        bossHealthEl.textContent = `광대에게 되돌린 가면 ${game.boss.calmReflectionBroken} / ${game.boss.calmReflectionRequired}`;
+        bossHealthEl.textContent = `직선 가면 명중 ${game.boss.calmReflectionBroken} / ${game.boss.calmReflectionRequired}`;
       } else if (fakeProgress.active.length) {
         bossFill.style.width = `${fakeProgress.hitCount / fakeProgress.requiredHits * 100}%`;
         bossHealthEl.textContent = `가짜 기억 추적 ${fakeProgress.hitCount} / ${fakeProgress.requiredHits}회`;
@@ -4765,7 +4745,7 @@ function updateMemoryLoopUI() {
       const fakeProgress = calmFakeProgress(boss);
       const state = calmMemoryState(boss);
       memoryStatus.textContent = boss.calmReflectionActive
-        ? `가면 ${boss.calmReflectionBroken} / ${boss.calmReflectionRequired} · 캐릭터-가면-광대를 정렬해 금빛 연결선을 켠 뒤 J를 누르세요. Shift는 움직임 정지 보조이며 K 기록은 비활성화됩니다.`
+        ? `가면 명중 ${boss.calmReflectionBroken} / ${boss.calmReflectionRequired} · 가면 가까이에서 조준선을 정하고 광대의 다음 동선을 예상해 J로 직선 발사하세요. Shift는 움직임 정지 보조이며 K 기록은 비활성화됩니다.`
         : fakeProgress.active.length
         ? `잔상 슬롯 ${countedEchoes.length} / 3 · 가짜 기억 피격 ${fakeProgress.hitCount} / ${fakeProgress.requiredHits} · 훔친 잔상은 슬롯을 차지하며 I와 선입선출 교체로 사라지지 않습니다.`
         : state.trueMemoryCount < state.memoryTargetCount
@@ -7630,13 +7610,18 @@ function drawCalmReflectionMask(mask) {
   ctx.restore();
 }
 
-function drawCalmReflectionAlignment(boss) {
-  const mask = calmReflectionStrikeCandidate(boss);
+function drawCalmReflectionAim(boss) {
+  const mask = calmReflectionLaunchCandidate(boss);
   if (!mask) return;
   const player = game.player;
   const playerCenter = { x: player.x + player.w / 2, y: player.y + player.h / 2 };
   const maskCenter = { x: mask.x + mask.w / 2, y: mask.y + mask.h / 2 };
-  const bossCenter = { x: boss.x + boss.w / 2, y: boss.y + boss.h / 2 };
+  const dx = maskCenter.x - playerCenter.x;
+  const dy = maskCenter.y - playerCenter.y;
+  const distance = Math.max(1, Math.hypot(dx, dy));
+  const unitX = dx / distance;
+  const unitY = dy / distance;
+  const rayEnd = { x: playerCenter.x + unitX * 1400, y: playerCenter.y + unitY * 1400 };
   const pulse = .55 + Math.sin(game.elapsed * 9) * .18;
   ctx.save();
   ctx.globalAlpha = pulse;
@@ -7648,7 +7633,7 @@ function drawCalmReflectionAlignment(boss) {
   ctx.beginPath();
   ctx.moveTo(playerCenter.x, playerCenter.y);
   ctx.lineTo(maskCenter.x, maskCenter.y);
-  ctx.lineTo(bossCenter.x, bossCenter.y);
+  ctx.lineTo(rayEnd.x, rayEnd.y);
   ctx.stroke();
   ctx.setLineDash([]);
   ctx.lineWidth = 2;
@@ -7656,7 +7641,7 @@ function drawCalmReflectionAlignment(boss) {
   ctx.fillStyle = '#fff4bd';
   ctx.font = '900 10px ui-monospace, monospace';
   ctx.textAlign = 'center';
-  ctx.fillText('J · MASK STRIKE', maskCenter.x, maskCenter.y - 36);
+  ctx.fillText('J · STRAIGHT SHOT', maskCenter.x, maskCenter.y - 36);
   ctx.restore();
 }
 
@@ -7924,7 +7909,7 @@ function drawBoss() {
   const choirFear = b.visual === 'choir';
   const mirrorFear = b.visual === 'mirror';
   const calmReflectionBossBottom = b.mode === 'calm' && b.calmReflectionActive ? b.y + b.h : null;
-  if (calmReflectionBossBottom !== null) drawCalmReflectionAlignment(b);
+  if (calmReflectionBossBottom !== null) drawCalmReflectionAim(b);
   if (calmReflectionBossBottom !== null) {
     b.calmReflectionMasks
       .filter((mask) => !mask.broken && mask.y + mask.h < calmReflectionBossBottom)
@@ -8034,7 +8019,7 @@ function drawBoss() {
     ctx.shadowColor = '#ff5d9b';
     ctx.font = '900 11px ui-monospace, monospace';
     ctx.textAlign = 'center';
-    ctx.fillText(`MASK STRIKE · ${b.calmReflectionBroken} / ${b.calmReflectionRequired} · PLAYER → MASK → CLOWN · PRESS J`, W / 2, 54);
+    ctx.fillText(`FREE AIM · HIT ${b.calmReflectionBroken} / ${b.calmReflectionRequired} · PLAYER → MASK RAY · PREDICT CLOWN · PRESS J`, W / 2, 54);
     ctx.restore();
   }
   drawMemoryLoopFeedback();
