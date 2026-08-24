@@ -68,14 +68,22 @@ const HANEUL_STAGE_MUSIC_PATHS = Object.freeze([
   'assets/audio/haneul-clear-sky-v1.wav',
 ]);
 const HARIN_STAGE_02_GATE_PATHS = Object.freeze({
-  blocked: 'assets/backgrounds/harin-stage-02-wall-ruined-structural-side10-clean-dark-outline-alpha-v15.png',
+  blocked: 'assets/backgrounds/harin-stage-02-wall-ruined-consistent-v2.png',
   open: 'assets/backgrounds/harin-stage-02-wall-restored-side10-clean-dark-outline-alpha-v15.png',
 });
 const HARIN_STAGE_02_GATE_DRAW = Object.freeze({
   scale: .38,
   roadOverlap: 18,
-  blocked: Object.freeze({ entranceCenterSourceX: 590, splitSourceX: 590, groundSourceY: 1066 }),
+  // 붕괴·완성 원화가 같은 성문을 기준으로 제작되어, 입구와 기초석의 기준점도 공유한다.
+  // 오른쪽 잔해만 아주 조금 남기고 넘친 돌무더기는 잘라 완성 성문보다 밑변이 넓어지지 않게 한다.
+  blocked: Object.freeze({ entranceCenterSourceX: 555, splitSourceX: 555, groundSourceY: 1078, sourceRight: 1000 }),
   open: Object.freeze({ entranceCenterSourceX: 555, splitSourceX: 555, groundSourceY: 1072 }),
+});
+// 중간 복원 일러스트는 완성 성문 위에 겹치는 '기억 마법의 잔상'으로만 사용한다.
+// 실제 충돌과 최종 구조는 동일 원화의 블록 조립으로 유지한다.
+const HARIN_STAGE_02_MAGIC_FRAME_DRAW = Object.freeze({
+  awakening: Object.freeze({ entranceCenterSourceX: 265, splitSourceX: 320, groundSourceY: 1405, scaleX: .223, scaleY: .302 }),
+  restoring: Object.freeze({ entranceCenterSourceX: 272, splitSourceX: 320, groundSourceY: 1452, scaleX: .24, scaleY: .294 }),
 });
 const HARIN_BACKGROUND_Y_OFFSETS = Object.freeze([40, 0, 0, 0, 0, 0]);
 const HARIN_STAGE_02_ROAD_ALIGNMENT = Object.freeze({ sourceY: 718, targetY: 500 });
@@ -132,6 +140,10 @@ const harinStage02GateSprites = Object.freeze({
   blocked: loadSprite(HARIN_STAGE_02_GATE_PATHS.blocked),
   open: loadSprite(HARIN_STAGE_02_GATE_PATHS.open),
 });
+const harinStage02MagicFrames = Object.freeze({
+  awakening: loadSprite('assets/backgrounds/harin-stage-02-wall-awakening-memory-v1.png'),
+  restoring: loadSprite('assets/backgrounds/harin-stage-02-wall-restoring-memory-v1.png'),
+});
 const failureArt = Object.freeze(Object.fromEntries(Object.entries(FAILURE_ART_PATHS).map(([key, source]) => [key, loadSprite(source)])));
 const bossSprites = Object.freeze({
   harinClown: loadSprite('assets/bosses/harin-laugh-thief-clown-sprite-v1.png'),
@@ -168,6 +180,7 @@ const memoryPadSprites = Object.freeze({
 // 배경에 섞이지 않으면서도 각 꿈의 고유 소재를 바로 읽게 하는 핵심 기믹 일러스트.
 const objectSprites = Object.freeze({
   harinLaughCollector: loadSprite('assets/objects/harin-laugh-collector-v1.png'),
+  harinRelayBulb: loadSprite('assets/objects/harin-relay-carnival-bulb-v1.png'),
   harinCarouselWall: loadSprite('assets/objects/harin-carousel-wall-v1.png'),
   yunaSilentKey: loadSprite('assets/objects/yuna-silent-key-pillar-v1.png'),
   haneulTrueSignpost: loadSprite('assets/objects/haneul-true-signpost-v1.png'),
@@ -577,10 +590,12 @@ function stageSpriteSet(stageIndex = game?.stageIndex || 0) {
   const stage = STAGES[Math.max(0, Math.min(STAGES.length - 1, stageIndex))] || STAGES[0];
   const sprites = [playerSprites.idle, playerSprites.run, playerSprites.jump];
   if (stageIndex < 6) {
-    sprites.push(harinBackgrounds[stageIndex], gateSprites.harin, memoryPadSprites.harin);
-    if (stageIndex === 1) sprites.push(harinStage02GateSprites.blocked, harinStage02GateSprites.open);
-    if (stageIndex === 2) sprites.push(objectSprites.harinLaughCollector, memoryPadSprites.harinRelay, platformSprites.harinEchoBridge);
-    if (stageIndex === 3) sprites.push(objectSprites.harinCarouselWall, platformSprites.harinCarouselPlatform);
+    // 1~6은 모두 같은 유원지 발판 원화를 쓴다. 4스테이지를 한 번 열어야만
+    // 스프라이트가 로드되던 조건을 없애, 재진입 여부와 상관없이 같은 디자인을 유지한다.
+    sprites.push(harinBackgrounds[stageIndex], gateSprites.harin, memoryPadSprites.harin, platformSprites.harinCarouselPlatform);
+    if (stageIndex === 1) sprites.push(harinStage02GateSprites.blocked, harinStage02GateSprites.open, harinStage02MagicFrames.awakening, harinStage02MagicFrames.restoring);
+    if (stageIndex === 2) sprites.push(objectSprites.harinLaughCollector, objectSprites.harinRelayBulb, memoryPadSprites.harinRelay, platformSprites.harinEchoBridge);
+    if (stageIndex === 3) sprites.push(objectSprites.harinCarouselWall);
     if (stage.type === 'boss') sprites.push(bossSprites.harinClown, memoryPadSprites.distortion);
   } else if (stageIndex < 12) {
     sprites.push(yunaBackgrounds[stageIndex - 6], gateSprites.yuna, memoryPadSprites.yuna, platformSprites.yunaResonancePad);
@@ -975,6 +990,7 @@ function freshGameState(phase = 'intro') {
     nextAttack: 1.2, message: '', completed: [], memories: new Set(campaign.memories), learnedSkills: new Set(campaign.skills), fragments: [], echoes: [], recording: null, memoryRecordsUsed: 0, reactionSeen: new Set(), rewindExpressionTimer: 0, dreamTrails: [], dashTrailClock: 0, dashVisualTimer: 0, memoryPads: [], fallZones: [], transition: 'start', stageIntroTimer: null, dashCooldown: 0, dashTimer: 0, dashDirection: 1, watcherResolved: false,
     stageRealElapsed: 0, challenge: null, bossGuideKey: '', bossGuideUntil: 0, bossGuideStarted: 0,
     windPillarCollapse: 0, windPillarReleased: false, windPillarCollapseAnnounced: false, headwindHintShown: false,
+    stage02Restoration: 0, stage02RestorationAnnounced: false,
   };
 }
 
@@ -2010,6 +2026,8 @@ function startStage() {
   game.windPillarReleased = false;
   game.windPillarCollapseAnnounced = false;
   game.headwindHintShown = false;
+  game.stage02Restoration = 0;
+  game.stage02RestorationAnnounced = false;
   game.stageRealElapsed = 0;
   game.bossGuideKey = '';
   game.bossGuideUntil = stage.type === 'boss' ? 4.8 : 0;
@@ -2679,6 +2697,16 @@ function updateWindCliffPillar(dt, stage = currentStage()) {
   if (game.windPillarReleased) game.windPillarCollapse = Math.min(1, (game.windPillarCollapse || 0) + dt / 1.25);
 }
 
+function updateHarinStage02Restoration(dt, stage = currentStage()) {
+  if (stage?.layout !== 'bridge' || !puzzleObjectiveReady()) return;
+  if (!game.stage02RestorationAnnounced) {
+    game.stage02RestorationAnnounced = true;
+    say('기억의 빛이 흩어진 벽돌을 하나씩 불러옵니다. 무너진 거리가 다시 제 모습을 찾기 시작합니다.');
+  }
+  // 벽돌 조각이 실제로 흩어진 자리에서 돌아와 쌓일 시간을 준다.
+  game.stage02Restoration = Math.min(1, (game.stage02Restoration || 0) + dt / 4.6);
+}
+
 function windCliffHeadwindStrength(stage = currentStage()) {
   // 탑이 서 있을 때만 공중 이동을 되밀어 내는 역풍이 존재한다. 무너지기 시작하면 즉시 잦아든다.
   if (stage?.layout !== 'wind-cliff' || game.windPillarReleased) return 0;
@@ -2708,6 +2736,7 @@ function updatePuzzle(dt) {
     }
   }
   game.bridge = techniques.bridge;
+  updateHarinStage02Restoration(dt, stage);
   updateWindCliffPillar(dt, stage);
   if (!frozen) game.elapsed += dt;
   const axis = horizontalInput();
@@ -3915,27 +3944,111 @@ function getHarinStage02GateSprite(gateOpen) {
   const state = gateOpen ? 'open' : 'blocked';
   const image = harinStage02GateSprites[state];
   if (!image?.complete || image.naturalWidth === 0) return null;
-  return { image, state, anchor: HARIN_STAGE_02_GATE_DRAW[state] };
+  return {
+    image,
+    state,
+    anchor: HARIN_STAGE_02_GATE_DRAW[state],
+  };
 }
 
 function drawHarinStage02GateLayer(gateSprite, structure, layer) {
   if (!gateSprite || !structure) return;
   const { image, anchor } = gateSprite;
-  const scale = HARIN_STAGE_02_GATE_DRAW.scale;
+  const scaleX = gateSprite.scaleX || HARIN_STAGE_02_GATE_DRAW.scale;
+  const scaleY = gateSprite.scaleY || HARIN_STAGE_02_GATE_DRAW.scale;
   const entranceCenterX = structure.x + structure.w / 2;
   // 이미지 전체 중심 대신 성문 입구 중심을 실제 차단 구조물 중심에 고정한다.
-  const drawX = entranceCenterX - anchor.entranceCenterSourceX * scale;
-  const drawY = structure.y + structure.h + HARIN_STAGE_02_GATE_DRAW.roadOverlap - anchor.groundSourceY * scale;
-  const splitSourceX = Math.max(0, Math.min(image.naturalWidth, anchor.splitSourceX));
+  const drawX = entranceCenterX - anchor.entranceCenterSourceX * scaleX;
+  const drawY = structure.y + structure.h + HARIN_STAGE_02_GATE_DRAW.roadOverlap - anchor.groundSourceY * scaleY;
+  const sourceRight = Math.max(0, Math.min(image.naturalWidth, anchor.sourceRight || image.naturalWidth));
+  const splitSourceX = Math.max(0, Math.min(sourceRight, anchor.splitSourceX));
   const sourceX = layer === 'far' ? 0 : splitSourceX;
-  const sourceWidth = layer === 'far' ? splitSourceX : image.naturalWidth - splitSourceX;
+  const sourceWidth = layer === 'far' ? splitSourceX : sourceRight - splitSourceX;
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(
     image,
     sourceX, 0, sourceWidth, image.naturalHeight,
-    drawX + sourceX * scale, drawY, sourceWidth * scale, image.naturalHeight * scale,
+    drawX + sourceX * scaleX, drawY, sourceWidth * scaleX, image.naturalHeight * scaleY,
   );
+  ctx.restore();
+}
+
+function restorationPieceNoise(seed) {
+  const value = Math.sin(seed * 127.1 + 311.7) * 43758.5453123;
+  return value - Math.floor(value);
+}
+
+// 완성 성문 원화에서 실제 석재 경계와 건축 요소를 따라 직접 잡은 조각들이다.
+// 균일한 격자를 쓰지 않아, 기초석·문기둥·차양·오른쪽 벽·상단 탑이 각각 한 덩어리로 읽힌다.
+const HARIN_STAGE_02_MASONRY_PIECES = Object.freeze([
+  // 기초석과 바닥의 큰 돌
+  { x: 433, y: 968, w: 75, h: 104, order: 0 }, { x: 508, y: 970, w: 61, h: 102, order: 0 },
+  { x: 570, y: 970, w: 78, h: 102, order: 0 }, { x: 648, y: 968, w: 79, h: 104, order: 0 },
+  { x: 727, y: 956, w: 82, h: 116, order: 0 }, { x: 809, y: 956, w: 85, h: 116, order: 0 },
+  { x: 894, y: 952, w: 83, h: 120, order: 0 },
+  // 아치를 받치는 양쪽 기둥
+  { x: 433, y: 838, w: 77, h: 130, order: 1 }, { x: 434, y: 683, w: 77, h: 155, order: 1 },
+  { x: 438, y: 529, w: 75, h: 154, order: 1 }, { x: 440, y: 461, w: 75, h: 68, order: 1 },
+  { x: 509, y: 838, w: 67, h: 132, order: 1 }, { x: 512, y: 680, w: 65, h: 158, order: 1 },
+  { x: 513, y: 528, w: 65, h: 152, order: 1 }, { x: 513, y: 462, w: 70, h: 66, order: 1 },
+  // 아치와 오른쪽 벽을 묶는 중앙 세로 기둥. 이전 목록에서 빠져 복원 중 빈틈으로 보이던 부분이다.
+  { x: 578, y: 838, w: 125, h: 132, order: 1 }, { x: 578, y: 676, w: 125, h: 162, order: 2 },
+  { x: 578, y: 519, w: 125, h: 157, order: 3 }, { x: 578, y: 377, w: 125, h: 142, order: 4 },
+  { x: 599, y: 300, w: 104, h: 77, order: 5 },
+  // 오른쪽 벽의 큰 석재: 아래에서 위로 쌓인다.
+  { x: 703, y: 789, w: 132, h: 165, order: 2 }, { x: 835, y: 789, w: 142, h: 165, order: 2 },
+  { x: 703, y: 613, w: 133, h: 176, order: 3 }, { x: 836, y: 613, w: 141, h: 176, order: 3 },
+  { x: 701, y: 461, w: 139, h: 152, order: 4 }, { x: 840, y: 461, w: 137, h: 152, order: 4 },
+  { x: 700, y: 312, w: 135, h: 149, order: 5 }, { x: 835, y: 312, w: 142, h: 149, order: 5 },
+  // 차양·달 장식·상단의 탑돌은 벽이 선 뒤에 제자리로 돌아온다.
+  { x: 438, y: 378, w: 162, h: 84, order: 4 }, { x: 438, y: 309, w: 258, h: 69, order: 5 },
+  { x: 448, y: 170, w: 87, h: 139, order: 6 },
+  // 중앙 꼭대기 바로 아래의 연결 석재. 빠져 있으면 마지막 전체 프레임에서만 빈칸이 메워진다.
+  { x: 533, y: 190, w: 92, h: 110, order: 5 }, { x: 533, y: 48, w: 92, h: 142, order: 7 },
+  { x: 624, y: 124, w: 77, h: 179, order: 6 }, { x: 599, y: 249, w: 102, h: 62, order: 6 },
+  { x: 699, y: 165, w: 136, h: 147, order: 6 }, { x: 835, y: 185, w: 142, h: 127, order: 6 },
+]);
+
+function drawHarinStage02RestorationPieces(gateSprite, structure, layer, progress) {
+  if (!gateSprite || !structure) return;
+  const { image, anchor } = gateSprite;
+  const scaleX = gateSprite.scaleX || HARIN_STAGE_02_GATE_DRAW.scale;
+  const scaleY = gateSprite.scaleY || HARIN_STAGE_02_GATE_DRAW.scale;
+  const entranceCenterX = structure.x + structure.w / 2;
+  const drawX = entranceCenterX - anchor.entranceCenterSourceX * scaleX;
+  const drawY = structure.y + structure.h + HARIN_STAGE_02_GATE_DRAW.roadOverlap - anchor.groundSourceY * scaleY;
+  const split = anchor.splitSourceX;
+
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  HARIN_STAGE_02_MASONRY_PIECES.forEach((piece, index) => {
+    const centerX = piece.x + piece.w / 2;
+    const pieceLayer = centerX < split ? 'far' : 'near';
+    if (pieceLayer !== layer) return;
+    const randomA = restorationPieceNoise(index + 3);
+    const randomB = restorationPieceNoise(index + 29);
+    // 같은 층의 벽돌도 아주 조금씩 시간차를 두되, 건축 순서 자체는 유지한다.
+    const arrival = .035 + piece.order * .105 + randomA * .028;
+    const local = Math.max(0, Math.min(1, (progress - arrival) / .205));
+    if (local <= 0) return;
+    const eased = 1 - Math.pow(1 - local, 3);
+    const targetX = drawX + centerX * scaleX;
+    const targetY = drawY + (piece.y + piece.h / 2) * scaleY;
+    // 각 석재가 무너진 오른쪽 잔해나 바닥에서 떠올라, 원래의 줄과 맞물려 들어간다.
+    const originX = targetX + (randomA - .5) * 106 + (centerX > 700 ? 54 : -18);
+    const originY = targetY + 62 + randomB * 92 + Math.max(0, 760 - piece.y) * .08;
+    const currentX = originX + (targetX - originX) * eased;
+    const currentY = originY + (targetY - originY) * eased - Math.sin(eased * Math.PI) * (13 + randomA * 17);
+    const width = piece.w * scaleX;
+    const height = piece.h * scaleY;
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, local * 3.6);
+    ctx.translate(currentX, currentY);
+    ctx.rotate((randomB - .5) * .34 * (1 - eased));
+    ctx.drawImage(image, piece.x, piece.y, piece.w, piece.h, -width / 2, -height / 2, width, height);
+    ctx.restore();
+  });
   ctx.restore();
 }
 
@@ -4086,6 +4199,79 @@ function drawHarinLaughCollector(item) {
   ctx.shadowBlur = 0;
   ctx.fillStyle = relayReady ? '#baffeb' : '#fff0b1'; ctx.font = '800 8px ui-monospace, monospace'; ctx.textAlign = 'center';
   ctx.fillText(relayReady ? 'LAUGH FLOW STOPPED' : 'LAUGH COLLECTOR', x + w / 2, y - 10);
+  ctx.restore();
+}
+
+function drawHarinStage02Restoration(structure, layer) {
+  const progress = Math.max(0, Math.min(1, game.stage02Restoration || 0));
+  const blocked = getHarinStage02GateSprite(false);
+  const restored = getHarinStage02GateSprite(true);
+  if (!blocked || !restored || progress <= .001) {
+    if (blocked) drawHarinStage02GateLayer(blocked, structure, layer);
+    return;
+  }
+  if (progress >= .999) {
+    drawHarinStage02GateLayer(restored, structure, layer);
+    return;
+  }
+  const magicFrame = (image, anchor) => (image?.complete && image.naturalWidth > 0
+    ? { image, anchor, scaleX: anchor.scaleX, scaleY: anchor.scaleY }
+    : null);
+  const awakeningFrame = magicFrame(harinStage02MagicFrames.awakening, HARIN_STAGE_02_MAGIC_FRAME_DRAW.awakening);
+  const restoringFrame = magicFrame(harinStage02MagicFrames.restoring, HARIN_STAGE_02_MAGIC_FRAME_DRAW.restoring);
+  const clamp01 = (value) => Math.max(0, Math.min(1, value));
+  // 일러스트 프레임은 건물 자체를 바꾸지 않고, 블록들을 부르는 기억 마법의 잔상으로 보인다.
+  const awakeningAlpha = .64 * Math.min(clamp01(progress / .13), clamp01((.60 - progress) / .18));
+  const restoringAlpha = .72 * Math.min(clamp01((progress - .27) / .16), clamp01((.94 - progress) / .20));
+  // 완성 이미지를 조각 단위로 잘라 흩어진 잔해에서 끌어온다. 겹치는 정지 화면이 아니라,
+  // 아래 기초석 → 벽돌 → 창과 등불 순으로 실제 성문이 조립되는 복원 장면이다.
+  ctx.save(); ctx.globalAlpha = 1 - Math.min(1, progress / .38) * .93; drawHarinStage02GateLayer(blocked, structure, layer); ctx.restore();
+  if (awakeningFrame && awakeningAlpha > .001) {
+    ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = awakeningAlpha; drawHarinStage02GateLayer(awakeningFrame, structure, layer); ctx.restore();
+  }
+  if (restoringFrame && restoringAlpha > .001) {
+    ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = restoringAlpha; drawHarinStage02GateLayer(restoringFrame, structure, layer); ctx.restore();
+  }
+  drawHarinStage02RestorationPieces(restored, structure, layer, progress);
+
+  // 발사체처럼 보이는 구슬 대신, 기억의 빛결이 바닥을 따라 성문으로 스며든다.
+  // near 레이어에서만 한 번 그려 플레이어 위로 겹친 이펙트도 피한다.
+  if (layer !== 'near') return;
+  const memoryPad = game.memoryPads?.[0];
+  const startX = memoryPad ? memoryPad.x + memoryPad.w / 2 : 180;
+  const startY = memoryPad ? memoryPad.y + memoryPad.h * .34 : 460;
+  const endX = structure.x + structure.w / 2;
+  const endY = structure.y + structure.h + 2;
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.lineCap = 'round';
+  const weave = Math.max(0, Math.min(1, progress / .78));
+  const strands = [
+    { color: '#a9f7ff', offset: -8, width: 1.6 },
+    { color: '#fff1a4', offset: 7, width: 1.05 },
+  ];
+  strands.forEach((strand, index) => {
+    ctx.globalAlpha = (.14 + weave * .26) * (index === 0 ? 1 : .82);
+    ctx.strokeStyle = strand.color;
+    ctx.lineWidth = strand.width;
+    ctx.setLineDash([4, 14]);
+    ctx.lineDashOffset = -(game.elapsed * 34 + index * 11);
+    ctx.beginPath();
+    ctx.moveTo(startX, startY + strand.offset);
+    ctx.bezierCurveTo(
+      startX + (endX - startX) * .30, startY + strand.offset - 11,
+      startX + (endX - startX) * .72, endY + strand.offset + 10,
+      endX, endY,
+    );
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
+  ctx.globalAlpha = .12 + weave * .16;
+  ctx.strokeStyle = '#c8fbff';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.ellipse(endX, endY - 6, 20 + weave * 10, 5 + weave * 2, 0, 0, Math.PI * 2);
+  ctx.stroke();
   ctx.restore();
 }
 
@@ -4323,8 +4509,7 @@ function drawHarinCarouselPlatform(item) {
     ctx.fillStyle = fallback; ctx.fillRect(x, y, w, Math.max(h, 16));
   }
   ctx.shadowBlur = 0;
-  ctx.fillStyle = item.hidden ? 'rgba(157, 255, 234, .72)' : 'rgba(255, 234, 161, .78)';
-  ctx.fillRect(x + 3, y, Math.max(0, w - 6), 2);
+  // 원화에 이미 금빛 난간과 빛띠가 들어 있다. 별도의 직선 노란선을 겹치지 않는다.
   if (item.carouselRide) {
     // 4스테이지의 이동 발판은 같은 회전목마 그림을 쓰되, 실제로 회전 중이라는 빛의 흐름을 겹친다.
     const pulse = .55 + Math.sin(game.elapsed * 5) * .3;
@@ -4485,24 +4670,74 @@ function drawLaughRelayNetwork() {
   if (!collector || pads.length !== 3) return;
   const activeStates = pads.map((pad) => activeMemoryPads([pad]) > 0);
   const colors = ['#ffe37d', '#9effea', '#ffb5d7'];
+  const bulbSprite = ensureSprite(objectSprites.harinRelayBulb);
+  const quadraticPoint = (start, control, end, t) => {
+    const inverse = 1 - t;
+    return {
+      x: inverse * inverse * start.x + 2 * inverse * t * control.x + t * t * end.x,
+      y: inverse * inverse * start.y + 2 * inverse * t * control.y + t * t * end.y,
+    };
+  };
   ctx.save();
   ctx.imageSmoothingEnabled = false;
 
   pads.forEach((pad, index) => {
     const active = activeStates[index];
-    const color = active ? colors[index] : '#414a70';
-    const centerX = pad.x + pad.w / 2;
-    const centerY = pad.y + pad.h / 2;
-    const pipeX = collector.x - 12 - index * 7;
-    ctx.fillStyle = color;
-    for (let x = centerX + 18; x < pipeX; x += 13) ctx.fillRect(x, centerY, 8, 3);
-    const fromY = Math.min(centerY, collector.y + 60 + index * 28);
-    const toY = Math.max(centerY, collector.y + 60 + index * 28);
-    for (let y = fromY; y < toY; y += 13) ctx.fillRect(pipeX, y, 3, 8);
-    for (let x = pipeX; x < collector.x + 5; x += 9) ctx.fillRect(x, collector.y + 60 + index * 28, 6, 3);
+    const color = colors[index];
+    const start = { x: pad.x + pad.w / 2, y: pad.y + pad.h * .34 };
+    const towerY = collector.y + 102 + index * 102;
+    const end = { x: collector.x + 8, y: towerY };
+    // 수평 점선 대신, 유원지 시계탑을 향해 자연스럽게 늘어진 전구선이다.
+    const sag = index === 1 ? 58 : 34;
+    const control = { x: start.x + (end.x - start.x) * .52, y: Math.max(start.y, end.y) + sag };
+    const wrapControl = { x: collector.x + collector.w + 18, y: end.y + 17 };
+    const wrapEnd = { x: collector.x + collector.w / 2, y: end.y + 31 };
+    const cable = active ? '#6b5275' : '#25233f';
+    ctx.save();
+    ctx.strokeStyle = cable;
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(start.x, start.y); ctx.quadraticCurveTo(control.x, control.y, end.x, end.y); ctx.stroke();
+    // 선이 시계탑 앞을 반 바퀴 감싸, 세 갈래 기억이 탑의 웃음 수집 장치에 꽂히는 모양을 만든다.
+    ctx.beginPath();
+    ctx.moveTo(end.x, end.y);
+    ctx.quadraticCurveTo(wrapControl.x, wrapControl.y, wrapEnd.x, wrapEnd.y);
+    ctx.stroke();
+    ctx.restore();
 
-    // 상호작용 발판은 drawMemoryPad의 전용 일러스트가 담당한다.
-    // 이 레이어는 수집탑으로 향하는 에너지 흐름만 그린다.
+    const drawBulb = (point, bulb) => {
+      const twinkle = .78 + Math.sin((game.elapsed || 0) * 5 + bulb * .82 + index * 1.9) * .22;
+      ctx.save();
+      const bulbH = active ? 20 + twinkle * 2 : 18;
+      const bulbW = bulbH * (bulbSprite?.naturalWidth && bulbSprite?.naturalHeight ? bulbSprite.naturalWidth / bulbSprite.naturalHeight : .44);
+      if (bulbSprite?.complete && bulbSprite.naturalWidth > 0) {
+        if (active) {
+          ctx.globalAlpha = .72 + twinkle * .28;
+          ctx.shadowBlur = 12 + twinkle * 7;
+          ctx.shadowColor = color;
+        } else {
+          // 꺼진 전구도 같은 일러스트를 낮은 밝기로 보이게 해, 전구선의 형태는 유지한다.
+          ctx.globalAlpha = .24;
+        }
+        ctx.drawImage(bulbSprite, point.x - bulbW / 2, point.y - 2, bulbW, bulbH);
+      } else {
+        // 스프라이트 로딩 전에도 연결 규칙은 읽히도록 최소한의 대체 전구만 남긴다.
+        ctx.globalAlpha = active ? .9 : .45;
+        ctx.fillStyle = active ? color : '#3b3656';
+        ctx.fillRect(Math.round(point.x) - 2, Math.round(point.y) - 4, 4, 2);
+        ctx.beginPath(); ctx.arc(point.x, point.y, active ? 3 : 2.4, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.restore();
+    };
+    const bulbCount = Math.max(7, Math.min(21, Math.round(Math.hypot(end.x - start.x, end.y - start.y) / 28)));
+    for (let bulb = 0; bulb <= bulbCount; bulb += 1) {
+      const t = bulb / bulbCount;
+      drawBulb(quadraticPoint(start, control, end, t), bulb);
+    }
+    for (let bulb = 1; bulb <= 3; bulb += 1) {
+      drawBulb(quadraticPoint(end, wrapControl, wrapEnd, bulb / 4), bulbCount + bulb);
+    }
+
+    // 상호작용 발판은 drawMemoryPad의 전용 일러스트가 담당하고, 이 레이어는 전구선만 담당한다.
   });
 
   ctx.restore();
@@ -5197,12 +5432,11 @@ function drawPuzzle() {
   const stage02GateStructure = game.layout === 'bridge'
     ? game.platforms.find((platform) => platform.wall && platform.label === 'MEMORY GATE')
     : null;
-  const stage02GateSprite = stage02GateStructure ? getHarinStage02GateSprite(gateOpen) : null;
-  if (stage02GateSprite) drawHarinStage02GateLayer(stage02GateSprite, stage02GateStructure, 'far');
+  if (stage02GateStructure) drawHarinStage02Restoration(stage02GateStructure, 'far');
   (game.fallZones || []).forEach(drawFallZone);
   game.platforms.forEach((platform) => {
     const hidden = platform.hidden && !techniques.resonance;
-    if (platform === stage02GateStructure && stage02GateSprite) {
+    if (platform === stage02GateStructure) {
       return;
     } else if (platform.collapseWithMemory && game.windPillarReleased) {
       // 15스테이지는 투명 벽을 남기지 않고, 실제로 무너지는 마지막 프레임만 보여 준다.
@@ -5235,7 +5469,7 @@ function drawPuzzle() {
   if (game.exit) drawExit();
   drawDreamTrails(false);
   if (game.player) drawChild(game.player);
-  if (stage02GateSprite) drawHarinStage02GateLayer(stage02GateSprite, stage02GateStructure, 'near');
+  if (stage02GateStructure) drawHarinStage02Restoration(stage02GateStructure, 'near');
   drawYunaLoopStationMeter();
   drawPhaseGuide();
 }
