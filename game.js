@@ -9785,16 +9785,19 @@ window.addEventListener('blur', () => {
   updateHud();
 });
 
-function openStage21PreviewFromUrl() {
-  // 검수 주소만 제목·프롤로그를 건너뛴다. 일반 주소의 시작 흐름은 그대로 유지한다.
-  if (new URLSearchParams(window.location.search).get('stage') !== '21') return false;
+function openStagePreviewFromUrl() {
+  // 검수 주소만 제목·프롤로그를 건너뛴다. 번호는 실제 배열 순서가 아니라
+  // 플레이어에게 보이는 연속 스테이지 번호를 기준으로 해, 제외 스테이지에도 흔들리지 않는다.
+  const requestedNumber = Number(new URLSearchParams(window.location.search).get('stage'));
+  const stageIndex = Number.isInteger(requestedNumber) ? PLAYABLE_STAGE_INDEXES[requestedNumber - 1] : undefined;
+  if (stageIndex === undefined) return false;
   stageBgm.enabled = false;
   game = freshGameState();
-  game.stageIndex = 20;
+  game.stageIndex = stageIndex;
   startStage();
   return true;
 }
 
 updateBgmVolumeControl();
-if (!openStage21PreviewFromUrl()) showTitleScreen();
+if (!openStagePreviewFromUrl()) showTitleScreen();
 requestAnimationFrame(loop);
