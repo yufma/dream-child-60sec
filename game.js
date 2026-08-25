@@ -322,7 +322,7 @@ const STAGES = [
   {
     chapter: '하린 · 잃어버린 웃음', name: '첫 접속', type: 'puzzle', skills: [], objective: '꿈의 가장자리까지 걸어가라',
     intro: '전 조수는 말했습니다. “꿈속에서는, 네가 믿는 일이 규칙이 될 수 있어.” 먼저 하린의 꿈 가장자리로 걸어가 봐.',
-    layout: 'walk', echoGoal: 0, hint: '← / → 로 움직이고, ↑ 로 점프해 보세요.',
+    layout: 'walk', echoGoal: 0, hint: 'A / D 로 움직이고, W 로 점프해 보세요.',
   },
   {
     chapter: '하린 · 잃어버린 웃음', name: '상상력의 첫걸음', type: 'puzzle', skills: [], objective: '과거의 나와 함께 기억의 문을 열어라',
@@ -341,14 +341,14 @@ const STAGES = [
   },
   {
     chapter: '하린 · 잃어버린 웃음', name: '하린이 가장 두려워한 것', type: 'boss', skills: ['time'], objective: '기억 탄환으로 가짜 기억을 되찾고 가면을 광대에게 되돌려라',
-    intro: '하린은 모두가 웃는 곳에서 혼자 웃지 못하게 될까 봐 두려워했어. 그 두려움이 “웃음을 훔치는 광대”가 되었다. 처음에는 진짜와 가짜 기억이 똑같이 보여. K로 남긴 기억의 나가 가짜에 닿으면, 가짜 기억이 잔상을 훔쳐 달아나. 방향키나 WASD로 탄환 방향을 잡고 J 기억 탄환을 두 번 맞혀 훔쳐 간 잔상을 지워. 진짜 기억 세 곳은 본체나 유지 중인 잔상 중 어느 쪽으로든 동시에 밝혀. 세 기억을 완성하면 2페이즈가 시작돼. 무대가 비워지고 작아진 광대와 가면 셋이 전역을 떠돌며, 이때부터 천천히 퍼지는 웃음 탄막이 나와. Shift로 가면만 잠시 멈춘 뒤, 가면 가까이에서 조준선을 잡고 J로 현재 조준 방향으로 직선 발사해 광대의 동선을 예측해.',
+    intro: '하린은 모두가 웃는 곳에서 혼자 웃지 못하게 될까 봐 두려워했어. 그 두려움이 “웃음을 훔치는 광대”가 되었다. 처음에는 진짜와 가짜 기억이 똑같이 보여. K로 남긴 기억의 나가 가짜에 닿으면, 가짜 기억이 잔상을 훔쳐 달아나. WASD로 탄환 방향을 잡고 J 기억 탄환을 두 번 맞혀 훔쳐 간 잔상을 지워. 진짜 기억 세 곳은 본체나 유지 중인 잔상 중 어느 쪽으로든 동시에 밝혀. 세 기억을 완성하면 2페이즈가 시작돼. 무대가 비워지고 작아진 광대와 가면 셋이 전역을 떠돌며, 이때부터 천천히 퍼지는 웃음 탄막이 나와. Shift로 가면만 잠시 멈춘 뒤, 가면 가까이에서 조준선을 잡고 J로 현재 조준 방향으로 직선 발사해 광대의 동선을 예측해.',
     boss: '웃음을 훔치는 광대', bossConfig: {
       mode: 'calm', visual: 'carousel', calmDuration: 2.1,
       distortedMemoryPads: [
         { x: 128, y: 316, w: 42, h: 42, label: '혼자 웃기' },
         { x: 470, y: 132, w: 42, h: 42, label: '텅 빈 관람석' },
       ],
-    }, hint: '① 똑같은 기억 후보를 K 잔상으로 확인 ② 가짜가 잔상을 훔치면 방향키/WASD로 조준해 J 탄환 2회 ③ 세 진짜 기억을 본체/잔상 조합으로 동시 활성화 ④ 2페이즈부터 웃음 탄막 회피 ⑤ 가면 가까이에서 조준선을 잡고 J로 직선 발사해 광대를 맞히세요.',
+    }, hint: '① 똑같은 기억 후보를 K 잔상으로 확인 ② 가짜가 잔상을 훔치면 WASD로 조준해 J 탄환 2회 ③ 세 진짜 기억을 본체/잔상 조합으로 동시 활성화 ④ 2페이즈부터 웃음 탄막 회피 ⑤ 가면 가까이에서 조준선을 잡고 J로 직선 발사해 광대를 맞히세요.',
     teaches: ['time'],
   },
   {
@@ -1158,13 +1158,13 @@ function acceleratedVelocity(value, axis, tuning, dt, control = 1) {
 }
 
 function horizontalInput() {
-  return (keys.has('ArrowRight') || keys.has('KeyD') ? 1 : 0)
-    - (keys.has('ArrowLeft') || keys.has('KeyA') ? 1 : 0);
+  return (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0)
+    - (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0);
 }
 
 function verticalInput() {
-  return (keys.has('ArrowDown') || keys.has('KeyS') ? 1 : 0)
-    - (keys.has('ArrowUp') || keys.has('KeyW') ? 1 : 0);
+  return (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0)
+    - (keys.has('KeyW') || keys.has('ArrowUp') ? 1 : 0);
 }
 
 function freshPlayer() {
@@ -1928,7 +1928,7 @@ function bossEntryLine(stage = currentStage()) {
 
 function bossBriefForStage(stage = currentStage()) {
   const mode = stage?.bossConfig?.mode;
-  if (mode === 'calm') return '① 똑같이 보이는 기억 후보를 K 잔상으로 확인  ② 방향키/WASD 조준 + J 탄환으로 가짜 2회 명중\n③ 세 기억을 본체/잔상 조합으로 동시 활성화  ④ 2페이즈부터 웃음 탄막 회피  ⑤ 가면 가까이에서 J로 직선 발사';
+  if (mode === 'calm') return '① 똑같이 보이는 기억 후보를 K 잔상으로 확인  ② WASD 조준 + J 탄환으로 가짜 2회 명중\n③ 세 기억을 본체/잔상 조합으로 동시 활성화  ④ 2페이즈부터 웃음 탄막 회피  ⑤ 가면 가까이에서 J로 직선 발사';
   if (mode === 'resonance') return '① K로 화음 앵커 두 곳 재생  ② 앵커가 불협화음 3회에 사라지기 전 다시 기록  ③ 별빛 박자에 맞춰 L을 짧게 6회  ④ 앵커·잔상 없이 마지막 불협화음 20초 회피';
   if (mode === 'chase') return '① K로 두 바람 기준점 준비  ② 되돌림 바람을 Space로 가로채 순풍 고리 세 개 통과\n③ P/Y 유지로 총 6회 반사  ④ 명중마다 사이드 연 +1  ⑤ 2·4회 명중 뒤 풍압 강화';
   if (mode === 'mirror') return '① K로 진짜 사진 재생  ② L로 진짜 균열만 드러내기  ③ Space 질주로 균열 네 곳 통과';
@@ -1940,11 +1940,11 @@ function guideKeyHints() {
   const stage = currentStage() || STAGES[0];
   const boss = game.boss;
   if (stage.type !== 'boss') {
-    const basics = [{ key: '← →', label: '이동' }, { key: '↑', label: '점프' }];
+    const basics = [{ key: 'A / D', label: '이동' }, { key: 'W', label: '점프' }];
     if (game.recording) return [...basics, { key: 'K', label: '되감기' }, { key: 'I', label: '기록 취소' }];
     if (stage.layout === 'carousel') return [
       ...basics,
-      { key: '↓ / S', label: '하단 방사로' },
+      { key: 'S', label: '하단 방사로' },
       { key: 'P / Y', label: '원형벽 회전' },
       ...(!game.carouselCoreLatched && !(game.echoes || []).some((echo) => !echo.holding)
         ? [{ key: 'K', label: '중앙 발판 기록' }]
@@ -1958,16 +1958,16 @@ function guideKeyHints() {
     if ((stage.chapter || '').includes('딸')) return [...basics, { key: 'L', label: '숨은 균열' }, { key: 'K', label: '친구 기억' }];
     return [...basics, ...(stage.echoGoal ? [{ key: 'K', label: '기억 기록' }] : [])];
   }
-  if (!boss) return [{ key: '← →', label: '이동' }, { key: '↑ ↓', label: '회피' }];
+  if (!boss) return [{ key: 'A / D', label: '이동' }, { key: 'W / S', label: '회피' }];
   if (boss.mode === 'calm') {
-    if (boss.calmReflectionActive) return [{ key: '↑ ↓', label: '웃음 탄막 회피' }, { key: 'J', label: '가면 직선 발사' }, { key: 'Shift', label: '가면만 정지' }];
+    if (boss.calmReflectionActive) return [{ key: 'W / S', label: '웃음 탄막 회피' }, { key: 'J', label: '가면 직선 발사' }, { key: 'Shift', label: '가면만 정지' }];
     const state = calmMemoryState(boss);
-    if (activeCalmFakeMemories(boss).length) return [{ key: '방향키 / WASD', label: '탄환 조준' }, { key: 'J', label: '기억 탄환' }, { key: 'K', label: '새 기억 기록' }];
+    if (activeCalmFakeMemories(boss).length) return [{ key: 'WASD', label: '탄환 조준' }, { key: 'J', label: '기억 탄환' }, { key: 'K', label: '새 기억 기록' }];
     if (state.trueMemoryCount < state.memoryTargetCount) return [{ key: 'K', label: '기억 배치' }, { key: '이동', label: '본체로 활성화' }, { key: 'I', label: '최근 잔상 삭제' }];
     return [{ key: '이동', label: '반사전 준비' }];
   }
   if (boss.mode === 'resonance') return boss.codaActive
-    ? [{ key: '↑ ↓', label: '음표 회피' }, { key: 'Space', label: '긴급 질주' }]
+    ? [{ key: 'W / S', label: '음표 회피' }, { key: 'Space', label: '긴급 질주' }]
     : boss.activePads < boss.memoryPads.length
       ? [{ key: 'K', label: '화음 앵커' }]
       : [{ key: 'L', label: '별빛 박자 공명' }];
@@ -1979,16 +1979,16 @@ function guideKeyHints() {
       { key: 'Space', label: '사이드 연 회피' },
     ];
     return boss.activePads < boss.decoyPads.length
-      ? [{ key: 'K', label: '바람 기준점' }, { key: '↑ ↓', label: '기준점 이동' }]
+      ? [{ key: 'K', label: '바람 기준점' }, { key: 'W / S', label: '기준점 이동' }]
       : boss.relayPhase === 'sprint'
         ? [{ key: 'Space', label: '순풍 고리 질주' }]
-        : [{ key: 'Space', label: '되돌림 바람 가르기' }, { key: '↑ ↓', label: '가로채기 위치' }];
+        : [{ key: 'Space', label: '되돌림 바람 가르기' }, { key: 'W / S', label: '가로채기 위치' }];
   }
   if (boss.mode === 'mirror') return boss.mirrorProgress < boss.mirrorGates.length && boss.activePads >= boss.memoryPads.length
     ? [{ key: 'L', label: '진짜 균열' }, { key: 'Space', label: '균열 질주' }]
     : [{ key: 'K', label: '진짜 사진' }];
   if (!boss.attackUnlocked) return [{ key: 'K', label: '세 기억 봉인' }, { key: 'L', label: '공명 해제' }];
-  if (finalBossPhase(boss) === 2) return [{ key: 'J', label: 'TRUE 기억 발사' }, { key: '↑ ↓', label: '탄막 회피' }];
+  if (finalBossPhase(boss) === 2) return [{ key: 'J', label: 'TRUE 기억 발사' }, { key: 'W / S', label: '탄막 회피' }];
   if (finalBossPhase(boss) === 4) return [{ key: 'L', label: '딸의 목소리 전달' }];
   if (finalBossPhase(boss) === 3) return [{ key: 'J', label: '수호자 해체' }, { key: 'Space', label: '탄막 질주' }];
   return [{ key: 'J', label: '기억 탄환' }, { key: 'Space', label: '탄막 질주' }];
@@ -2078,14 +2078,14 @@ function phaseGuide() {
     if (goal > active) {
       const roleText = roleState.rule
         ? roleState.rule.directions
-          ? ` ${roleState.rule.prompt} 발판 위에서 방향키로 얼굴을 돌린 뒤 K로 되감으세요.`
+          ? ` ${roleState.rule.prompt} 발판 위에서 A/D로 얼굴을 돌린 뒤 K로 되감으세요.`
           : ` ${roleState.rule.prompt}`
         : '';
       return { step: `STEP 1 / 2 · ${active} / ${goal}`, text: `K로 길을 기록해 과거의 나를 기억 발판에 남기세요.${roleText}`, compact: `기억 역할 ${active} / ${goal} 준비` };
     }
     if (!roleState.ready) {
       const correction = roleState.rule.directions
-        ? 'I로 잘못된 기억을 지우고, 발판 위에서 방향키로 얼굴을 돌린 뒤 K를 눌러 다시 기록하세요.'
+        ? 'I로 잘못된 기억을 지우고, 발판 위에서 A/D로 얼굴을 돌린 뒤 K를 눌러 다시 기록하세요.'
         : 'I로 기존 기억을 지운 뒤, 기억 발판 위에서 K를 눌러 다시 기록하세요.';
       return {
         step: `MEMORY ROLE · ${roleState.matched} / ${roleState.total}`,
@@ -2109,7 +2109,7 @@ function phaseGuide() {
     }
     const fakeProgress = calmFakeProgress(boss);
     const state = calmMemoryState(boss);
-    if (fakeProgress.active.length) return { step: 'FALSE MEMORY', text: '가짜 기억이 잔상을 훔쳐 달아납니다. 방향키나 WASD로 발사 방향을 잡고 J 기억 탄환을 각각 두 번 맞히세요.', compact: `가짜 기억 탄환 명중 ${fakeProgress.hitCount} / ${fakeProgress.requiredHits}` };
+    if (fakeProgress.active.length) return { step: 'FALSE MEMORY', text: '가짜 기억이 잔상을 훔쳐 달아납니다. WASD로 발사 방향을 잡고 J 기억 탄환을 각각 두 번 맞히세요.', compact: `가짜 기억 탄환 명중 ${fakeProgress.hitCount} / ${fakeProgress.requiredHits}` };
     if (state.trueMemoryCount < state.memoryTargetCount) {
       return { step: 'STEP 1 / 2', text: '진짜 기억 세 곳을 동시에 밝히세요. 각 기억은 현재 본체나 유지 중인 K 잔상 어느 쪽으로든 활성화할 수 있습니다. 1페이즈에는 탄막이 나오지 않습니다.', compact: `세 기억 ${state.trueMemoryCount} / ${state.memoryTargetCount}` };
     }
@@ -3013,7 +3013,7 @@ function activateCalmFakeMemories(boss) {
     activatedCount += 1;
   });
   if (activatedCount > 0) {
-    say('가짜 기억이 잔상을 훔쳐 달아납니다! 방향키나 WASD로 발사 방향을 잡고 J 기억 탄환을 두 번 맞히세요.');
+    say('가짜 기억이 잔상을 훔쳐 달아납니다! WASD로 발사 방향을 잡고 J 기억 탄환을 두 번 맞히세요.');
   }
 }
 
@@ -3324,7 +3324,7 @@ function finishMemoryRecording() {
   if (availableNormalSlots === 0) {
     Object.assign(game.player, { ...recording.start, vx: 0, vy: 0, grounded: false });
     game.recording = null;
-    say('세 잔상 슬롯이 모두 가짜 기억에 붙잡혔습니다. 방향키나 WASD로 조준해 J 기억 탄환을 맞히세요.');
+    say('세 잔상 슬롯이 모두 가짜 기억에 붙잡혔습니다. WASD로 조준해 J 기억 탄환을 맞히세요.');
     updateHud();
     return;
   }
@@ -5460,7 +5460,7 @@ function updateMemoryLoopUI() {
       memoryStatus.textContent = boss.calmReflectionActive
         ? `자유 조준 명중 ${boss.calmReflectionBroken} / ${boss.calmReflectionRequired} · 가면 가까이에서 조준선을 잡고 J로 직선 발사하세요. Shift는 가면만 멈추며 광대와 탄막은 계속 움직이고 K 기록은 비활성화됩니다.`
         : fakeProgress.active.length
-        ? `잔상 슬롯 ${countedEchoes.length} / 3 · 방향키/WASD 조준 + J 탄환 ${fakeProgress.hitCount} / ${fakeProgress.requiredHits} · 훔친 잔상은 슬롯을 차지하며 I와 선입선출 교체로 사라지지 않습니다.`
+        ? `잔상 슬롯 ${countedEchoes.length} / 3 · WASD 조준 + J 탄환 ${fakeProgress.hitCount} / ${fakeProgress.requiredHits} · 훔친 잔상은 슬롯을 차지하며 I와 선입선출 교체로 사라지지 않습니다.`
         : state.trueMemoryCount < state.memoryTargetCount
           ? `세 기억 ${state.trueMemoryCount} / ${state.memoryTargetCount} · 각 기억은 현재 본체 또는 유지 중인 K 잔상으로 활성화할 수 있습니다. 탄막은 2페이즈부터 시작됩니다.`
           : '세 기억이 완성됐습니다. 무대가 비워지며 마지막 가면 반사전으로 전환됩니다.';
@@ -7149,7 +7149,7 @@ function drawMemoryPad(pad, active, index, role = 'normal') {
     present: { cue: '현재의 나', prompt: '이 자리에 직접 서세요', color: '#ffe37d' },
     either: { cue: '현재 또는 기억', prompt: '직접 서거나 K 기억을 남기세요', color: '#ffe9a2' },
     truth: { cue: '진실의 기억', prompt: 'K로 진짜 기억을 재생하세요', color: '#ffd56d' },
-    distortion: { cue: '가짜 기억 추격', prompt: '방향키/WASD 조준 후 J 탄환', color: '#ff537b' },
+    distortion: { cue: '가짜 기억 추격', prompt: 'WASD 조준 후 J 탄환', color: '#ff537b' },
   };
   const style = roleStyles[role] || roleStyles.normal;
   const color = colors[index % colors.length];
@@ -7299,7 +7299,7 @@ function drawCalmFleeingFakeMemory(fake, index) {
     ctx.strokeRect(fakeCenterX - 10 + hit * 13 + .5, fake.y - 34.5, 7, 7);
   }
   ctx.fillStyle = '#fff1a4';
-  ctx.fillText(`방향키/WASD + J 탄환 · ${fake.hits || 0}/2`, fakeCenterX, fake.y - 40);
+  ctx.fillText(`WASD + J 탄환 · ${fake.hits || 0}/2`, fakeCenterX, fake.y - 40);
   ctx.restore();
 }
 
