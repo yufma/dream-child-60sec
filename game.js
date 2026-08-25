@@ -1264,7 +1264,7 @@ function freshGameState(phase = 'intro') {
     carouselRelays: new Set(), carouselSwitches: [],
     stageRealElapsed: 0, challenge: null, bossGuideKey: '', bossGuideUntil: 0, bossGuideStarted: 0,
     windPillarCollapse: 0, windPillarReleased: false, windPillarCollapseAnnounced: false, headwindHintShown: false, signpostMaze: null,
-    stage02Restoration: 0, stage02RestorationAnnounced: false,
+    stage02Restoration: 0, stage02RestorationAnnounced: false, stageIntroReady: phase !== 'intro',
   };
 }
 
@@ -1323,6 +1323,22 @@ function showTitleScreen() {
   endScreen.classList.add('hidden');
   renderCampaignRoute();
   startStageBgm(null, { key: 'title' });
+}
+
+function localStageCheckIndex() {
+  const requested = Number(new URLSearchParams(window.location.search).get('stage-check'));
+  if (!Number.isInteger(requested) || requested < 1 || requested > PLAYABLE_STAGE_INDEXES.length) return null;
+  return PLAYABLE_STAGE_INDEXES[requested - 1] ?? null;
+}
+
+function showLocalStageCheck(stageIndex) {
+  // 로컬 확인 페이지에서만 쓰는 바로가기다. 일반 게임 시작과 저장 진행에는 영향을 주지 않는다.
+  stopStageBgm();
+  game = freshGameState('intro');
+  game.stageIndex = stageIndex;
+  campaign.unlocked = Math.max(campaign.unlocked, stageIndex);
+  document.body.classList.remove('title-screen-active');
+  showStageIntro();
 }
 
 function clearStageIntroTimer() {
@@ -2357,6 +2373,7 @@ function showStoryBeat(beat) {
   closeTitleModals();
   startScreen.classList.remove('title-mode', 'boss-intro');
   startScreen.classList.add('story-mode');
+  startButton.disabled = false;
   startScreen.classList.remove('hidden');
   stageMenu.classList.add('hidden');
   endScreen.classList.add('hidden');
@@ -2401,6 +2418,7 @@ function showStageIntro() {
   startScreen.classList.toggle('boss-intro', stage.type === 'boss');
   storyDialogue.classList.add('hidden');
   game.phase = 'intro';
+  game.stageIntroReady = false;
   const pagePrefix = stagePage(stage) === 2 ? '두 번째 장 · 마지막 꿈' : '꿈의 연결';
   startTag.textContent = `${pagePrefix} · 스테이지 ${String(displayStageNumber()).padStart(2, '0')} / ${String(totalStages()).padStart(2, '0')}`;
   startTitle.textContent = stage.name;
@@ -2411,17 +2429,19 @@ function showStageIntro() {
     startCopy.textContent = formatNumberedGuide(stage.intro);
   }
   startButton.innerHTML = `${stage.type === 'boss' ? '악몽에 맞서기' : '꿈속으로 들어가기'} <span>↵</span>`;
+  startButton.disabled = true;
   startScreen.classList.remove('hidden');
   stageMenu.classList.add('hidden');
   endScreen.classList.add('hidden');
   // 보스전은 읽을 시간 없이 자동 시작하지 않는다. Enter/버튼으로 준비가 끝난 뒤에만 60초가 흐른다.
   renderCampaignRoute();
   updateHud();
-  if (stage.type === 'boss') {
-    previewReady.then((isCurrentPreview) => {
-      if (isCurrentPreview && game.phase === 'intro' && currentStage() === stage) loadingSplash.classList.add('hidden');
-    });
-  }
+  previewReady.then((isCurrentPreview) => {
+    if (!isCurrentPreview || game.phase !== 'intro' || currentStage() !== stage) return;
+    game.stageIntroReady = true;
+    startButton.disabled = false;
+    if (stage.type === 'boss') loadingSplash.classList.add('hidden');
+  });
 }
 
 function renderStageMenu() {
@@ -2513,6 +2533,7 @@ function removeLatestEcho() {
 }
 
 function startStage() {
+  if (game.phase === 'intro' && !game.stageIntroReady) return;
   // 다음 꿈으로 넘어가도 사용자가 보고 있던 페이지 위치는 유지한다.
   const stage = currentStage();
   document.body.classList.remove('title-screen-active');
@@ -9626,7 +9647,7 @@ startButton.addEventListener('click', () => {
     startGameFromTitle();
   }
   else if (game.phase === 'story') continueStoryBeat();
-  else startStage();
+  else if (game.phase !== 'intro' || game.stageIntroReady) startStage();
 });
 storyButton?.addEventListener('click', () => {
   if (game.phase !== 'title') return;
@@ -9697,7 +9718,11 @@ function handleConfirmInput() {
   else if (game.phase === 'ending-cinematic') advanceEndingCinematic();
   else if (game.phase === 'title') startGameFromTitle();
   else if (game.phase === 'story') continueStoryBeat();
-  else if (game.phase === 'intro' || game.phase === 'failed') startStage();
+  else if (game.phase === 'intro') {
+    if (!game.stageIntroReady) return true;
+    startStage();
+  }
+  else if (game.phase === 'failed') startStage();
   else if (game.phase === 'chapter-complete') showFinalTruth();
   else if (game.phase === 'truth') showTitleScreen();
   else if (game.phase === 'menu') closeStageMenu();
@@ -9745,5 +9770,7 @@ window.addEventListener('blur', () => {
 });
 
 updateBgmVolumeControl();
-showTitleScreen();
+const requestedLocalStageCheck = localStageCheckIndex();
+if (requestedLocalStageCheck === null) showTitleScreen();
+else showLocalStageCheck(requestedLocalStageCheck);
 requestAnimationFrame(loop);
