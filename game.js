@@ -381,8 +381,8 @@ const STAGES = [
     intro: '유나는 아무리 크게 노래해도 아무에게도 닿지 않을까 봐 두려웠다. 그 두려움은 “침묵을 삼킨 합창단”이 되어 모든 소리를 지운다. 먼저 과거의 나 둘에게 서로 다른 화음 앵커를 맡겨. 그 다음 보스 바깥에 떠 있는 별빛 고리가 밝아지는 박자에 맞춰 L을 짧게 눌러, 여섯 음을 순서대로 되찾자. 마지막 음이 돌아오면 합창단은 무너지는 불협화음으로 20초간 발악한다. 그 시간을 피하면 유나의 노래가 완성된다.',
     boss: '침묵을 삼킨 합창단', bossConfig: {
       mode: 'resonance', visual: 'choir', x: 420, y: 76, w: 120, h: 170, codaDuration: 20,
-      // 오른쪽 박자 고리까지 벽 없이 도달할 수 있도록 보스전 이동 범위를 캔버스 끝까지 연다.
-      moveBounds: { xMin: 45, xMax: 880, yMin: 86, yMax: 437 },
+      // 11스테이지는 불협화음 회피를 위해 화면 안 전체를 이동 공간으로 연다.
+      moveBounds: { xMin: 0, xMax: W - 25, yMin: 0, yMax: H - 34 },
       // 화음 앵커는 불협화음 세 번을 받아내면 사라진다. 이후 K로 다시 남길 수 있다.
       echoHitLimit: 3, echoAttackCadence: 3,
       memoryPads: [
@@ -484,7 +484,8 @@ const STAGES = [
     boss: '수면 과학자', bossConfig: {
       mode: 'final', finalChargeNeeded: 1.4,
       attackHp: 12,
-      moveBounds: { xMin: 45, xMax: 760, yMin: 86, yMax: 437 },
+      // 22스테이지는 탄막을 피할 세로 여유를 화면 전체로 연다.
+      moveBounds: { xMin: 45, xMax: 760, yMin: 0, yMax: H - 34 },
       memoryPads: [
         { x: 188, y: 122, w: 42, h: 42, label: '하린의 웃음' },
         { x: 372, y: 228, w: 42, h: 42, label: '유나의 노래' },
@@ -3099,13 +3100,15 @@ function beginCalmReflectionPhase(boss) {
   boss.calmProgress = boss.calmDuration;
   boss.activePads = boss.calmMemoryComplete;
   boss.phase = 4;
-  boss.w = 72;
-  boss.h = 108;
+  // 2페이즈 광대는 기존 크기의 2/3으로 줄여 가면 투사체를 예측해 맞히는 표적이 된다.
+  boss.w = 48;
+  boss.h = 72;
   boss.x = W - boss.w - 108;
   boss.y = 214;
   boss.vx = 0;
   boss.vy = 0;
-  boss.roamSpeed = 76;
+  // 작은 몸집에 맞춰 이동 속도를 더 높여, 가면 투사 각도 예측을 요구한다.
+  boss.roamSpeed = 104;
   boss.moveBounds = { xMin: 24, xMax: W - game.player.w - 24, yMin: 58, yMax: H - game.player.h - 24 };
   boss.calmReflectionBounds = { xMin: 24, xMax: W - boss.w - 24, yMin: 58, yMax: H - boss.h - 24 };
   setCalmReflectionRoamTarget(boss, boss.calmReflectionBounds);
@@ -3143,7 +3146,8 @@ function beginCalmReflectionPhase(boss) {
   game.nightmareShots = [];
   boss.memoryPads = [];
   boss.distortedMemoryPads = [];
-  game.nextAttack = 1.1;
+  // 2페이즈 전환 직후 첫 웃음 탄막이 바로 시작된다.
+  game.nextAttack = 0;
   say('세 기억이 겹치자 무대의 오브젝트가 사라졌습니다. 가면 가까이에서 조준선을 정하고 광대의 이동 경로를 예상해 J로 직선 발사하세요.');
   updateHud();
 }
@@ -4037,8 +4041,8 @@ function bossShotDamage(shot, boss) {
   if (shot.kind === 'black-kite' && Number.isFinite(shot.damage)) return shot.damage;
   if (shot.kind === 'black-kite') return HANEUL_VANE_KITE_DAMAGE;
   if (shot.kind === 'harin-laugh') return 12;
-  // 11스테이지 불협화음은 기존 피해의 약 2/3로 낮춰, 탄막 수는 유지하되 회복 여지를 준다.
-  if (shot.kind === 'dissonant-note') return boss?.codaActive ? 19 : 15;
+  // 11스테이지 불협화음은 탄막 수는 유지하되 회복 여지를 준다.
+  if (shot.kind === 'dissonant-note') return boss?.codaActive ? 21 : 17;
   if (shot.kind === 'memory') return 24;
   if (shot.kind === 'shard') return 22;
   if (shot.kind === 'wind') return 20;
@@ -4105,7 +4109,7 @@ function haneulVaneAttackProfile(b) {
 }
 
 function nextBossAttackDelay(b) {
-  if (b.mode === 'calm') return b.calmReflectionActive ? 1.35 : 99;
+  if (b.mode === 'calm') return b.calmReflectionActive ? 1.2 : 99;
   if (b.mode === 'final') {
     const phase = finalBossPhase(b);
     return phase === 4 ? 99 : phase === 3 ? .58 : phase === 2 ? .68 : .82;
@@ -4128,14 +4132,14 @@ function spawnNightmarePattern() {
 
   if (b.mode === 'calm') {
     const activeLaughShots = game.nightmareShots.filter((shot) => shot.kind === 'harin-laugh').length;
-    // 5스테이지 2페이즈는 숨 돌릴 여지는 남기되, 가면 조준 중에도 회피가 필요하게 한 단계만 높인다.
-    const capacity = Math.max(0, 22 - activeLaughShots);
+    // 5스테이지 2페이즈는 가면 조준 중에도 계속 회피선을 읽어야 하도록 밀도를 한 단계 더 높인다.
+    const capacity = Math.max(0, 24 - activeLaughShots);
     if (!capacity) return;
     const calmOrigin = { x: b.x + b.w / 2, y: b.y + b.h * .5 };
     if (attackNumber % 4 === 0) {
-      launchNightmareRing(calmOrigin, Math.min(7, capacity), { speed: 155, r: 7, kind: 'harin-laugh', offset: threatTime * .36 });
+      launchNightmareRing(calmOrigin, Math.min(8, capacity), { speed: 155, r: 7, kind: 'harin-laugh', offset: threatTime * .36 });
     } else if (attackNumber % 2 === 0) {
-      launchNightmareFan(calmOrigin, p, Math.min(4, capacity), .82, { speed: 190, r: 8, kind: 'harin-laugh' });
+      launchNightmareFan(calmOrigin, p, Math.min(5, capacity), .82, { speed: 190, r: 8, kind: 'harin-laugh' });
     } else {
       launchNightmareFan(calmOrigin, p, 1, 0, { speed: 210, r: 8, kind: 'harin-laugh' });
     }
@@ -4806,7 +4810,9 @@ function updateBoss(dt) {
     for (const shot of game.nightmareShots) updateNightmareShotMotion(shot, dt);
     game.nightmareShots = game.nightmareShots.filter((shot) => {
       redirectHaneulKiteWithVane(b, shot);
-      const rect = { x: shot.x - shot.r, y: shot.y - shot.r, w: shot.r * 2, h: shot.r * 2 };
+      // 불협화음의 외형은 유지하고 실제 피격 반경만 살짝 줄인다.
+      const hitRadius = shot.kind === 'dissonant-note' ? shot.r * .86 : shot.r;
+      const rect = { x: shot.x - hitRadius, y: shot.y - hitRadius, w: hitRadius * 2, h: hitRadius * 2 };
       if (b.mode === 'chase' && b.windVanePhase && shot.vaneReflected && overlaps(rect, b)) {
         if (b.vaneHitCooldown <= 0) hitHaneulWithReflectedKite(b);
         return false;
@@ -8711,7 +8717,7 @@ function drawHarinLaughThiefSprite(b) {
     ctx.globalAlpha = 1;
     ctx.shadowBlur = b.flash > 0 ? 18 : 10;
     ctx.shadowColor = b.flash > 0 ? '#fff4bd' : '#ff5d9b';
-    ctx.drawImage(image, Math.round(b.x), Math.round(b.y), 72, 108);
+    ctx.drawImage(image, Math.round(b.x), Math.round(b.y), b.w, b.h);
     if (b.calmMaskImpactPulse > 0) {
       ctx.globalAlpha = b.calmMaskImpactPulse / .48;
       ctx.strokeStyle = '#fff0a8';
