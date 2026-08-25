@@ -1113,7 +1113,6 @@ const stageBgm = {
 };
 let gameSfxContext = null;
 const yunaLoopStation = { active: false, stageIndex: -1, key: null, level: 0, maxLevel: 0, milestones: new Set() };
-const YUNA_LOOP_LAYER_NAMES = Object.freeze(['저음 레이어', '리듬 레이어', '멜로디 레이어', '합창 잔향']);
 
 const MOVEMENT_TUNING = {
   puzzle: { maxSpeed: 290, accelerationTime: .16, stopTime: .11, turnTime: .18, airControl: .55 },
@@ -1967,8 +1966,6 @@ function unlockYunaMusicLayer(milestone) {
   if (yunaLoopStation.level >= yunaLoopStation.maxLevel) return;
   yunaLoopStation.level += 1;
   applyYunaLoopMix();
-  const name = YUNA_LOOP_LAYER_NAMES[yunaLoopStation.level - 1];
-  say(`LOOP ${String(yunaLoopStation.level).padStart(2, '0')} · ${name}가 유나의 노래에 쌓였습니다.`);
 }
 
 function playerIsHoldingYunaPlatform(platform) {
@@ -2511,7 +2508,6 @@ function fallOffStage(message = '낙사! 기억이 시작점으로 되돌아갔�
   game.player.grounded = false;
   game.dreamTrails = [];
   game.imagination = 100;
-  say(`${message} 상상력이 모두 회복됐습니다.`);
   updateHud();
 }
 
@@ -2539,20 +2535,16 @@ function removeLatestEcho() {
     }
   } else if (game.recording) {
     game.recording = null;
-    say('기억 기록을 취소했습니다.');
     updateHud();
     return;
   }
   if (!game.echoes.length) {
     say(protectedStolenEchoes().length
-      ? '가짜 기억이 훔친 잔상은 슬롯을 차지하지만 I로 지울 수 없습니다.'
-      : '지울 기억의 나가 없습니다.');
+      ? '가짜 기억을 먼저 WASD와 J 기억 탄환으로 지우세요.'
+      : 'K로 움직임을 기록한 뒤, 다시 K를 눌러 기억의 나를 남기세요.');
     return;
   }
   game.echoes.pop();
-  say(game.layout === 'carousel' && game.carouselCoreLatched
-    ? '기억의 나는 지웠지만, 고정된 좌상단 기억·켜진 외부 잠금·모든 발판은 그대로 유지됩니다.'
-    : '가장 최근 기억의 나를 지웠습니다.');
   updateHud();
 }
 
@@ -3102,7 +3094,6 @@ function triggerBossShot() {
     if (!spend(4)) return;
     if (!launchCalmReflectionMask(boss, mask)) return;
     game.fireCooldown = .28;
-    say('가면을 현재 조준 방향으로 직선 발사했습니다! 광대의 동선과 맞는지 지켜보세요.');
     return;
   }
   const calmFakeIsFleeing = boss?.mode === 'calm' && activeCalmFakeMemories(boss).length > 0;
@@ -3134,7 +3125,6 @@ function triggerBossShot() {
   const origin = { x: direction > 0 ? p.x + p.w : p.x - 19, y: p.y + p.h / 2 - 3 };
   game.dreamShots.push({ x: origin.x, y: origin.y, w: 19, h: 7, vx: direction * 720, vy: 0, life: 0, target: 'boss' });
   game.fireCooldown = 0.22;
-  say('기억 탄환을 되돌려 보냈습니다.');
 }
 
 function echoOverlapsPad(echo, pad) {
@@ -3416,7 +3406,7 @@ function hitCalmReflectionMask(boss, mask) {
     game.nextAttack = 99;
     resolveBoss(boss, '되돌린 가면 세 개가 광대의 두려움을 모두 깨뜨렸습니다. 가면이 사라지고 하린이 다시 웃습니다.');
   } else {
-    say(`가면이 광대를 정확히 맞혔습니다. ${boss.calmReflectionBroken} / ${boss.calmReflectionRequired}`);
+    say('남은 가면 가까이에서 조준선을 맞추고 J를 눌러 광대의 이동 경로로 보내세요.');
   }
   updateHud();
 }
@@ -3426,14 +3416,13 @@ function hitCalmFakeMemory(fake) {
   fake.hitFlash = .3;
   fake.stunTimer = .62;
   if (fake.hits < 2) {
-    say('기억 탄환이 가짜 기억에 맞았습니다. 한 번 더 맞히면 훔쳐 간 잔상이 사라집니다.');
+    say('가짜 기억에 J 기억 탄환을 한 번 더 맞혀, 훔쳐 간 잔상을 되찾으세요.');
     return;
   }
   fake.stolenEcho = null;
   fake.activated = false;
   fake.fleeing = false;
   fake.defeated = true;
-  say('두 번째 기억 탄환이 가짜 기억을 깨뜨려, 훔쳐 달아나던 잔상도 함께 사라졌습니다.');
 }
 
 function captureMemoryFrame(player, time = 0) {
@@ -3598,6 +3587,7 @@ function formatNumberedGuide(text = '') {
 }
 
 function say(text) {
+  // 토스트는 결과·피격 로그가 아니라, 플레이어가 다음에 수행할 기믹만 안내한다.
   toast.textContent = formatNumberedGuide(text);
   toast.classList.add('visible');
   clearTimeout(toastTimer);
@@ -3631,7 +3621,6 @@ function triggerDash() {
   rememberDreamTrail();
   game.dashCooldown = 0.6;
   p.vy *= 0.35;
-  say('질주! 숨은 길을 가로질러라.');
 }
 
 function updateDash(dt) {
@@ -3843,7 +3832,7 @@ function openCarouselExitIfReady() {
   game.carouselOrbitPose = 'exit';
   game.carouselOrbitFromPose = 'exit';
   game.carouselOrbitTargetPose = 'exit';
-  say('왼쪽 위 기억과 두 외부 잠금 장치가 동쪽 틈에 연결됐습니다. 꿈의 문이 자동으로 열립니다.');
+  say('P/Y로 동쪽 틈을 맞춘 뒤, 오른쪽 램프를 따라 열린 꿈의 문으로 이동하세요.');
   return true;
 }
 
@@ -3872,7 +3861,6 @@ function rotateCarouselPhase(direction) {
   game.dropThroughTimer = 0;
   game.dropThroughPlatform = null;
   const target = carouselPhaseInfo(game.carouselTargetPhase);
-  say(`${direction > 0 ? '시계' : '반시계'} 방향 회전 · ${target.label} 틈으로 맞추는 중입니다.`);
   return true;
 }
 
@@ -3998,7 +3986,7 @@ function updateHarinStage02Restoration(dt, stage = currentStage()) {
   const previous = game.stage02Restoration || 0;
   game.stage02Restoration = Math.min(1, previous + dt / HARIN_STAGE_02_RESTORATION_SECONDS);
   if (previous < HARIN_STAGE_02_RESTORATION_COMPLETE && game.stage02Restoration >= HARIN_STAGE_02_RESTORATION_COMPLETE) {
-    say('성문 재건이 완료됐습니다. 이제 복구된 입구 사이로 지나갈 수 있습니다.');
+    say('복구된 성문 입구 사이로 이동하세요.');
   }
 }
 
@@ -4051,7 +4039,6 @@ function updatePuzzle(dt) {
       p.grounded = false;
       p.y += 4;
       p.vy = Math.max(100, p.vy);
-      say('발판 아래층으로 내려갑니다.');
     }
   }
   // 회전목마 벽이 움직이는 동안에도 윤호는 계속 걸으며 점프할 수 있다.
@@ -4165,7 +4152,7 @@ function updatePuzzle(dt) {
     const echoCrossingWatcher = game.echoes.some((echo) => !echo.holding && overlaps(echo, watcher));
     if (frozen && echoCrossingWatcher) {
       game.watcherResolved = true;
-      say('성공! 멈춘 시간 속에서 기억의 내가 감시선을 끊었습니다. 두 개의 발판을 채우세요.');
+      say('기억의 나가 감시선을 지나는 동안 Shift를 누르고, 두 개의 발판을 모두 채우세요.');
     } else if (!frozen && overlaps(p, watcher) && game.watcherHitCooldown <= 0) {
       game.watcherHitCooldown = .75;
       hitByNightmare('감시선에 포착됐습니다. K로 기록한 뒤, 기억의 내가 눈을 지날 때 Shift를 누르세요.', 12, true);
@@ -4207,17 +4194,15 @@ function updatePuzzle(dt) {
   }
 }
 
-function hitByNightmare(message, cost, reset) {
+function hitByNightmare(_message, cost, reset) {
   if (reset) {
     game.player = freshPlayer();
     game.dreamTrails = [];
     game.dashVisualTimer = 0;
     game.imagination = 100;
-    say(`${message} 상상력이 모두 회복됐습니다.`);
     return;
   }
   game.imagination = Math.max(0, game.imagination - cost);
-  say(message);
   updateHud();
   if (game.imagination <= 0) disconnect();
 }
@@ -4514,27 +4499,21 @@ function bossEchoPads(b) {
 function damageBossEcho(echo, b) {
   if (!echo || !b || !b.echoHitLimit || b.echoMaintenanceDisabled) return false;
   const pads = bossEchoPads(b);
-  const pad = pads.find((candidate) => echoOverlapsPad(echo, candidate));
-  const echoLabel = pad?.label || (echo.holding ? '기억의 나' : '재생 중인 잔상');
   const hitLimit = b.echoHitLimit;
   echo.nightmareHits = Math.min(hitLimit, (echo.nightmareHits || 0) + 1);
   echo.flash = .72;
   b.echoDamagePulse = .62;
-  const attackName = b.mode === 'resonance' ? '불협화음' : '공포 탄환';
   if (echo.nightmareHits >= hitLimit) {
     game.echoes = game.echoes.filter((candidate) => candidate !== echo);
     b.activePads = activeMemoryPads(pads);
-    say(`${attackName}이 “${echoLabel}” 잔상을 ${hitLimit}번 흔들어 깨뜨렸습니다. 필요하면 K로 새 기억을 남기세요.`);
-  } else {
-    say(`${attackName}이 “${echoLabel}” 잔상을 흔듭니다. ${echo.nightmareHits} / ${hitLimit} · ${hitLimit}번 맞으면 사라집니다.`);
+    say('K로 새 기억을 남겨 비어 있는 기억 발판을 다시 채우세요.');
   }
   return true;
 }
 
-function resolveBoss(b, message) {
+function resolveBoss(b, _message) {
   if (b.resolving) return;
   b.resolving = true;
-  say(message);
   setTimeout(completeStage, 1000);
 }
 
@@ -4658,7 +4637,7 @@ function updateWindGates(b) {
   b.relayTargetIndex = b.relayProgress % Math.max(1, b.decoyPads.length);
   game.nextAttack = .58;
   const nextAnchor = windRelayTargetPad(b);
-  say(`순풍 고리를 통과했습니다! 다음 되돌림 바람은 “${nextAnchor?.label || '출발'}” 기준점을 향합니다.`);
+  say(`다음 되돌림 바람이 “${nextAnchor?.label || '출발'}” 기준점을 향합니다. Space 질주로 가로채세요.`);
 }
 
 function updateWindRelayDeadline(b) {
@@ -4808,7 +4787,7 @@ function hitHaneulWithReflectedKite(b) {
     setHaneulVaneBossTarget(b, b.vaneBossSequence[b.vaneBossSequenceIndex]);
     game.nextAttack = .72;
     const nextPosition = HANEUL_VANE_BOSS_POSITIONS[b.vaneBossSlot]?.label || '위쪽';
-    say(`되돌려 보낸 검은 연이 보스에 명중했습니다. ${b.vaneReflectedHits} / ${b.maxHp} · 다음 위치는 ${nextPosition} 방향입니다.`);
+    say(`바람개비를 P/Y로 돌려, ${nextPosition} 방향에 있는 검은 연을 보스에게 되돌리세요.`);
   }
   updateHud();
 }
@@ -4856,7 +4835,6 @@ function updateResonanceGates(b, techniques) {
   b.resonanceProgress += 1;
   b.flash = .24;
   playResonanceBassHit(true);
-  say(b.resonanceProgress >= b.resonanceGates.length ? '마지막 음이 돌아왔습니다!' : `공명 성공! 되찾은 음 ${b.resonanceProgress} / ${b.resonanceGates.length}`);
 }
 
 function beginResonanceCoda(b) {
@@ -4914,7 +4892,6 @@ function updateMirrorGates(b, techniques) {
   if (!nextGate || !techniques.resonance || game.dashTimer <= 0 || !overlaps(game.player, nextGate)) return;
   b.mirrorProgress += 1;
   b.flash = .3;
-  say(b.mirrorProgress >= b.mirrorGates.length ? '마지막 거울이 갈라졌습니다!' : `거울 균열 통과 ${b.mirrorProgress} / ${b.mirrorGates.length}`);
 }
 
 function finalTruthTarget(b) {
@@ -5054,7 +5031,7 @@ function updateBoss(dt) {
         if (truthEchoHit) {
           b.memoryShield = Math.min(1.25, b.memoryShield + .68);
           b.memoryReplay = Math.max(1.15, b.memoryReplay);
-          say('과거의 내가 과학자의 연구실 기억을 재생했습니다. 공포 패턴이 잠시 멈추고 반사 방패가 생깁니다.');
+          say('반사 방패가 유지되는 동안, 날아오는 공포 탄환을 방패로 되돌리세요.');
         }
         return false;
       }
@@ -5062,11 +5039,9 @@ function updateBoss(dt) {
         const reflectDirection = p.x + p.w / 2 < b.x + b.w / 2 ? 1 : -1;
         game.dreamShots.push({ x: p.x + p.w / 2, y: p.y + p.h / 2 - 3, w: 19, h: 7, vx: reflectDirection * 680, reflected: true });
         b.memoryShield = 0;
-        say('진실의 기억 방패가 공포 탄환을 과학자에게 되돌렸습니다!');
         return false;
       }
       if (overlaps(rect, p) && game.dashTimer > 0) {
-        say('질주로 공포 탄막을 가로질렀습니다!');
         return false;
       }
       if (overlaps(rect, p)) {
@@ -5110,9 +5085,9 @@ function updateBoss(dt) {
               b.phase = 3;
               game.nightmareShots = [];
               game.nextAttack = .56;
-              say('세 친구의 진짜 기억이 복제를 지웠습니다. 수호자의 모습이 무너졌지만, 아직 남은 꿈 에너지를 모두 돌려줘야 합니다.');
+              say('수호자에게 J 기억 탄환을 보내, 남은 꿈 에너지를 모두 돌려주세요.');
             } else {
-              say(`진짜 기억을 찾았습니다. ${b.truthProgress} / ${b.truthTargets.length} · 다음 기억을 찾아보세요.`);
+              say('다음 빛나는 진짜 기억을 찾아 J 기억 탄환으로 맞히세요.');
             }
           } else {
             say('그건 과학자가 만든 가짜 복제입니다. 다음 빛나는 진짜 기억을 노리세요.');
@@ -5256,14 +5231,8 @@ function completeStage() {
   if (!storyBeat) stopStageBgm();
   game.completed.push(game.stageIndex);
   const stage = currentStage();
-  const memoryRecord = stage.type === 'boss' ? saveBossMemoryRecord() : savePuzzleMemoryRecord();
-  if (memoryRecord?.improved) {
-    const rankName = { DAWN: '새벽', MOON: '달빛', STAR: '별빛' }[memoryRecord.record.rank] || memoryRecord.record.rank;
-    const recordLine = stage.type === 'boss'
-      ? `${rankName} 기록 · ${memoryRecord.record.bestRemaining.toFixed(1)}초를 남기고 공포를 풀었습니다.`
-      : `${rankName} 기록 · ${memoryRecord.record.bestTime.toFixed(1)}초 · 상상력 ${memoryRecord.record.bestImagination} · 기록 ${memoryRecord.record.bestRecords}회`;
-    say(recordLine);
-  }
+  if (stage.type === 'boss') saveBossMemoryRecord();
+  else savePuzzleMemoryRecord();
   if (Array.isArray(stage?.teaches)) {
     stage.teaches.forEach((skill) => {
       campaign.skills.add(skill);
