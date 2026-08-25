@@ -827,12 +827,21 @@ function ensureStageVisualAssets(stageIndex = game?.stageIndex || 0) {
   ensureSprites(stageSpriteSet(stageIndex));
 }
 
-function waitForSprite(image) {
+function waitForSprite(image, timeoutMs = 4500) {
   ensureSprite(image);
-  if (image.complete) return Promise.resolve();
+  if (image.complete) return Promise.resolve(image.naturalWidth > 0);
   return new Promise((resolve) => {
-    image.addEventListener('load', resolve, { once: true });
-    image.addEventListener('error', resolve, { once: true });
+    let settled = false;
+    let timeoutId = null;
+    const finish = (loaded) => {
+      if (settled) return;
+      settled = true;
+      if (timeoutId !== null) clearTimeout(timeoutId);
+      resolve(loaded);
+    };
+    image.addEventListener('load', () => finish(true), { once: true });
+    image.addEventListener('error', () => finish(false), { once: true });
+    timeoutId = setTimeout(() => finish(false), timeoutMs);
   });
 }
 
@@ -2398,8 +2407,15 @@ function showStageIntro() {
   const stage = currentStage();
   document.body.classList.remove('title-screen-active');
   clearStageIntroTimer();
-  ensureStageVisualAssets();
-  const previewReady = prepareCurrentStagePreview();
+  let previewReady;
+  try {
+    ensureStageVisualAssets();
+    previewReady = prepareCurrentStagePreview();
+  } catch (error) {
+    // 한 장의 원화가 깨져도 안내 화면이 영구 로딩 상태에 머물지 않게 한다.
+    console.warn('스테이지 미리보기를 준비하지 못했습니다.', error);
+    previewReady = Promise.reject(error);
+  }
   if (stage.type === 'boss') {
     // 보스 안내창은 이전 스테이지 캔버스를 재활용하지 않는다. 현재 보스 원화와
     // 구조물이 모두 준비될 때까지 짧은 중립 로딩 화면으로 가린 뒤 한 번에 교체한다.
@@ -2436,11 +2452,19 @@ function showStageIntro() {
   // 보스전은 읽을 시간 없이 자동 시작하지 않는다. Enter/버튼으로 준비가 끝난 뒤에만 60초가 흐른다.
   renderCampaignRoute();
   updateHud();
-  previewReady.then((isCurrentPreview) => {
-    if (!isCurrentPreview || game.phase !== 'intro' || currentStage() !== stage) return;
+  const unlockStageIntro = () => {
+    if (game.phase !== 'intro' || currentStage() !== stage) return;
+    canvas.classList.remove('stage-preview-pending');
     game.stageIntroReady = true;
     startButton.disabled = false;
     if (stage.type === 'boss') loadingSplash.classList.add('hidden');
+  };
+  Promise.resolve(previewReady).then((isCurrentPreview) => {
+    if (isCurrentPreview) unlockStageIntro();
+  }).catch((error) => {
+    // 이미지 로드·그리기 오류가 나도 보스전 시작 버튼을 무한히 잠그지 않는다.
+    console.warn('스테이지 미리보기 로딩이 중단되었습니다.', error);
+    unlockStageIntro();
   });
 }
 
