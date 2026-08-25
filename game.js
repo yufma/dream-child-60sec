@@ -2499,7 +2499,7 @@ function removeLatestEcho() {
 }
 
 function startStage() {
-  window.scrollTo(0, 0);
+  // 다음 꿈으로 넘어가도 사용자가 보고 있던 페이지 위치는 유지한다.
   const stage = currentStage();
   document.body.classList.remove('title-screen-active');
   ensureStageVisualAssets();
