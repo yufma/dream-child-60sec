@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>꿈을 잇는 아이 · 스테이지 확인</title>
+    <style>
+      :root { color-scheme: dark; font-family: system-ui, sans-serif; background: #070b1a; color: #eef4ff; }
+      body { min-height: 100vh; display: grid; place-items: center; margin: 0; background: radial-gradient(circle at 50% 0%, #172a58, #070b1a 60%); }
+      main { width: min(90vw, 560px); padding: 36px; border: 1px solid #426194; border-radius: 18px; background: #0d1730dd; box-shadow: 0 22px 60px #0008; }
+      p { color: #aebfdd; line-height: 1.6; }
+      nav { display: grid; gap: 12px; margin-top: 24px; }
+      a { padding: 18px 20px; border: 1px solid #63e4ef; border-radius: 12px; color: #081426; background: #81eee5; font-weight: 800; text-align: center; text-decoration: none; }
+      a:hover, a:focus-visible { background: #c2fff4; outline: 3px solid #fff7; }
+      small { display: block; margin-top: 20px; color: #7590bd; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>스테이지 20 · 21 확인</h1>
+      <p>확인할 스테이지를 선택하면 해당 스테이지의 시작 안내 화면으로 바로 이동합니다.</p>
+      <nav aria-label="스테이지 바로가기">
+        <a href="index.html?stage-check=20">스테이지 20 확인</a>
+        <a href="index.html?stage-check=21">스테이지 21 확인</a>
+      </nav>
+      <small>로컬 확인용 페이지이며 배포 빌드에는 포함되지 않습니다.</small>
+    </main>
+  </body>
+</html>
