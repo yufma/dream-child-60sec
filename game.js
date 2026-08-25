@@ -2324,13 +2324,14 @@ function prepareCurrentStagePreview() {
 
   const previewSprites = stageSpriteSet(previewStageIndex);
   ensureSprites(previewSprites);
-  Promise.all(previewSprites.map(waitForSprite)).then(() => {
+  return Promise.all(previewSprites.map(waitForSprite)).then(() => {
     // 빠르게 다음 화면으로 넘어간 경우, 늦게 도착한 이전 이미지가 새 장면을
     // 덮어쓰지 않도록 이번 준비 요청과 스테이지가 모두 같은지 확인한다.
-    if (previewRun !== stagePreviewRun || previewStageIndex !== game.stageIndex) return;
+    if (previewRun !== stagePreviewRun || previewStageIndex !== game.stageIndex) return false;
     if (stage.type === 'boss') drawBoss();
     else drawPuzzle();
     canvas.classList.remove('stage-preview-pending');
+    return true;
   });
 }
 
@@ -2381,7 +2382,15 @@ function showStageIntro() {
   document.body.classList.remove('title-screen-active');
   clearStageIntroTimer();
   ensureStageVisualAssets();
-  prepareCurrentStagePreview();
+  const previewReady = prepareCurrentStagePreview();
+  if (stage.type === 'boss') {
+    // 보스 안내창은 이전 스테이지 캔버스를 재활용하지 않는다. 현재 보스 원화와
+    // 구조물이 모두 준비될 때까지 짧은 중립 로딩 화면으로 가린 뒤 한 번에 교체한다.
+    loadingTitle.textContent = '보스 장면을 불러오는 중';
+    loadingCopy.textContent = '현재 악몽의 배경과 수호자를 준비하고 있어요.';
+    loadingFill.style.width = '76%';
+    loadingSplash.classList.remove('hidden');
+  }
   contextControls.classList.add('hidden');
   hideFriendReaction();
   gameHud.classList.add('hidden');
@@ -2408,6 +2417,11 @@ function showStageIntro() {
   // 보스전은 읽을 시간 없이 자동 시작하지 않는다. Enter/버튼으로 준비가 끝난 뒤에만 60초가 흐른다.
   renderCampaignRoute();
   updateHud();
+  if (stage.type === 'boss') {
+    previewReady.then((isCurrentPreview) => {
+      if (isCurrentPreview && game.phase === 'intro' && currentStage() === stage) loadingSplash.classList.add('hidden');
+    });
+  }
 }
 
 function renderStageMenu() {
