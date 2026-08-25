@@ -2324,13 +2324,14 @@ function prepareCurrentStagePreview() {
 
   const previewSprites = stageSpriteSet(previewStageIndex);
   ensureSprites(previewSprites);
-  Promise.all(previewSprites.map(waitForSprite)).then(() => {
+  return Promise.all(previewSprites.map(waitForSprite)).then(() => {
     // 빠르게 다음 화면으로 넘어간 경우, 늦게 도착한 이전 이미지가 새 장면을
     // 덮어쓰지 않도록 이번 준비 요청과 스테이지가 모두 같은지 확인한다.
-    if (previewRun !== stagePreviewRun || previewStageIndex !== game.stageIndex) return;
+    if (previewRun !== stagePreviewRun || previewStageIndex !== game.stageIndex) return false;
     if (stage.type === 'boss') drawBoss();
     else drawPuzzle();
     canvas.classList.remove('stage-preview-pending');
+    return true;
   });
 }
 
@@ -2381,7 +2382,15 @@ function showStageIntro() {
   document.body.classList.remove('title-screen-active');
   clearStageIntroTimer();
   ensureStageVisualAssets();
-  prepareCurrentStagePreview();
+  const previewReady = prepareCurrentStagePreview();
+  if (stage.type === 'boss') {
+    // 보스 안내창은 이전 스테이지 캔버스를 재활용하지 않는다. 현재 보스 원화와
+    // 구조물이 모두 준비될 때까지 짧은 중립 로딩 화면으로 가린 뒤 한 번에 교체한다.
+    loadingTitle.textContent = '보스 장면을 불러오는 중';
+    loadingCopy.textContent = '현재 악몽의 배경과 수호자를 준비하고 있어요.';
+    loadingFill.style.width = '76%';
+    loadingSplash.classList.remove('hidden');
+  }
   contextControls.classList.add('hidden');
   hideFriendReaction();
   gameHud.classList.add('hidden');
@@ -2408,6 +2417,11 @@ function showStageIntro() {
   // 보스전은 읽을 시간 없이 자동 시작하지 않는다. Enter/버튼으로 준비가 끝난 뒤에만 60초가 흐른다.
   renderCampaignRoute();
   updateHud();
+  if (stage.type === 'boss') {
+    previewReady.then((isCurrentPreview) => {
+      if (isCurrentPreview && game.phase === 'intro' && currentStage() === stage) loadingSplash.classList.add('hidden');
+    });
+  }
 }
 
 function renderStageMenu() {
@@ -8871,9 +8885,9 @@ function drawCalmReflectionMask(mask) {
   if (!mask || mask.broken) return;
   const image = ensureSprite(bossSprites.harinLaughterMask);
   const palettes = [
-    { face: '#f8e3df', edge: '#ff6aa2', mark: '#6b205d' },
-    { face: '#eadcff', edge: '#9a7cff', mark: '#3a276e' },
-    { face: '#fff0bd', edge: '#ffbe55', mark: '#7a315d' },
+    { edge: '#ff6aa2' },
+    { edge: '#9a7cff' },
+    { edge: '#ffbe55' },
   ];
   const palette = palettes[mask.index % palettes.length];
   const bob = mask.launched || frozenTime() ? 0 : Math.sin(game.elapsed * 4.2 + mask.roamPhase) * 2;
@@ -8903,26 +8917,6 @@ function drawCalmReflectionMask(mask) {
     // 장식만 판정 위로 살짝 솟도록 두고 근접 타격·충돌 기준은 그대로 유지한다.
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(image, -24, -28, 48, 56);
-  } else {
-    // 이미지 로딩이 늦거나 실패해도 가면 판정과 플레이 흐름이 보이도록 기존 도형을 유지한다.
-    ctx.scale(.84, .84);
-    ctx.fillStyle = palette.edge;
-    ctx.beginPath();
-    ctx.moveTo(-20, -17); ctx.lineTo(-14, -23); ctx.lineTo(14, -23); ctx.lineTo(20, -17);
-    ctx.lineTo(18, 12); ctx.lineTo(10, 22); ctx.lineTo(0, 25); ctx.lineTo(-10, 22); ctx.lineTo(-18, 12); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = palette.face;
-    ctx.beginPath();
-    ctx.moveTo(-15, -15); ctx.lineTo(-10, -19); ctx.lineTo(10, -19); ctx.lineTo(15, -15);
-    ctx.lineTo(13, 9); ctx.lineTo(7, 17); ctx.lineTo(0, 20); ctx.lineTo(-7, 17); ctx.lineTo(-13, 9); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = palette.mark;
-    ctx.fillRect(-11, -7, 7, 4);
-    ctx.fillRect(4, -7, 7, 4);
-    ctx.fillRect(-3, 1, 6, 4);
-    ctx.fillRect(-9, 10, 4, 3);
-    ctx.fillRect(-5, 13, 10, 3);
-    ctx.fillRect(5, 10, 4, 3);
-    ctx.fillStyle = '#fff7dc';
-    ctx.fillRect(-13, -15, 4, 3);
   }
   ctx.restore();
 }
@@ -9470,30 +9464,15 @@ function drawBoss() {
       .filter((mask) => !mask.broken && mask.y + mask.h < calmReflectionBossBottom)
       .forEach(drawCalmReflectionMask);
   }
-  const harinIllustration = b.mode === 'calm' && drawHarinLaughThiefSprite(b);
-  const choirIllustration = choirFear && drawYunaSilentChoirSprite(b);
-  const windIllustration = windFear && drawHaneulBlackKiteSprite(b);
-  const mirrorIllustration = mirrorFear && drawDaughterPerfectGuardianSprite(b);
-  const scientistIllustration = b.mode === 'final' && drawScientistDreamGuardianSprite(b);
-  const bossIllustration = harinIllustration || choirIllustration || windIllustration || mirrorIllustration || scientistIllustration;
+  if (b.mode === 'calm') drawHarinLaughThiefSprite(b);
+  if (choirFear) drawYunaSilentChoirSprite(b);
+  if (windFear) drawHaneulBlackKiteSprite(b);
+  if (mirrorFear) drawDaughterPerfectGuardianSprite(b);
+  if (b.mode === 'final') drawScientistDreamGuardianSprite(b);
   if (calmReflectionBossBottom !== null) {
     b.calmReflectionMasks
       .filter((mask) => !mask.broken && mask.y + mask.h >= calmReflectionBossBottom)
       .forEach(drawCalmReflectionMask);
-  }
-  const releaseRatio = b.releaseReady ? b.releaseProgress / b.releaseDuration : 0;
-  const scale = b.mode === 'final'
-    ? (b.releaseReady ? 1.14 - releaseRatio * .38 : b.attackUnlocked ? 1.14 + (b.phase - 1) * .13 : 1.14)
-    : b.phase === 1 ? 1.18 : b.phase === 2 ? .9 : .62;
-  const bossShadow = b.mode === 'final' ? b.releaseReady ? '#ffe27e' : '#7be9ff' : windFear ? '#9cdbff' : choirFear ? '#9effd7' : mirrorFear ? '#ffb5df' : '#ff4d7c';
-  const bossBody = b.mode === 'final' ? b.releaseReady ? '#4e637c' : '#19475e' : windFear ? '#173857' : choirFear ? '#174c4c' : mirrorFear ? '#5f346b' : '#6e1745';
-  const bossFace = b.mode === 'final' ? b.releaseReady ? '#fff0b5' : '#8adcf2' : windFear ? '#b4ecff' : choirFear ? '#bfffe8' : mirrorFear ? '#ffd5eb' : '#f6b2ca';
-  if (!bossIllustration) {
-    ctx.save(); ctx.translate(b.x + b.w / 2, b.y + b.h / 2); ctx.scale(scale, scale); ctx.shadowBlur = 34; ctx.shadowColor = bossShadow; ctx.fillStyle = b.flash > 0 ? '#ffe4ef' : bossBody;
-    if (windFear) { ctx.rotate(.78); ctx.fillRect(-62, -62, 124, 124); ctx.strokeStyle = '#d0f7ff'; ctx.lineWidth = 4; ctx.strokeRect(-62, -62, 124, 124); ctx.rotate(-.78); }
-    else if (mirrorFear) { ctx.rotate(Math.PI / 4); ctx.fillRect(-66, -66, 132, 132); ctx.strokeStyle = '#ffe3f4'; ctx.lineWidth = 4; ctx.strokeRect(-66, -66, 132, 132); ctx.rotate(-Math.PI / 4); }
-    else { ctx.beginPath(); ctx.ellipse(0, 0, 72, 92, 0, 0, Math.PI * 2); ctx.fill(); }
-    ctx.fillStyle = bossFace; ctx.beginPath(); ctx.arc(-27, -12, 24, 0, Math.PI * 2); ctx.arc(27, -12, 24, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = b.mode === 'final' ? '#0f2432' : windFear ? '#102030' : '#1f1027'; ctx.fillRect(-41, -18, 22, 8); ctx.fillRect(19, -18, 22, 8); ctx.strokeStyle = windFear ? '#d0f7ff' : choirFear ? '#bfffe8' : mirrorFear ? '#ffe3f4' : b.mode === 'final' ? '#8cf0ff' : '#ffc4d9'; ctx.lineWidth = 7; ctx.beginPath(); ctx.arc(0, 29, 23, 0, Math.PI); ctx.stroke(); ctx.fillStyle = '#f8df77'; ctx.beginPath(); ctx.arc(0, -80, 12, 0, Math.PI * 2); ctx.fill(); ctx.restore();
   }
   const bossLabel = b.releaseReady ? '수면 과학자 · 아버지' : b.mode === 'final' && b.truthResolved ? '수면 과학자 · 부서진 수호자' : b.name;
   if (!(b.mode === 'calm' && b.calmReflectionActive)) {

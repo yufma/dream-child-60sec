@@ -57,13 +57,13 @@ button { font: inherit; }
 }
 
 /* FHD에서는 현재 프레임의 90%로 한 단계 더 여유를 둔다. */
-@media (min-width: 1600px) and (max-width: 2199px) and (min-height: 900px) {
+@media (min-width: 1600px) and (max-width: 1999px) and (min-height: 900px) {
   .game-shell { width: min(96vw, 990px); }
 }
 
 /* FHD에서는 세로 여백을 남겨 한 화면에서 HUD와 게임 장면을 함께 읽고,
    QHD에서는 해상도 이점을 살려 원화가 과도하게 작아지지 않게 넓힌다. */
-@media (min-width: 2200px) and (min-height: 1200px) {
+@media (min-width: 2000px) and (min-height: 1100px) {
   .game-shell { width: min(94vw, 1520px); }
   .game-heading, .game-frame { width: 95%; max-width: 1440px; }
 }
