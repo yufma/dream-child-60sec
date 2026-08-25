@@ -1280,8 +1280,8 @@ function showTitleScreen() {
   closeTitleModals();
   startScreen.classList.remove('story-mode', 'boss-intro');
   startScreen.classList.add('title-mode');
-  startTag.textContent = '꿈의 연결 · 60초 수정실';
-  startTitle.innerHTML = '꿈을 되돌리는 아이<br /><span>60초 수정실</span>';
+  startTag.textContent = '꿈의 연결';
+  startTitle.textContent = '꿈을 잇는 아이';
   startCopy.textContent = '빼앗긴 친구들의 꿈을 되돌리기 위한 첫 번째 접속. 하린의 웃음이 사라지기 전에, 꿈의 문을 열어주세요.';
   startButton.innerHTML = '게임 시작 <span>↵</span>';
   startScreen.classList.remove('hidden');
@@ -4418,7 +4418,7 @@ function failMemoryCollapse() {
   endTag.textContent = '기억 붕괴';
   endTitle.textContent = '60초 안에 기억을 붙잡지 못했어.';
   endCopy.textContent = '공포는 세게 싸워서 이기는 것이 아니라, 각 기억의 역할을 빠르게 이어야 풀립니다. 보스의 목표 안내를 보고 필요한 기술만 사용해 다시 도전하세요.';
-  restartButton.innerHTML = '60초 수정실 다시 시작 <span>↻</span>';
+  restartButton.innerHTML = '다시 시작 <span>↻</span>';
   endScreen.classList.remove('hidden');
 }
 
@@ -5690,7 +5690,8 @@ function drawDaughterPixelBackground(stageIndex, boss) {
   ctx.fillStyle = '#251b43';
   ctx.fillRect(0, 0, W, H);
   drawCoverImage(image);
-  const shade = boss ? .1 : daughterStageIndex === 1 ? .06 : .04;
+  // 21스테이지는 K 기억 발판이 보랏빛 배경에 묻히지 않도록 한 단계 더 어둡게 둔다.
+  const shade = boss ? .1 : daughterStageIndex === 2 ? .12 : daughterStageIndex === 1 ? .06 : .04;
   ctx.fillStyle = `rgba(21, 14, 47, ${shade})`;
   ctx.fillRect(0, 0, W, H);
   ctx.restore();
@@ -8109,73 +8110,7 @@ function drawEndingCinematic() {
     ctx.fillStyle = vignette; ctx.fillRect(0, 0, W, H);
     ctx.restore();
     drawCinematicStars(scene.kind === 'morning' ? '#fff1bf' : '#d9eaff', 24, elapsed * 6);
-  } else if (false) {
-  const palettes = {
-    promise: ['#221347', '#193a68', '#0b1936'], hospital: ['#10182f', '#26314a', '#11162b'],
-    machine: ['#171c4c', '#133f59', '#0a1831'], cost: ['#301738', '#25234d', '#100f2b'],
-    choice: ['#482451', '#3a4a78', '#172d50'], morning: ['#8f5b8d', '#f0a86e', '#6679b5'],
-  };
-  const palette = palettes[scene.kind];
-  const background = ctx.createLinearGradient(0, 0, 0, H);
-  background.addColorStop(0, palette[0]); background.addColorStop(.58, palette[1]); background.addColorStop(1, palette[2]);
-  ctx.fillStyle = background; ctx.fillRect(0, 0, W, H);
-  drawCinematicStars(scene.kind === 'morning' ? '#fff1bf' : '#d9eaff', 42, elapsed * 8);
-
-  if (scene.kind === 'promise') {
-    ctx.save(); ctx.globalAlpha = .28; ctx.strokeStyle = '#ffe27e'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(690, 220, 112, 0, Math.PI * 2); ctx.stroke();
-    for (let i = 0; i < 8; i += 1) { const a = i * Math.PI / 4 + elapsed * .2; ctx.beginPath(); ctx.moveTo(690, 220); ctx.lineTo(690 + Math.cos(a) * 112, 220 + Math.sin(a) * 112); ctx.stroke(); }
-    ctx.restore();
-    drawCinematicScientist(318, 364, 1.45, true);
-    drawCinematicPixelChild(452, 364, { hair: '#ef8ebd', clothes: '#bf63a2', detail: '#fff0a7', glow: '#ffb5df' }, 1.4);
-    drawCinematicPixelChild(610, 382, { hair: '#825fba', clothes: '#5ca8a7', detail: '#d6ffed', glow: '#9effd7' }, .85);
-    drawCinematicPixelChild(700, 382, { hair: '#6aa3c9', clothes: '#608ad0', detail: '#ecf9ff', glow: '#a6efff' }, .85);
-  } else if (scene.kind === 'hospital') {
-    ctx.save(); ctx.fillStyle = 'rgba(219,239,255,.1)'; ctx.fillRect(0, 300, W, 160); ctx.fillStyle = '#b6d8f4'; ctx.fillRect(474, 228, 310, 14); ctx.fillStyle = '#344660'; ctx.fillRect(500, 242, 260, 96); ctx.fillStyle = '#e7f4ff'; ctx.fillRect(525, 256, 210, 58); ctx.fillStyle = '#efb8d0'; ctx.fillRect(552, 272, 100, 28); ctx.restore();
-    drawCinematicPixelChild(614, 304, { hair: '#ef8ebd', clothes: '#bf63a2', detail: '#fff0a7', glow: '#ffb5df' }, .88, true);
-    drawCinematicScientist(318, 372, 1.5, false);
-    ctx.save(); ctx.strokeStyle = '#8effe5'; ctx.lineWidth = 2; ctx.strokeRect(160, 176, 114, 74); ctx.beginPath(); ctx.moveTo(172, 220); ctx.lineTo(194, 220); ctx.lineTo(205, 202); ctx.lineTo(216, 232); ctx.lineTo(226, 216); ctx.lineTo(260, 216); ctx.stroke(); ctx.restore();
-  } else if (scene.kind === 'machine') {
-    drawCinematicMachine(602, 254, .5 + Math.sin(elapsed * 3) * .25);
-    drawCinematicScientist(264, 378, 1.42, false);
-    drawCinematicPixelChild(790, 369, { hair: '#ef8ebd', clothes: '#bf63a2', detail: '#fff0a7', glow: '#ffb5df' }, 1.18, true);
-    ctx.save(); ctx.strokeStyle = '#a7eeff'; ctx.globalAlpha = .54; ctx.lineWidth = 3;
-    [[326, 332, 526, 245], [683, 248, 748, 330]].forEach(([x1, y1, x2, y2]) => { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.quadraticCurveTo((x1 + x2) / 2, y1 - 70, x2, y2); ctx.stroke(); });
-    ctx.restore();
-  } else if (scene.kind === 'cost') {
-    drawCinematicMachine(710, 246, .8 + Math.sin(elapsed * 5) * .2);
-    drawCinematicPixelChild(848, 364, { hair: '#ef8ebd', clothes: '#bf63a2', detail: '#fff0a7', glow: '#ffb5df' }, 1.08, true);
-    drawCinematicScientist(530, 380, 1.15, false);
-    const friends = [
-      { x: 118, y: 340, c: '#ffb5d7' }, { x: 248, y: 292, c: '#9effd7' }, { x: 364, y: 368, c: '#a6efff' },
-    ];
-    friends.forEach((friend, index) => {
-      const travel = cinematicEase(Math.min(1, elapsed / 2.6));
-      const x = friend.x + (660 - friend.x) * travel;
-      const y = friend.y + (235 - friend.y) * travel;
-      ctx.save(); ctx.globalAlpha = .9 - travel * .22; ctx.shadowBlur = 26; ctx.shadowColor = friend.c; ctx.fillStyle = friend.c; ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI * 2); ctx.fill(); ctx.restore();
-      drawCinematicPixelChild(friend.x, friend.y + 48, { hair: '#59628d', clothes: '#334369', detail: friend.c, glow: friend.c }, .7, true);
-    });
-  } else if (scene.kind === 'choice') {
-    drawCinematicMachine(696, 246, .25 + (1 - progress) * .4, true);
-    drawCinematicPixelChild(456, 374, { hair: '#ef8ebd', clothes: '#bf63a2', detail: '#fff0a7', glow: '#ffb5df' }, 1.36);
-    drawCinematicScientist(690, 382, 1.25, true);
-    ['#ffb5d7', '#9effd7', '#a6efff'].forEach((color, index) => {
-      const startX = 650 - index * 15;
-      const endX = 152 + index * 154;
-      const move = cinematicEase(Math.min(1, elapsed / 2.7));
-      ctx.save(); ctx.shadowBlur = 22; ctx.shadowColor = color; ctx.fillStyle = color; ctx.beginPath(); ctx.arc(startX + (endX - startX) * move, 248 + (104 + index * 52 - 248) * move, 10, 0, Math.PI * 2); ctx.fill(); ctx.restore();
-    });
-  } else if (scene.kind === 'morning') {
-    ctx.save(); ctx.globalAlpha = .9; ctx.fillStyle = '#fff1a9'; ctx.beginPath(); ctx.arc(772, 118, 54, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = .26; ctx.fillStyle = '#fff5d7'; ctx.fillRect(0, 388, W, 92); ctx.restore();
-    drawCinematicPixelChild(322, 382, { hair: '#59405e', clothes: '#e66c75', detail: '#fff0a6', glow: '#ffe27e' }, 1.05);
-    drawCinematicPixelChild(442, 382, { hair: '#ef8ebd', clothes: '#bf63a2', detail: '#fff0a7', glow: '#ffb5df' }, 1.05);
-    drawCinematicPixelChild(550, 382, { hair: '#825fba', clothes: '#5ca8a7', detail: '#d6ffed', glow: '#9effd7' }, 1.05);
-    drawCinematicPixelChild(660, 382, { hair: '#6aa3c9', clothes: '#608ad0', detail: '#ecf9ff', glow: '#a6efff' }, 1.05);
-    drawCinematicScientist(796, 388, 1.05, true);
   }
-  }
-
   ctx.save(); ctx.globalAlpha = Math.min(1, elapsed * 1.2); ctx.fillStyle = '#d9edff'; ctx.font = '800 10px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText(scene.tag, W / 2, 48);
   ctx.fillStyle = '#fff7dc'; ctx.font = '850 32px "Segoe UI", sans-serif'; ctx.fillText(scene.title, W / 2, 86); ctx.restore();
   drawCinematicDialogue(scene, elapsed);
