@@ -2226,11 +2226,52 @@ function renderStoryLine() {
   startButton.innerHTML = `${lastLine ? finishLabel : '다음 대사'} <span>↵</span>`;
 }
 
+function prepareCurrentStagePreview() {
+  const stage = currentStage();
+  // 반투명 안내·대화창 뒤에는 직전 스테이지의 잔여 상태가 아니라,
+  // 곧 시작할 스테이지의 배경·구조물·시작 위치만 보이게 준비한다.
+  game.player = freshPlayer();
+  game.imagination = 100;
+  game.dreamShots = [];
+  game.nightmareShots = [];
+  game.echoes = [];
+  game.recording = null;
+  game.dreamTrails = [];
+  game.memoryPads = [];
+  game.platforms = [];
+  game.exit = null;
+  game.fragments = [];
+  game.fallZones = [];
+  game.watcherResolved = false;
+  game.stage02Restoration = 0;
+  game.stage02RestorationAnnounced = false;
+  game.carouselGateOpened = false;
+  game.carouselCoreLatched = false;
+  game.carouselExitBridgeDeployed = false;
+  game.carouselRelays = new Set();
+  game.carouselSwitches = [];
+  game.carouselPhase = 0;
+  game.carouselTargetPhase = 0;
+  game.carouselRotationTimer = 0;
+  game.carouselOrbitPose = 'moon';
+  game.carouselOrbitFromPose = 'moon';
+  game.carouselOrbitTargetPose = 'moon';
+  if (stage.type === 'boss') ensureBossStage(true);
+  else {
+    game.boss = null;
+    setupPuzzle(stage.layout, stage.echoGoal || 0);
+  }
+}
+
 function showStoryBeat(beat) {
   clearStageIntroTimer();
   ensureStageVisualAssets();
+  prepareCurrentStagePreview();
   contextControls.classList.add('hidden');
   hideFriendReaction();
+  gameHud.classList.add('hidden');
+  bossHud.classList.add('hidden');
+  toast.classList.remove('visible');
   game.phase = 'story';
   document.body.classList.remove('title-screen-active');
   continueStoryBgm();
@@ -2269,15 +2310,16 @@ function showStageIntro() {
   document.body.classList.remove('title-screen-active');
   clearStageIntroTimer();
   ensureStageVisualAssets();
+  prepareCurrentStagePreview();
   contextControls.classList.add('hidden');
   hideFriendReaction();
+  gameHud.classList.add('hidden');
+  bossHud.classList.add('hidden');
+  toast.classList.remove('visible');
   closeTitleModals();
   startScreen.classList.remove('story-mode', 'title-mode');
   startScreen.classList.toggle('boss-intro', stage.type === 'boss');
   storyDialogue.classList.add('hidden');
-  // 보스 스테이지는 인트로 화면이 떠 있는 동안에도 전투 장면을 준비한다.
-  // 자동 전환 타이머와 렌더 루프가 엇갈려도 빈 캔버스가 보이지 않게 한다.
-  if (stage.type === 'boss') ensureBossStage();
   game.phase = 'intro';
   const pagePrefix = stagePage(stage) === 2 ? '두 번째 장 · 마지막 꿈' : '꿈의 연결';
   startTag.textContent = `${pagePrefix} · 스테이지 ${String(game.stageIndex + 1).padStart(2, '0')} / ${String(totalStages()).padStart(2, '0')}`;
@@ -2389,6 +2431,12 @@ function startStage() {
   game.imagination = 100;
   game.elapsed = 0;
   game.player = freshPlayer();
+  // 문을 질주로 통과했더라도 다음 꿈에는 관성·질주 판정·입력 유지가 남지 않게 한다.
+  game.dashTimer = 0;
+  game.dashCooldown = 0;
+  game.dashDirection = 1;
+  keys.clear();
+  pressed.clear();
   game.dreamShots = [];
   game.nightmareShots = [];
   game.echoes = [];
@@ -5257,6 +5305,8 @@ function showChapterEnd() {
 }
 
 function startEndingCinematic() {
+  // 장면을 넘길 때 원화가 아직 도착하지 않아 임시 캐릭터가 한 프레임 보이는 일을 막는다.
+  ensureSprites(Object.values(endingCinematicSprites));
   game.phase = 'ending-cinematic';
   game.endingScene = 0;
   game.endingSceneElapsed = 0;
@@ -5299,7 +5349,7 @@ function showFinalTruth() {
   endTag.textContent = '에필로그 · 새로운 아침';
   endTitle.textContent = '혼자가 아니야.';
   endCopy.innerHTML = '<span class="epilogue-copy-lead">딸은 끝내 눈을 뜨지 못했지만,<br>친구들의 목소리 곁에서 아주 옅게 웃고 있었습니다.</span><span>그 미소는 빼앗은 완벽한 꿈이 아니라,<br>함께 나눈 기억에서 피어난 것이었습니다.</span><span>아버지는 딸의 손을 잡고 현실의 슬픔을 함께 견디며,<br>누구의 꿈도 빼앗기지 않을 다음 이야기를 기다립니다.</span>';
-  restartButton.innerHTML = '처음부터 다시 꿈꾸기 <span>↻</span>';
+  restartButton.innerHTML = '메인 화면으로 <span>⌂</span>';
   endScreen.classList.remove('hidden');
 }
 
@@ -7645,7 +7695,7 @@ function drawMemoryPath(frames, color, alpha, options = {}) {
     ctx.restore();
   };
   // 여러 개의 굵은 리본 원화를 반복해 붙이지 않고, 한 줄로 이어지는 기억의 흐름을 만든다.
-  drawRibbonStroke(15, '#102b5a', .28, 16);
+  drawRibbonStroke(15, options.underlay || color, .28, 16);
   drawRibbonStroke(9, color, .44, 12);
   drawRibbonStroke(4, '#dffcff', .72, 4);
   drawRibbonStroke(1.4, '#fff5cc', .92);
@@ -7690,10 +7740,15 @@ function drawMemoryPath(frames, color, alpha, options = {}) {
 function drawMemoryLoopFeedback() {
   game.echoes.forEach((echo, index) => {
     if (echo.holding) return;
-    drawMemoryPath(echo.frames, ['#9effea', '#9eb9ff', '#ffb5d7'][index % 3], .42, { endIndex: echo.playbackIndex || 0 });
+    // 되감기 뒤에는 새 파란 경로를 덧그리지 않는다. 기록할 때 남긴 노란 길을
+    // 잔상이 앞에서부터 밟아 지우며 목표까지 재생한다.
+    drawMemoryPath(echo.frames, '#ffe37d', .78, {
+      startIndex: echo.playbackIndex || 0,
+      underlay: '#80501e',
+    });
   });
   if (!game.recording) return;
-  drawMemoryPath(game.recording.frames, '#ffe37d', .85, { markerLabel: 'K · 기억 되감기' });
+  drawMemoryPath(game.recording.frames, '#ffe37d', .85, { markerLabel: 'K · 기억 되감기', underlay: '#80501e' });
 }
 
 function drawChoirBalconySingerCues() {
@@ -8025,6 +8080,15 @@ function drawEndingCinematic() {
   const progress = cinematicEase(elapsed / scene.duration);
   const cinematicImage = ensureSprite(endingCinematicSprites[scene.kind]);
   const hasSceneArt = cinematicImage?.complete && cinematicImage.naturalWidth > 0;
+  if (!hasSceneArt) {
+    // 원화가 준비되는 찰나에는 캐릭터 대용 도형을 그리지 않고, 장면색만 잠깐 유지한다.
+    const backdrop = ctx.createLinearGradient(0, 0, 0, H);
+    backdrop.addColorStop(0, '#182950');
+    backdrop.addColorStop(1, '#070d24');
+    ctx.fillStyle = backdrop;
+    ctx.fillRect(0, 0, W, H);
+    drawCinematicStars('#d9eaff', 24, elapsed * 6);
+  }
   if (hasSceneArt) {
     // 16:9 원화는 미세하게만 줌인해 정지 그림도 영화 컷처럼 느껴지게 한다.
     const imageScale = Math.max(W / cinematicImage.naturalWidth, H / cinematicImage.naturalHeight) * (1.01 + progress * .024);
@@ -8045,7 +8109,7 @@ function drawEndingCinematic() {
     ctx.fillStyle = vignette; ctx.fillRect(0, 0, W, H);
     ctx.restore();
     drawCinematicStars(scene.kind === 'morning' ? '#fff1bf' : '#d9eaff', 24, elapsed * 6);
-  } else {
+  } else if (false) {
   const palettes = {
     promise: ['#221347', '#193a68', '#0b1936'], hospital: ['#10182f', '#26314a', '#11162b'],
     machine: ['#171c4c', '#133f59', '#0a1831'], cost: ['#301738', '#25234d', '#100f2b'],
@@ -9623,7 +9687,7 @@ pauseBgmVolumeSlider?.addEventListener('change', () => {
 restartButton.addEventListener('click', () => {
   if (game.phase === 'failed') startStage();
   else if (game.phase === 'chapter-complete') showFinalTruth();
-  else if (game.phase === 'truth') newGame();
+  else if (game.phase === 'truth') showTitleScreen();
 });
 ruleCards.forEach((card) => {
   const keyForRule = { time: 'ShiftLeft', resonance: 'KeyL' }[card.dataset.rule];
@@ -9645,7 +9709,7 @@ function handleConfirmInput() {
   else if (game.phase === 'story') continueStoryBeat();
   else if (game.phase === 'intro' || game.phase === 'failed') startStage();
   else if (game.phase === 'chapter-complete') showFinalTruth();
-  else if (game.phase === 'truth') newGame();
+  else if (game.phase === 'truth') showTitleScreen();
   else if (game.phase === 'menu') closeStageMenu();
   else return false;
   return true;
