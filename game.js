@@ -93,7 +93,7 @@ const HARIN_STAGE_02_MAGIC_FRAME_DRAW = Object.freeze({
   awakening: Object.freeze({ entranceCenterSourceX: 265, splitSourceX: 320, groundSourceY: 1405, scaleX: .223, scaleY: .302 }),
   restoring: Object.freeze({ entranceCenterSourceX: 272, splitSourceX: 320, groundSourceY: 1452, scaleX: .24, scaleY: .294 }),
 });
-const HARIN_STAGE_02_RESTORATION_SECONDS = 4.6;
+const HARIN_STAGE_02_RESTORATION_SECONDS = 2;
 const HARIN_STAGE_02_RESTORATION_COMPLETE = .999;
 const HARIN_BACKGROUND_Y_OFFSETS = Object.freeze([40, 0, 0, 0, 0, 0]);
 const HARIN_STAGE_02_ROAD_ALIGNMENT = Object.freeze({ sourceY: 718, targetY: 500 });
@@ -258,8 +258,13 @@ const disconnectIllustrationImage = document.querySelector('#disconnect-illustra
 const disconnectIllustrationLabel = document.querySelector('#disconnect-illustration-label');
 const disconnectSkipButton = document.querySelector('#disconnect-skip');
 const startButton = document.querySelector('#start-button');
-const resumeButton = document.querySelector('#resume-button');
-const stageSelectGrid = document.querySelector('#stage-select-grid');
+const storyButton = document.querySelector('#story-button');
+const settingsButton = document.querySelector('#settings-button');
+const titleSettings = document.querySelector('#title-settings-modal');
+const settingsCloseButton = document.querySelector('#settings-close-button');
+const storySummaryModal = document.querySelector('#story-summary-modal');
+const storyCloseButton = document.querySelector('#story-close-button');
+const mainMenuButton = document.querySelector('#main-menu-button');
 const campaignRouteEl = document.querySelector('#campaign-route');
 const restartButton = document.querySelector('#restart-button');
 const startTag = startScreen.querySelector('.tag');
@@ -293,6 +298,8 @@ const bgmControls = document.querySelector('#bgm-controls');
 const bgmToggleButton = document.querySelector('#bgm-toggle');
 const bgmVolumeSlider = document.querySelector('#bgm-volume');
 const bgmVolumeValue = document.querySelector('#bgm-volume-value');
+const pauseBgmVolumeSlider = document.querySelector('#pause-bgm-volume');
+const pauseBgmVolumeValue = document.querySelector('#pause-bgm-volume-value');
 const bossNameEl = document.querySelector('#boss-name');
 const bossFill = document.querySelector('#boss-fill');
 const bossHealthEl = document.querySelector('#boss-health');
@@ -304,8 +311,6 @@ const ruleStates = {
   resonance: document.querySelector('#resonance-state'),
   dash: document.querySelector('#dash-state'),
 };
-const stageMenuCopy = document.querySelector('#stage-menu-copy');
-const routeModeButton = document.querySelector('#route-mode-button');
 const loadingSplash = document.querySelector('#loading-splash');
 const loadingTitle = document.querySelector('#loading-title');
 const loadingFill = document.querySelector('#loading-fill');
@@ -381,8 +386,8 @@ const STAGES = [
     intro: '유나는 아무리 크게 노래해도 아무에게도 닿지 않을까 봐 두려웠다. 그 두려움은 “침묵을 삼킨 합창단”이 되어 모든 소리를 지운다. 먼저 과거의 나 둘에게 서로 다른 화음 앵커를 맡겨. 그 다음 보스 바깥에 떠 있는 별빛 고리가 밝아지는 박자에 맞춰 L을 짧게 눌러, 여섯 음을 순서대로 되찾자. 마지막 음이 돌아오면 합창단은 무너지는 불협화음으로 20초간 발악한다. 그 시간을 피하면 유나의 노래가 완성된다.',
     boss: '침묵을 삼킨 합창단', bossConfig: {
       mode: 'resonance', visual: 'choir', x: 420, y: 76, w: 120, h: 170, codaDuration: 20,
-      // 오른쪽 박자 고리까지 벽 없이 도달할 수 있도록 보스전 이동 범위를 캔버스 끝까지 연다.
-      moveBounds: { xMin: 45, xMax: 880, yMin: 86, yMax: 437 },
+      // 11스테이지는 불협화음 회피를 위해 화면 안 전체를 이동 공간으로 연다.
+      moveBounds: { xMin: 0, xMax: W - 25, yMin: 0, yMax: H - 34 },
       // 화음 앵커는 불협화음 세 번을 받아내면 사라진다. 이후 K로 다시 남길 수 있다.
       echoHitLimit: 3, echoAttackCadence: 3,
       memoryPads: [
@@ -484,7 +489,8 @@ const STAGES = [
     boss: '수면 과학자', bossConfig: {
       mode: 'final', finalChargeNeeded: 1.4,
       attackHp: 12,
-      moveBounds: { xMin: 45, xMax: 760, yMin: 86, yMax: 437 },
+      // 22스테이지는 탄막을 피할 세로 여유를 화면 전체로 연다.
+      moveBounds: { xMin: 45, xMax: 760, yMin: 0, yMax: H - 34 },
       memoryPads: [
         { x: 188, y: 122, w: 42, h: 42, label: '하린의 웃음' },
         { x: 372, y: 228, w: 42, h: 42, label: '유나의 노래' },
@@ -1240,16 +1246,38 @@ function newGame() {
   establishFirstDreamLink(() => showStoryBeat(PROLOGUE_STORY));
 }
 
+function startGameFromTitle() {
+  // 타이틀에서 시작해도 첫 접속 대화와 프롤로그를 거친 뒤 스테이지 1로 들어간다.
+  newGame();
+}
+
+function closeTitleSettings() {
+  titleSettings?.classList.add('hidden');
+  settingsButton?.setAttribute('aria-expanded', 'false');
+}
+
+function closeStorySummary() {
+  storySummaryModal?.classList.add('hidden');
+}
+
+function closeTitleModals() {
+  closeTitleSettings();
+  closeStorySummary();
+}
+
 function showTitleScreen() {
+  window.scrollTo(0, 0);
   loadingRun += 1;
   loadingSplash.classList.add('hidden');
   contextControls.classList.add('hidden');
   hideFriendReaction();
   stopStageBgm();
   game = freshGameState('title');
+  document.body.classList.add('title-screen-active');
   gameHud.classList.add('hidden');
   bossHud.classList.add('hidden');
   storyDialogue.classList.add('hidden');
+  closeTitleModals();
   startScreen.classList.remove('story-mode', 'boss-intro');
   startScreen.classList.add('title-mode');
   startTag.textContent = '꿈의 연결 · 60초 수정실';
@@ -1347,12 +1375,14 @@ function stageBgmConfig(key) {
 }
 
 function updateBgmVolumeControl() {
-  if (!bgmVolumeSlider || !bgmVolumeValue) return;
   const percent = Math.round(stageBgm.masterVolume * 100);
-  bgmVolumeSlider.value = String(percent);
-  bgmVolumeSlider.setAttribute('aria-valuetext', `${percent}%`);
-  bgmVolumeValue.value = `${percent}%`;
-  bgmVolumeValue.textContent = `${percent}%`;
+  [[bgmVolumeSlider, bgmVolumeValue], [pauseBgmVolumeSlider, pauseBgmVolumeValue]].forEach(([slider, value]) => {
+    if (!slider || !value) return;
+    slider.value = String(percent);
+    slider.setAttribute('aria-valuetext', `${percent}%`);
+    value.value = `${percent}%`;
+    value.textContent = `${percent}%`;
+  });
 }
 
 function setBgmMasterVolume(value, persist = false) {
@@ -2202,6 +2232,7 @@ function showStoryBeat(beat) {
   contextControls.classList.add('hidden');
   hideFriendReaction();
   game.phase = 'story';
+  document.body.classList.remove('title-screen-active');
   continueStoryBgm();
   game.storyBeat = beat;
   game.storyLineIndex = 0;
@@ -2210,6 +2241,7 @@ function showStoryBeat(beat) {
   startCopy.textContent = '';
   storyDialogue.classList.remove('hidden');
   renderStoryLine();
+  closeTitleModals();
   startScreen.classList.remove('title-mode', 'boss-intro');
   startScreen.classList.add('story-mode');
   startScreen.classList.remove('hidden');
@@ -2234,10 +2266,12 @@ function continueStoryBeat() {
 
 function showStageIntro() {
   const stage = currentStage();
+  document.body.classList.remove('title-screen-active');
   clearStageIntroTimer();
   ensureStageVisualAssets();
   contextControls.classList.add('hidden');
   hideFriendReaction();
+  closeTitleModals();
   startScreen.classList.remove('story-mode', 'title-mode');
   startScreen.classList.toggle('boss-intro', stage.type === 'boss');
   storyDialogue.classList.add('hidden');
@@ -2252,7 +2286,7 @@ function showStageIntro() {
     // 보스 안내는 한 덩어리의 긴 문단 대신, 읽는 순서가 보이는 세 줄 구조로 둔다.
     startCopy.innerHTML = `<span class="boss-intro-lead">${bossEntryLine(stage)}</span><span class="boss-intro-route-label">60초 전투 순서</span><span class="boss-intro-route">${bossBriefForStage(stage)}</span>`;
   } else {
-    startCopy.textContent = stage.intro;
+    startCopy.textContent = formatNumberedGuide(stage.intro);
   }
   startButton.innerHTML = `${stage.type === 'boss' ? '악몽에 맞서기' : '꿈속으로 들어가기'} <span>↵</span>`;
   startScreen.classList.remove('hidden');
@@ -2264,33 +2298,7 @@ function showStageIntro() {
 }
 
 function renderStageMenu() {
-  const developmentMode = campaign.routeMode === 'development';
-  if (stageMenuCopy) {
-    stageMenuCopy.textContent = developmentMode
-      ? '개발 점검 모드입니다. 모든 스테이지를 바로 선택할 수 있습니다. 보스전은 60초 기억 붕괴 기록과 랭크를 남기며, 11스테이지 이후는 아래로 스크롤해 선택하세요.'
-      : '캠페인 모드입니다. 이전 스테이지를 클리어해야 다음 꿈이 열립니다. 이미 클리어한 스테이지는 언제든 다시 도전해 더 높은 기억 랭크를 노릴 수 있습니다.';
-  }
-  if (routeModeButton) routeModeButton.textContent = developmentMode ? '개발 점검 모드' : '캠페인 모드';
-  stageSelectGrid.innerHTML = STAGES.map((stage, index) => {
-    const current = index === game.stageIndex;
-    const locked = !developmentMode && index > campaign.unlocked;
-    const cleared = campaign.cleared.has(index) || index < campaign.unlocked;
-    const record = stage.type === 'boss' ? campaign.bossRecords[index] : campaign.puzzleRecords[index];
-    const rankName = { DAWN: '새벽', MOON: '달빛', STAR: '별빛' }[record?.rank] || record?.rank;
-    const status = locked
-      ? '잠김 · 이전 꿈을 먼저 회복하세요'
-      : record
-        ? stage.type === 'boss'
-          ? `${rankName} · ${record.bestRemaining.toFixed(1)}초 남김`
-          : `${rankName} · ${record.bestTime.toFixed(1)}초 · 상상력 ${record.bestImagination} · 기록 ${record.bestRecords}회`
-        : cleared ? '완료 · 다시 도전 가능' : '현재 꿈 · 도전 가능';
-    return `<button class="stage-select-button${current ? ' current' : ''}${locked ? ' locked' : ''}" data-stage="${index}"${locked ? ' disabled' : ''}>
-      <b>${stagePage(stage) === 2 ? '두 번째 장 · ' : ''}스테이지 ${String(index + 1).padStart(2, '0')}</b>
-      <strong>${stage.name}</strong>
-      <small>${status}</small>
-    </button>`;
-  }).join('');
-  stageSelectGrid.querySelectorAll('[data-stage]').forEach((button) => button.addEventListener('click', () => selectStage(Number(button.dataset.stage))));
+  updateBgmVolumeControl();
 }
 
 function openStageMenu() {
@@ -2309,25 +2317,6 @@ function closeStageMenu() {
   stageMenu.classList.add('hidden');
   if (game.phase === 'playing') resumeStageBgm();
   updateHud();
-}
-
-function selectStage(index) {
-  if (campaign.routeMode === 'campaign' && index > campaign.unlocked) {
-    say('이 꿈은 아직 연결되지 않았습니다. 바로 전 스테이지를 먼저 클리어하세요.');
-    return;
-  }
-  game.stageIndex = index;
-  game.memories = new Set(campaign.memories);
-  game.fragments = [];
-  game.boss = null;
-  showStageIntro();
-}
-
-function toggleRouteMode() {
-  campaign.routeMode = campaign.routeMode === 'development' ? 'campaign' : 'development';
-  saveCampaignProgress();
-  renderStageMenu();
-  say(campaign.routeMode === 'development' ? '개발 점검 모드: 모든 꿈을 바로 확인할 수 있습니다.' : '캠페인 모드: 순서대로 꿈을 회복합니다.');
 }
 
 function fallOffStage(message = '낙사! 기억이 시작점으로 되돌아갔어.') {
@@ -2387,7 +2376,9 @@ function removeLatestEcho() {
 }
 
 function startStage() {
+  window.scrollTo(0, 0);
   const stage = currentStage();
+  document.body.classList.remove('title-screen-active');
   ensureStageVisualAssets();
   hideFriendReaction();
   if (stage.type === 'boss' && stage.bossConfig?.mode === 'resonance') primeGameSfx();
@@ -2658,7 +2649,9 @@ function setupPuzzle(layout, echoGoal) {
   } else if (layout === 'bridge') {
     game.platforms = [
       { x: 0, y: 500, w: 960, h: 40, label: 'MEMORY WALKWAY' },
-      { x: 500, y: 270, w: 60, h: 230, wall: true, label: 'MEMORY GATE' },
+      // 성문 그림의 입구 기준점은 유지하고, 실제 막힘 판정만 입구 안쪽으로 12px 물린다.
+      // 입구 테두리에서 캐릭터가 걸려 보이는 현상을 막는다.
+      { x: 512, visualX: 500, y: 270, w: 60, h: 230, wall: true, label: 'MEMORY GATE' },
     ];
     game.exit = { x: 875, y: 418, w: 36, h: 82, label: 'MEMORY GATE' };
     game.fallZones = [];
@@ -3099,13 +3092,15 @@ function beginCalmReflectionPhase(boss) {
   boss.calmProgress = boss.calmDuration;
   boss.activePads = boss.calmMemoryComplete;
   boss.phase = 4;
-  boss.w = 72;
-  boss.h = 108;
+  // 2페이즈 광대는 기존 크기의 2/3으로 줄여 가면 투사체를 예측해 맞히는 표적이 된다.
+  boss.w = 48;
+  boss.h = 72;
   boss.x = W - boss.w - 108;
   boss.y = 214;
   boss.vx = 0;
   boss.vy = 0;
-  boss.roamSpeed = 76;
+  // 작은 몸집에 맞춰 이동 속도를 더 높여, 가면 투사 각도 예측을 요구한다.
+  boss.roamSpeed = 104;
   boss.moveBounds = { xMin: 24, xMax: W - game.player.w - 24, yMin: 58, yMax: H - game.player.h - 24 };
   boss.calmReflectionBounds = { xMin: 24, xMax: W - boss.w - 24, yMin: 58, yMax: H - boss.h - 24 };
   setCalmReflectionRoamTarget(boss, boss.calmReflectionBounds);
@@ -3143,7 +3138,8 @@ function beginCalmReflectionPhase(boss) {
   game.nightmareShots = [];
   boss.memoryPads = [];
   boss.distortedMemoryPads = [];
-  game.nextAttack = 1.1;
+  // 2페이즈 전환 직후 첫 웃음 탄막이 바로 시작된다.
+  game.nextAttack = 0;
   say('세 기억이 겹치자 무대의 오브젝트가 사라졌습니다. 가면 가까이에서 조준선을 정하고 광대의 이동 경로를 예상해 J로 직선 발사하세요.');
   updateHud();
 }
@@ -3408,8 +3404,13 @@ function updateMemoryLoops(dt) {
   });
 }
 
+function formatNumberedGuide(text = '') {
+  // 안내 어디에서든 ①·②·③ 같은 순서 표시는 한 줄에 하나만 남겨 읽기 쉽게 한다.
+  return String(text).replace(/\s*([①②③④⑤⑥⑦⑧⑨⑩])\s*/g, '\n$1 ').trim();
+}
+
 function say(text) {
-  toast.textContent = text;
+  toast.textContent = formatNumberedGuide(text);
   toast.classList.add('visible');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toast.classList.remove('visible'), 3000);
@@ -4037,8 +4038,8 @@ function bossShotDamage(shot, boss) {
   if (shot.kind === 'black-kite' && Number.isFinite(shot.damage)) return shot.damage;
   if (shot.kind === 'black-kite') return HANEUL_VANE_KITE_DAMAGE;
   if (shot.kind === 'harin-laugh') return 12;
-  // 11스테이지 불협화음은 기존 피해의 약 2/3로 낮춰, 탄막 수는 유지하되 회복 여지를 준다.
-  if (shot.kind === 'dissonant-note') return boss?.codaActive ? 19 : 15;
+  // 11스테이지 불협화음은 탄막 수는 유지하되 회복 여지를 준다.
+  if (shot.kind === 'dissonant-note') return boss?.codaActive ? 21 : 17;
   if (shot.kind === 'memory') return 24;
   if (shot.kind === 'shard') return 22;
   if (shot.kind === 'wind') return 20;
@@ -4105,7 +4106,7 @@ function haneulVaneAttackProfile(b) {
 }
 
 function nextBossAttackDelay(b) {
-  if (b.mode === 'calm') return b.calmReflectionActive ? 1.35 : 99;
+  if (b.mode === 'calm') return b.calmReflectionActive ? 1.2 : 99;
   if (b.mode === 'final') {
     const phase = finalBossPhase(b);
     return phase === 4 ? 99 : phase === 3 ? .58 : phase === 2 ? .68 : .82;
@@ -4128,14 +4129,14 @@ function spawnNightmarePattern() {
 
   if (b.mode === 'calm') {
     const activeLaughShots = game.nightmareShots.filter((shot) => shot.kind === 'harin-laugh').length;
-    // 5스테이지 2페이즈는 숨 돌릴 여지는 남기되, 가면 조준 중에도 회피가 필요하게 한 단계만 높인다.
-    const capacity = Math.max(0, 22 - activeLaughShots);
+    // 5스테이지 2페이즈는 가면 조준 중에도 계속 회피선을 읽어야 하도록 밀도를 한 단계 더 높인다.
+    const capacity = Math.max(0, 24 - activeLaughShots);
     if (!capacity) return;
     const calmOrigin = { x: b.x + b.w / 2, y: b.y + b.h * .5 };
     if (attackNumber % 4 === 0) {
-      launchNightmareRing(calmOrigin, Math.min(7, capacity), { speed: 155, r: 7, kind: 'harin-laugh', offset: threatTime * .36 });
+      launchNightmareRing(calmOrigin, Math.min(8, capacity), { speed: 155, r: 7, kind: 'harin-laugh', offset: threatTime * .36 });
     } else if (attackNumber % 2 === 0) {
-      launchNightmareFan(calmOrigin, p, Math.min(4, capacity), .82, { speed: 190, r: 8, kind: 'harin-laugh' });
+      launchNightmareFan(calmOrigin, p, Math.min(5, capacity), .82, { speed: 190, r: 8, kind: 'harin-laugh' });
     } else {
       launchNightmareFan(calmOrigin, p, 1, 0, { speed: 210, r: 8, kind: 'harin-laugh' });
     }
@@ -4688,8 +4689,34 @@ function beginResonanceCoda(b) {
   game.dreamShots = [];
   game.nightmareShots = [];
   game.dreamTrails = [];
+  // 11스테이지 2페이즈에서는 발밑 기준을 유지한 채 주인공과 충돌 판정을 70%로 줄인다.
+  const player = game.player;
+  player.sizeTransition = {
+    elapsed: 0, duration: .45,
+    fromW: player.w, fromH: player.h, fromScale: 1,
+    toW: player.w * .7, toH: player.h * .7, toScale: .7,
+  };
+  player.shrinkPulse = .45;
   game.nextAttack = .3;
   say('마지막 음이 돌아왔습니다. 박자 오브젝트와 잔상 조건이 사라졌습니다. 주인공으로 불협화음을 20초 동안 피하세요!');
+}
+
+function updatePlayerSizeTransition(player, dt) {
+  const transition = player?.sizeTransition;
+  if (!transition) return;
+  transition.elapsed = Math.min(transition.duration, transition.elapsed + dt);
+  const progress = transition.elapsed / transition.duration;
+  // 처음에는 천천히, 끝에서는 빠르게 수축해 꿈이 접히는 감각을 준다.
+  const eased = 1 - (1 - progress) ** 3;
+  const centerX = player.x + player.w / 2;
+  const feetY = player.y + player.h;
+  player.w = transition.fromW + (transition.toW - transition.fromW) * eased;
+  player.h = transition.fromH + (transition.toH - transition.fromH) * eased;
+  player.x = centerX - player.w / 2;
+  player.y = feetY - player.h;
+  player.spriteScale = transition.fromScale + (transition.toScale - transition.fromScale) * eased;
+  player.shrinkPulse = Math.max(0, transition.duration - transition.elapsed);
+  if (progress >= 1) delete player.sizeTransition;
 }
 
 function updateMirrorGates(b, techniques) {
@@ -4756,6 +4783,7 @@ function updateBoss(dt) {
   updateDash(dt);
   imaginationRegen(dt, techniques);
   if (game.phase !== 'playing') return;
+  updatePlayerSizeTransition(p, dt);
   game.elapsed += dt;
   if (!freezeBoss) b.threatElapsed = (b.threatElapsed || 0) + dt;
   if (game.fireCooldown > 0) game.fireCooldown = Math.max(0, game.fireCooldown - dt);
@@ -4806,7 +4834,9 @@ function updateBoss(dt) {
     for (const shot of game.nightmareShots) updateNightmareShotMotion(shot, dt);
     game.nightmareShots = game.nightmareShots.filter((shot) => {
       redirectHaneulKiteWithVane(b, shot);
-      const rect = { x: shot.x - shot.r, y: shot.y - shot.r, w: shot.r * 2, h: shot.r * 2 };
+      // 불협화음의 외형은 유지하고 실제 피격 반경만 살짝 줄인다.
+      const hitRadius = shot.kind === 'dissonant-note' ? shot.r * .86 : shot.r;
+      const rect = { x: shot.x - hitRadius, y: shot.y - hitRadius, w: hitRadius * 2, h: hitRadius * 2 };
       if (b.mode === 'chase' && b.windVanePhase && shot.vaneReflected && overlaps(rect, b)) {
         if (b.vaneHitCooldown <= 0) hitHaneulWithReflectedKite(b);
         return false;
@@ -5646,7 +5676,7 @@ function drawHarinStage02GateLayer(gateSprite, structure, layer) {
   const { image, anchor } = gateSprite;
   const scaleX = gateSprite.scaleX || HARIN_STAGE_02_GATE_DRAW.scale;
   const scaleY = gateSprite.scaleY || HARIN_STAGE_02_GATE_DRAW.scale;
-  const entranceCenterX = structure.x + structure.w / 2;
+  const entranceCenterX = (structure.visualX ?? structure.x) + structure.w / 2;
   // 이미지 전체 중심 대신 성문 입구 중심을 실제 차단 구조물 중심에 고정한다.
   const drawX = entranceCenterX - anchor.entranceCenterSourceX * scaleX;
   const drawY = structure.y + structure.h + HARIN_STAGE_02_GATE_DRAW.roadOverlap - anchor.groundSourceY * scaleY;
@@ -5705,7 +5735,7 @@ function drawHarinStage02RestorationPieces(gateSprite, structure, layer, progres
   const { image, anchor } = gateSprite;
   const scaleX = gateSprite.scaleX || HARIN_STAGE_02_GATE_DRAW.scale;
   const scaleY = gateSprite.scaleY || HARIN_STAGE_02_GATE_DRAW.scale;
-  const entranceCenterX = structure.x + structure.w / 2;
+  const entranceCenterX = (structure.visualX ?? structure.x) + structure.w / 2;
   const drawX = entranceCenterX - anchor.entranceCenterSourceX * scaleX;
   const drawY = structure.y + structure.h + HARIN_STAGE_02_GATE_DRAW.roadOverlap - anchor.groundSourceY * scaleY;
   const split = anchor.splitSourceX;
@@ -5936,7 +5966,7 @@ function drawHarinStage02Restoration(structure, layer) {
   const memoryPad = game.memoryPads?.[0];
   const startX = memoryPad ? memoryPad.x + memoryPad.w / 2 : 180;
   const startY = memoryPad ? memoryPad.y + memoryPad.h * .34 : 460;
-  const endX = structure.x + structure.w / 2;
+  const endX = (structure.visualX ?? structure.x) + structure.w / 2;
   const endY = structure.y + structure.h + 2;
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
@@ -7384,7 +7414,8 @@ function drawRunningSpritePieces(image, drawX, drawY, drawWidth, drawHeight, swi
 }
 
 function drawSpriteAt(image, player, bossMode = false, motion = {}) {
-  const visualHeight = bossMode ? 54 : 48;
+  const visualScale = Number.isFinite(player.spriteScale) ? player.spriteScale : 1;
+  const visualHeight = (bossMode ? 54 : 48) * visualScale;
   const visualWidth = Math.round(visualHeight * (PLAYER_SPRITE_SIZE.width / PLAYER_SPRITE_SIZE.height));
   const centerX = Math.round(player.x + player.w / 2) + (motion.offsetX || 0);
   const footY = Math.round(player.y + player.h) + (motion.bob || 0) + (motion.offsetY || 0);
@@ -7517,6 +7548,24 @@ function drawCharacterMotion(player, bossMode, motion = {}, visualOverrides = {}
 }
 
 function drawChild(player, bossMode = false) {
+  const pulse = player.shrinkPulse || 0;
+  if (pulse > 0) {
+    const ratio = 1 - pulse / .45;
+    const centerX = player.x + player.w / 2;
+    const centerY = player.y + player.h / 2;
+    const radius = 28 - ratio * 15;
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = Math.max(0, .42 * (1 - ratio));
+    ctx.strokeStyle = '#d9fff7';
+    ctx.lineWidth = 2;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#91f3e4';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
   drawCharacterMotion(player, bossMode, playerMotionState(player, bossMode));
 }
 
@@ -8711,7 +8760,7 @@ function drawHarinLaughThiefSprite(b) {
     ctx.globalAlpha = 1;
     ctx.shadowBlur = b.flash > 0 ? 18 : 10;
     ctx.shadowColor = b.flash > 0 ? '#fff4bd' : '#ff5d9b';
-    ctx.drawImage(image, Math.round(b.x), Math.round(b.y), 72, 108);
+    ctx.drawImage(image, Math.round(b.x), Math.round(b.y), b.w, b.h);
     if (b.calmMaskImpactPulse > 0) {
       ctx.globalAlpha = b.calmMaskImpactPulse / .48;
       ctx.strokeStyle = '#fff0a8';
@@ -9519,16 +9568,33 @@ function loop(time) {
 }
 
 startButton.addEventListener('click', () => {
-  if (game.phase === 'title') newGame();
+  if (game.phase === 'title') {
+    closeTitleModals();
+    startGameFromTitle();
+  }
   else if (game.phase === 'story') continueStoryBeat();
   else startStage();
 });
+storyButton?.addEventListener('click', () => {
+  if (game.phase !== 'title') return;
+  closeTitleSettings();
+  storySummaryModal?.classList.remove('hidden');
+});
+settingsButton?.addEventListener('click', () => {
+  const opening = titleSettings?.classList.contains('hidden');
+  if (opening) closeStorySummary();
+  titleSettings?.classList.toggle('hidden', !opening);
+  settingsButton.setAttribute('aria-expanded', String(Boolean(opening)));
+  updateBgmVolumeControl();
+  updateBgmToggle(stageBgm.key);
+});
+settingsCloseButton?.addEventListener('click', closeTitleSettings);
+storyCloseButton?.addEventListener('click', closeStorySummary);
 canvas.addEventListener('click', () => {
   if (game.phase === 'ending-cinematic') advanceEndingCinematic();
 });
 window.addEventListener('pointerdown', primeGameAudio, { passive: true });
-resumeButton.addEventListener('click', closeStageMenu);
-routeModeButton.addEventListener('click', toggleRouteMode);
+mainMenuButton?.addEventListener('click', showTitleScreen);
 disconnectSkipButton.addEventListener('click', skipDreamDisconnect);
 bgmToggleButton.addEventListener('click', () => {
   if (stageBgm.enabled && stageBgm.playBlocked) {
@@ -9547,6 +9613,12 @@ bgmVolumeSlider?.addEventListener('input', () => {
 });
 bgmVolumeSlider?.addEventListener('change', () => {
   setBgmMasterVolume(Number(bgmVolumeSlider.value) / 100, true);
+});
+pauseBgmVolumeSlider?.addEventListener('input', () => {
+  setBgmMasterVolume(Number(pauseBgmVolumeSlider.value) / 100);
+});
+pauseBgmVolumeSlider?.addEventListener('change', () => {
+  setBgmMasterVolume(Number(pauseBgmVolumeSlider.value) / 100, true);
 });
 restartButton.addEventListener('click', () => {
   if (game.phase === 'failed') startStage();
@@ -9569,7 +9641,7 @@ ruleCards.forEach((card) => {
 function handleConfirmInput() {
   if (game.phase === 'disconnecting') skipDreamDisconnect();
   else if (game.phase === 'ending-cinematic') advanceEndingCinematic();
-  else if (game.phase === 'title') newGame();
+  else if (game.phase === 'title') startGameFromTitle();
   else if (game.phase === 'story') continueStoryBeat();
   else if (game.phase === 'intro' || game.phase === 'failed') startStage();
   else if (game.phase === 'chapter-complete') showFinalTruth();

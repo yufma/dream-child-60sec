@@ -14,14 +14,12 @@
     <meta name="twitter:description" content="빼앗긴 행복을 되돌리는 22스테이지 꿈 액션 게임" />
     <meta name="twitter:image" content="__SITE_ORIGIN__/og.png" />
     <title>꿈을 되돌리는 아이: 60초 수정실</title>
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=20260825-title-bottom-right-112" />
   </head>
   <body>
     <main class="game-shell" aria-label="꿈을 되돌리는 아이 게임">
       <div class="game-heading">
-        <p class="eyebrow">꿈의 연결 · 22개의 기억</p>
         <h1>꿈을 되돌리는 아이 <span>:</span> 60초 수정실</h1>
-        <p class="subtitle">세 친구와 딸의 꿈을 지나, 빼앗긴 행복을 모두 되돌리세요.</p>
       </div>
 
       <section class="game-frame" aria-live="polite">
@@ -93,28 +91,98 @@
                 <small class="story-progress" id="story-progress">01 / 02</small>
               </div>
             </div>
-            <button class="primary-button" id="start-button">꿈 접속 시작 <span>↵</span></button>
+            <div class="title-actions" aria-label="시작 메뉴">
+              <button class="primary-button" id="start-button" type="button">게임 시작 <span>↵</span></button>
+              <button class="title-menu-button" id="story-button" type="button">스토리</button>
+              <button class="title-menu-button" id="settings-button" type="button" aria-expanded="false" aria-controls="title-settings-modal">설정</button>
+            </div>
             <p class="controls-preview">처음에는 <b>이동 A/D · 점프 W · 확인 Enter/F · K 기록</b>만 기억하세요. 나머지 기술과 회전목마 P/Y 원형벽은 해당 꿈에서 화면 아래에 표시됩니다. <b>ESC</b>로 언제든 꿈의 경로를 열 수 있어요.</p>
+          </div>
+          <div class="title-modal hidden" id="title-settings-modal" role="dialog" aria-modal="true" aria-label="게임 설정">
+            <section class="title-settings" aria-label="게임 설정 내용">
+              <div class="title-modal-heading">
+                <div class="title-settings-heading"><span>설정</span><small>음량과 조작키</small></div>
+                <button class="title-modal-close" id="settings-close-button" type="button" aria-label="설정 닫기">×</button>
+              </div>
+              <section class="bgm-controls" id="bgm-controls" aria-label="배경음악 설정">
+                <span class="bgm-settings-label">배경음</span>
+                <button class="bgm-toggle" id="bgm-toggle" type="button" aria-label="배경음악 끄기">음악 <span>켜짐</span></button>
+                <label class="bgm-volume-control" for="bgm-volume">
+                  <span>음량</span>
+                  <input class="bgm-volume-slider" id="bgm-volume" type="range" min="0" max="100" step="1" value="65" aria-label="배경음악 음량" />
+                  <output class="bgm-volume-value" id="bgm-volume-value" for="bgm-volume">65%</output>
+                </label>
+              </section>
+              <section class="key-settings" aria-label="키 설정">
+                <span class="key-settings-label">키 설정 · 사용 키만 점등</span>
+                <div class="keyboard-layout" aria-label="사용 키보드 배열">
+                  <div class="keyboard-row">
+                    <span class="keyboard-key used wide">Esc</span><span class="keyboard-key">Q</span><span class="keyboard-key used">W</span><span class="keyboard-key">E</span><span class="keyboard-key">R</span><span class="keyboard-key">T</span><span class="keyboard-key used">Y</span><span class="keyboard-key">U</span><span class="keyboard-key used">I</span><span class="keyboard-key">O</span><span class="keyboard-key used">P</span>
+                  </div>
+                  <div class="keyboard-row">
+                    <span class="keyboard-key wide">Tab</span><span class="keyboard-key used">A</span><span class="keyboard-key used">S</span><span class="keyboard-key used">D</span><span class="keyboard-key used">F</span><span class="keyboard-key">G</span><span class="keyboard-key">H</span><span class="keyboard-key used">J</span><span class="keyboard-key used">K</span><span class="keyboard-key used">L</span><span class="keyboard-key used wide">Enter</span>
+                  </div>
+                  <div class="keyboard-row">
+                    <span class="keyboard-key used wider">Shift</span><span class="keyboard-key">Z</span><span class="keyboard-key">X</span><span class="keyboard-key">C</span><span class="keyboard-key">V</span><span class="keyboard-key">B</span><span class="keyboard-key">N</span><span class="keyboard-key">M</span><span class="keyboard-key wider">Shift</span>
+                  </div>
+                  <div class="keyboard-row keyboard-bottom-row">
+                    <span class="keyboard-key">Ctrl</span><span class="keyboard-key">Alt</span><span class="keyboard-key used space-key">Space</span><span class="keyboard-key">Alt</span>
+                    <div class="arrow-cluster" aria-label="방향키">
+                      <span class="keyboard-spacer" aria-hidden="true"></span><span class="keyboard-key used arrow-key">↑</span><span class="keyboard-spacer" aria-hidden="true"></span>
+                      <span class="keyboard-key used arrow-key">←</span><span class="keyboard-key used arrow-key">↓</span><span class="keyboard-key used arrow-key">→</span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </section>
+          </div>
+          <div class="title-modal hidden" id="story-summary-modal" role="dialog" aria-modal="true" aria-labelledby="story-summary-title">
+            <section class="story-summary-card">
+              <div class="title-modal-heading">
+                <p class="tag">프롤로그</p>
+                <button class="title-modal-close" id="story-close-button" type="button" aria-label="스토리 요약 닫기">×</button>
+              </div>
+              <h2 id="story-summary-title">되돌려야 할<br />꿈들이 있습니다</h2>
+              <p>수면 과학자는 딸의 완벽한 꿈을 유지하려고 친구들의 행복한 기억을 꿈 추출기의 연료로 빼앗고 있습니다.</p>
+              <p>윤호는 전 조수의 접속 장치로 하린·유나·하늘의 꿈을 지나며 잃어버린 기억을 되돌리고, 마지막에는 잠든 딸의 꿈에 닿아야 합니다.</p>
+            </section>
           </div>
         </div>
 
         <div class="overlay hidden" id="stage-menu">
-          <div class="overlay-card menu-card">
-            <p class="tag">꿈의 경로 · ESC로 돌아가기</p>
-            <h2>꿈의 경로</h2>
-            <p id="stage-menu-copy">개발 점검 모드입니다. 모든 스테이지를 바로 선택할 수 있으며, 클리어한 스테이지는 언제든 다시 도전할 수 있습니다. 11스테이지 이후는 아래로 스크롤해 선택하세요.</p>
-            <button class="route-mode-button" id="route-mode-button" type="button">개발 점검 모드</button>
-            <section class="bgm-controls hidden" id="bgm-controls" aria-label="배경음악 설정">
-              <span class="bgm-settings-label">배경음</span>
-              <button class="bgm-toggle" id="bgm-toggle" type="button" aria-label="배경음악 끄기">음악 <span>켜짐</span></button>
-              <label class="bgm-volume-control" for="bgm-volume">
-                <span>음량</span>
-                <input class="bgm-volume-slider" id="bgm-volume" type="range" min="0" max="100" step="1" value="65" aria-label="배경음악 음량" />
-                <output class="bgm-volume-value" id="bgm-volume-value" for="bgm-volume">65%</output>
+          <div class="overlay-card menu-card pause-menu-card">
+            <p class="tag">일시 정지</p>
+            <h2>게임 설정</h2>
+            <section class="bgm-controls pause-bgm-controls" aria-label="배경음악 음량 설정">
+              <span class="bgm-settings-label">배경음 음량</span>
+              <label class="bgm-volume-control" for="pause-bgm-volume">
+                <input class="bgm-volume-slider" id="pause-bgm-volume" type="range" min="0" max="100" step="1" value="65" aria-label="배경음악 음량" />
+                <output class="bgm-volume-value" id="pause-bgm-volume-value" for="pause-bgm-volume">65%</output>
               </label>
             </section>
-            <div class="stage-select-grid" id="stage-select-grid"></div>
-            <button class="primary-button" id="resume-button">현재 꿈으로 돌아가기 <span>ESC</span></button>
+            <section class="key-settings" aria-label="키 설정">
+              <span class="key-settings-label">키 설정 · 사용 키만 점등</span>
+              <div class="keyboard-layout" aria-label="사용 키보드 배열">
+                <div class="keyboard-row">
+                  <span class="keyboard-key used wide">Esc</span><span class="keyboard-key">Q</span><span class="keyboard-key used">W</span><span class="keyboard-key">E</span><span class="keyboard-key">R</span><span class="keyboard-key">T</span><span class="keyboard-key used">Y</span><span class="keyboard-key">U</span><span class="keyboard-key used">I</span><span class="keyboard-key">O</span><span class="keyboard-key used">P</span>
+                </div>
+                <div class="keyboard-row">
+                  <span class="keyboard-key wide">Tab</span><span class="keyboard-key used">A</span><span class="keyboard-key used">S</span><span class="keyboard-key used">D</span><span class="keyboard-key used">F</span><span class="keyboard-key">G</span><span class="keyboard-key">H</span><span class="keyboard-key used">J</span><span class="keyboard-key used">K</span><span class="keyboard-key used">L</span><span class="keyboard-key used wide">Enter</span>
+                </div>
+                <div class="keyboard-row">
+                  <span class="keyboard-key used wider">Shift</span><span class="keyboard-key">Z</span><span class="keyboard-key">X</span><span class="keyboard-key">C</span><span class="keyboard-key">V</span><span class="keyboard-key">B</span><span class="keyboard-key">N</span><span class="keyboard-key">M</span><span class="keyboard-key wider">Shift</span>
+                </div>
+                <div class="keyboard-row keyboard-bottom-row">
+                  <span class="keyboard-key">Ctrl</span><span class="keyboard-key">Alt</span><span class="keyboard-key used space-key">Space</span><span class="keyboard-key">Alt</span>
+                  <div class="arrow-cluster" aria-label="방향키">
+                    <span class="keyboard-spacer" aria-hidden="true"></span><span class="keyboard-key used arrow-key">↑</span><span class="keyboard-spacer" aria-hidden="true"></span>
+                    <span class="keyboard-key used arrow-key">←</span><span class="keyboard-key used arrow-key">↓</span><span class="keyboard-key used arrow-key">→</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <button class="title-menu-button main-menu-button" id="main-menu-button" type="button">메인 화면으로 나가기</button>
+            <p class="pause-menu-hint">ESC를 누르면 현재 꿈으로 돌아갑니다.</p>
           </div>
         </div>
 
@@ -147,6 +215,7 @@
         <div class="toast" id="toast" role="status"></div>
       </section>
 
+      <div class="post-game-info" hidden aria-hidden="true">
       <section class="rules-panel" aria-label="상상으로 바꿀 수 있는 꿈의 규칙">
         <div class="rules-intro">
           <p class="eyebrow">상상력의 규칙</p>
@@ -230,7 +299,8 @@
       </section>
 
       <p class="footer-note">A tiny browser game made for OpenAI Game Builders Seoul · Chapter 01 of a dream action adventure.</p>
+      </div>
     </main>
-  <script src="game.js?v=20260825-stage11-transit-no-damage-96"></script>
+  <script src="game.js?v=20260825-title-fixed-scroll-111"></script>
   </body>
 </html>
