@@ -1306,6 +1306,22 @@ function closeTitleModals() {
   closeStorySummary();
 }
 
+function resetCampaignProgress() {
+  campaign.unlocked = 0;
+  campaign.memories.clear();
+  campaign.skills.clear();
+  campaign.cleared.clear();
+  campaign.bossRecords = {};
+  campaign.puzzleRecords = {};
+  campaign.routeMode = 'development';
+  try {
+    localStorage.removeItem(PROGRESS_STORAGE_KEY);
+    localStorage.removeItem('dream-child-campaign-progress-v1');
+  } catch {
+    // 저장소 접근이 제한돼도 현재 세션의 해금 상태는 초기화한다.
+  }
+}
+
 function showTitleScreen() {
   window.scrollTo(0, 0);
   loadingRun += 1;
@@ -1313,6 +1329,7 @@ function showTitleScreen() {
   contextControls.classList.add('hidden');
   hideFriendReaction();
   stopStageBgm();
+  resetCampaignProgress();
   game = freshGameState('title');
   document.body.classList.add('title-screen-active');
   gameHud.classList.add('hidden');
