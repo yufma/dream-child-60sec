@@ -3842,7 +3842,7 @@ function updatePuzzle(dt) {
   game.dropThroughTimer = Math.max(0, (game.dropThroughTimer || 0) - dt);
   if (game.dropThroughTimer <= 0) game.dropThroughPlatform = null;
   const dropRequested = pressed.has('ArrowDown') || pressed.has('KeyS');
-  if (dropRequested && p.grounded && game.carouselRotationTimer <= 0) {
+  if (dropRequested && p.grounded) {
     const feet = p.y + p.h;
     const dropEdgeGrace = stage.layout === 'carousel' ? 3 : -3;
     const supportsPlayer = (platform) => !platform.wall
@@ -3865,14 +3865,15 @@ function updatePuzzle(dt) {
       say('발판 아래층으로 내려갑니다.');
     }
   }
-  const carouselRotationLocked = stage.layout === 'carousel' && game.carouselRotationTimer > 0;
-  const axis = carouselRotationLocked ? 0 : horizontalInput();
+  // 회전목마 벽이 움직이는 동안에도 윤호는 계속 걸으며 점프할 수 있다.
+  // P/Y는 구조물만 돌리고 플레이어 입력을 잠그지 않는다.
+  const axis = horizontalInput();
   const movementControl = p.grounded ? 1 : MOVEMENT_TUNING.puzzle.airControl;
-  p.vx = carouselRotationLocked ? 0 : acceleratedVelocity(p.vx, axis, MOVEMENT_TUNING.puzzle, dt, movementControl);
+  p.vx = acceleratedVelocity(p.vx, axis, MOVEMENT_TUNING.puzzle, dt, movementControl);
   if (axis) p.facing = axis;
   const headwind = windCliffHeadwindStrength(stage);
   const jump = pressed.has('ArrowUp') || pressed.has('KeyW');
-  if (jump && p.grounded && !carouselRotationLocked) {
+  if (jump && p.grounded) {
     p.vy = -470; p.grounded = false;
     // 점프가 시작되는 바로 그 프레임에도 바람이 등을 밀어, 역풍 규칙을 명확히 체감시킨다.
     if (headwind > 0) p.vx = Math.max(-390, p.vx - 172 * headwind);
@@ -3891,7 +3892,7 @@ function updatePuzzle(dt) {
   applySignpostMazeWindPhysics(p, dt, stage);
   const oldX = p.x;
   p.x = Math.max(0, Math.min(W - p.w, p.x + p.vx * dt));
-  if (game.dashTimer > 0 && !carouselRotationLocked) {
+  if (game.dashTimer > 0) {
     p.x = Math.max(0, Math.min(W - p.w, p.x + game.dashDirection * 520 * dt));
     p.facing = game.dashDirection;
     p.vx = game.dashDirection * 340;
@@ -4036,7 +4037,8 @@ function bossShotDamage(shot, boss) {
   if (shot.kind === 'black-kite' && Number.isFinite(shot.damage)) return shot.damage;
   if (shot.kind === 'black-kite') return HANEUL_VANE_KITE_DAMAGE;
   if (shot.kind === 'harin-laugh') return 12;
-  if (shot.kind === 'dissonant-note') return boss?.codaActive ? 28 : 22;
+  // 11스테이지 불협화음은 기존 피해의 약 2/3로 낮춰, 탄막 수는 유지하되 회복 여지를 준다.
+  if (shot.kind === 'dissonant-note') return boss?.codaActive ? 19 : 15;
   if (shot.kind === 'memory') return 24;
   if (shot.kind === 'shard') return 22;
   if (shot.kind === 'wind') return 20;
@@ -4126,13 +4128,14 @@ function spawnNightmarePattern() {
 
   if (b.mode === 'calm') {
     const activeLaughShots = game.nightmareShots.filter((shot) => shot.kind === 'harin-laugh').length;
-    const capacity = Math.max(0, 18 - activeLaughShots);
+    // 5스테이지 2페이즈는 숨 돌릴 여지는 남기되, 가면 조준 중에도 회피가 필요하게 한 단계만 높인다.
+    const capacity = Math.max(0, 22 - activeLaughShots);
     if (!capacity) return;
     const calmOrigin = { x: b.x + b.w / 2, y: b.y + b.h * .5 };
     if (attackNumber % 4 === 0) {
-      launchNightmareRing(calmOrigin, Math.min(6, capacity), { speed: 155, r: 7, kind: 'harin-laugh', offset: threatTime * .36 });
+      launchNightmareRing(calmOrigin, Math.min(7, capacity), { speed: 155, r: 7, kind: 'harin-laugh', offset: threatTime * .36 });
     } else if (attackNumber % 2 === 0) {
-      launchNightmareFan(calmOrigin, p, Math.min(3, capacity), .82, { speed: 190, r: 8, kind: 'harin-laugh' });
+      launchNightmareFan(calmOrigin, p, Math.min(4, capacity), .82, { speed: 190, r: 8, kind: 'harin-laugh' });
     } else {
       launchNightmareFan(calmOrigin, p, 1, 0, { speed: 210, r: 8, kind: 'harin-laugh' });
     }
@@ -4827,6 +4830,10 @@ function updateBoss(dt) {
         : game.echoes.find((echo) => overlaps(rect, echo));
       if (echoHit) {
         echoHit.flash = .24;
+        // 11스테이지의 이동 중 잔상은 탄막을 한 번 막아 내되, 최종 화음 발판에 닿기 전에는 내구도를 잃지 않는다.
+        const resonanceEchoInTransit = b.mode === 'resonance'
+          && (!echoHit.holding || !b.memoryPads.some((pad) => echoOverlapsPad(echoHit, pad)));
+        if (resonanceEchoInTransit) return false;
         if (b.mode === 'chase') {
           // 기준점은 체력 게이지가 아니다. 되돌림 바람을 놓치면 다음 기회를 기다릴 뿐 잔상은 깨지지 않는다.
           if (shot.relayShot) resetWindRelayToIntercept(b, '되돌림 바람이 기준점에 닿아 흩어졌습니다. 잔상은 남아 있어요. 다음 바람을 Space 질주로 가로채세요.');
@@ -7656,12 +7663,9 @@ function drawChoirBalconySingerCues() {
     // 빈 의자의 주인이 K 발판 바로 위에 머물도록 바닥선을 발판과 맞춘다.
     const top = pad.y - visualHeight + 2 + bob;
     ctx.save();
-    // 배경의 남청·청록 공간에 녹는, 잊힌 합창단의 잔상으로 낮춘다.
+    // 원본 픽셀 윤곽은 그대로 두고, 투명도만으로 유령의 존재감을 조절한다.
     ctx.imageSmoothingEnabled = false;
-    ctx.filter = 'blur(.65px) saturate(.5) brightness(.68)';
     ctx.globalAlpha = duetReady ? .56 : .40;
-    ctx.shadowBlur = duetReady ? 9 : 5;
-    ctx.shadowColor = index === 0 ? '#669aa2' : '#8c7fa0';
     ctx.drawImage(image, Math.round(centerX - visualWidth / 2), Math.round(top), visualWidth, visualHeight);
     ctx.restore();
   });
@@ -7728,10 +7732,8 @@ function drawMemoryPadDirectionGhosts() {
       const flip = direction === defaultSingerDirections[index % defaultSingerDirections.length] ? 1 : -1;
       ctx.save();
       ctx.imageSmoothingEnabled = false;
+      // 10스테이지도 원본 스프라이트의 픽셀 윤곽을 유지하고 투명도만 낮춘다.
       ctx.globalAlpha = active ? .16 : .43;
-      ctx.filter = 'blur(.62px) saturate(.54) brightness(.76)';
-      ctx.shadowBlur = active ? 5 : 10;
-      ctx.shadowColor = color;
       ctx.translate(Math.round(centerX), Math.round(footY + bob));
       ctx.scale(flip, 1);
       ctx.drawImage(image, -visualWidth / 2, -visualHeight, visualWidth, visualHeight);
