@@ -294,7 +294,10 @@ canvas.connection-critical { filter: blur(4px) saturate(.4) brightness(.56); }
 .pause-bgm-controls .bgm-volume-control { flex: 1; min-width: 0; }
 .pause-bgm-controls .bgm-volume-slider { width: min(100%, 190px); flex: 1; }
 .pause-menu-card .key-settings { margin-top: 14px; }
-.main-menu-button { width: 100%; margin-top: 16px; text-align: center; }
+.restart-stage-button, .main-menu-button { width: 100%; text-align: center; }
+.restart-stage-button { margin-top: 16px; border-color: rgba(255, 227, 125, .55); background: linear-gradient(135deg, rgba(89, 59, 117, .86), rgba(28, 70, 101, .9)); }
+.restart-stage-button:hover { border-color: #fff0a8; background: linear-gradient(135deg, rgba(119, 77, 143, .95), rgba(35, 100, 131, .96)); }
+.main-menu-button { margin-top: 8px; }
 .pause-menu-hint { margin: 10px 0 0; color: #9caecc; font-size: .67rem; font-weight: 650; text-align: center; }
 .overlay h2 { font-size: clamp(1.72rem, 4.35vw, 3rem); line-height: 1.12; word-break: keep-all; overflow-wrap: anywhere; text-wrap: balance; }
 .overlay-card > p:not(.tag):not(.controls-preview) { max-width: 56ch; margin: clamp(12px, 2vh, 17px) auto clamp(16px, 2.5vh, 21px); color: #c7d1e7; font-size: clamp(.78rem, 1.2vw, .91rem); line-height: 1.62; letter-spacing: -.021em; word-break: keep-all; overflow-wrap: anywhere; text-wrap: pretty; }

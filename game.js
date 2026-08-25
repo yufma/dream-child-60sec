@@ -268,6 +268,7 @@ const settingsCloseButton = document.querySelector('#settings-close-button');
 const storySummaryModal = document.querySelector('#story-summary-modal');
 const storyCloseButton = document.querySelector('#story-close-button');
 const mainMenuButton = document.querySelector('#main-menu-button');
+const restartCurrentStageButton = document.querySelector('#restart-current-stage-button');
 const campaignRouteEl = document.querySelector('#campaign-route');
 const restartButton = document.querySelector('#restart-button');
 const startTag = startScreen.querySelector('.tag');
@@ -414,12 +415,15 @@ const STAGES = [
     layout: 'walk', echoGoal: 0, hint: '별빛 음표가 가리키는 오른쪽 문까지 걸어가세요.',
   },
   {
+    // 첫 질주 튜토리얼은 캠페인에서 제외한다. 원본 인덱스는 기존 스프라이트와
+    // 브라우저 저장 기록의 정합성을 위해 남겨 두되, 어떤 경로에서도 진입하지 않는다.
+    removed: true,
     chapter: '하늘 · 멈춰 버린 발걸음', name: '바람길의 입구', type: 'puzzle', skills: ['dash'], teaches: ['dash'], objective: '질주로 첫 번째 바람 틈을 넘어라',
     intro: '세 번째 친구 하늘이는 갇힌 꿈에서도 앞으로 달리는 걸 멈추지 않았어. 하지만 이 바람길의 틈은 점프만으로 닿기엔 너무 멀다. Space를 누르면 짧게 질주해, 바람을 가르듯 간격을 넘을 수 있어.',
     layout: 'dash', echoGoal: 1, hint: '기억의 나가 출발 신호를 지키면 길이 열립니다. Space로 첫 번째 긴 틈을 넘으세요.',
   },
   {
-    chapter: '하늘 · 멈춰 버린 발걸음', name: '바람을 가르는 달리기', type: 'puzzle', skills: ['resonance', 'dash'], objective: '바람 터널의 위아래 길을 질주와 공명으로 이어라',
+    chapter: '하늘 · 멈춰 버린 발걸음', name: '바람을 가르는 달리기', type: 'puzzle', skills: ['resonance', 'dash'], teaches: ['dash'], objective: '바람 터널의 위아래 길을 질주와 공명으로 이어라',
     intro: '거대한 바람 터널은 낮은 길과 높은 길을 번갈아 막아. 기억의 나에게 출발 신호를 맡기고, Space로 첫 틈을 넘은 뒤 L로 위쪽 숨은 바람길을 찾아가자.',
     layout: 'wind-tunnel', echoGoal: 1, hint: '출발 신호에 기억을 남긴 뒤, Space로 터널 틈을 넘고 L로 위쪽 바람길을 드러내세요.',
   },
@@ -509,6 +513,10 @@ const STAGES = [
     hint: '① 세 기억 봉인을 채우기 ② L로 꿈 에너지 분리하기 ③ J로 방어막을 깨기 ④ 움직이는 진짜 기억만 맞히기 ⑤ 딸의 목소리를 전달하기.',
   },
 ];
+
+// 13스테이지는 플레이 경로에서 제외한다. 실제 배열 인덱스는 유지해 과거 저장 데이터와
+// 원화/음악 배열의 연결을 깨지 않으며, 화면에 보이는 스테이지 번호만 연속된 1~21로 계산한다.
+const PLAYABLE_STAGE_INDEXES = Object.freeze(STAGES.flatMap((stage, index) => stage.removed ? [] : [index]));
 
 // 몇 개의 핵심 퍼즐은 기억 발판의 개수를 채우는 데서 끝나지 않는다.
 // 과거의 내가 어느 방향을 바라보며 장면을 재생하는지가 현재 길의 규칙을 바꾼다.
@@ -1183,11 +1191,12 @@ function freshPlayer() {
 function loadCampaignProgress() {
   try {
     const saved = JSON.parse(localStorage.getItem(PROGRESS_STORAGE_KEY) || localStorage.getItem('dream-child-campaign-progress-v1') || '{}');
+    const savedUnlocked = Math.max(0, Math.min(STAGES.length - 1, Number(saved.unlocked) || 0));
     return {
-      unlocked: Math.max(0, Math.min(STAGES.length - 1, Number(saved.unlocked) || 0)),
+      unlocked: normalizePlayableStageIndex(savedUnlocked),
       memories: new Set(Array.isArray(saved.memories) ? saved.memories : []),
       skills: new Set(Array.isArray(saved.skills) ? saved.skills.filter((skill) => skill !== 'gravity') : []),
-      cleared: new Set(Array.isArray(saved.cleared) ? saved.cleared.map(Number).filter(Number.isInteger) : []),
+      cleared: new Set(Array.isArray(saved.cleared) ? saved.cleared.map(Number).filter(isPlayableStageIndex) : []),
       bossRecords: saved.bossRecords && typeof saved.bossRecords === 'object' ? saved.bossRecords : {},
       puzzleRecords: saved.puzzleRecords && typeof saved.puzzleRecords === 'object' ? saved.puzzleRecords : {},
       routeMode: saved.routeMode === 'campaign' ? 'campaign' : 'development',
@@ -1214,18 +1223,39 @@ function saveCampaignProgress() {
 }
 
 function totalStages() {
-  return STAGES.length;
+  return PLAYABLE_STAGE_INDEXES.length;
+}
+
+function isPlayableStageIndex(index) {
+  return PLAYABLE_STAGE_INDEXES.includes(index);
+}
+
+function normalizePlayableStageIndex(index) {
+  const bounded = Math.max(0, Math.min(STAGES.length - 1, Number(index) || 0));
+  if (isPlayableStageIndex(bounded)) return bounded;
+  return PLAYABLE_STAGE_INDEXES.find((stageIndex) => stageIndex > bounded) ?? PLAYABLE_STAGE_INDEXES[PLAYABLE_STAGE_INDEXES.length - 1];
+}
+
+function nextPlayableStageIndex(index = game.stageIndex) {
+  return PLAYABLE_STAGE_INDEXES.find((stageIndex) => stageIndex > index) ?? null;
+}
+
+function displayStageNumber(index = game.stageIndex) {
+  const visibleIndex = PLAYABLE_STAGE_INDEXES.indexOf(index);
+  if (visibleIndex >= 0) return visibleIndex + 1;
+  return PLAYABLE_STAGE_INDEXES.filter((stageIndex) => stageIndex <= index).length;
 }
 
 function stagePage(stage = currentStage()) { return stage?.page || 1; }
 
 function renderCampaignRoute() {
   if (!campaignRouteEl) return;
-  campaignRouteEl.innerHTML = STAGES.map((stage, index) => {
-    const current = index === game.stageIndex ? ' current' : '';
+  campaignRouteEl.innerHTML = PLAYABLE_STAGE_INDEXES.map((stageIndex, visibleIndex) => {
+    const stage = STAGES[stageIndex];
+    const current = stageIndex === game.stageIndex ? ' current' : '';
     const pageMarker = stagePage(stage) === 2 ? 'PAGE 02 · ' : '';
     const bossMarker = stage.type === 'boss' ? ' · BOSS' : '';
-    return `<li class="${current.trim()}"><b>${pageMarker}${String(index + 1).padStart(2, '0')}</b><span>${stage.name}</span><small>${stage.chapter || '꿈의 길'}${bossMarker}</small></li>`;
+    return `<li class="${current.trim()}"><b>${pageMarker}${String(visibleIndex + 1).padStart(2, '0')}</b><span>${stage.name}</span><small>${stage.chapter || '꿈의 길'}${bossMarker}</small></li>`;
   }).join('');
 }
 
@@ -2344,7 +2374,7 @@ function showStageIntro() {
   storyDialogue.classList.add('hidden');
   game.phase = 'intro';
   const pagePrefix = stagePage(stage) === 2 ? '두 번째 장 · 마지막 꿈' : '꿈의 연결';
-  startTag.textContent = `${pagePrefix} · 스테이지 ${String(game.stageIndex + 1).padStart(2, '0')} / ${String(totalStages()).padStart(2, '0')}`;
+  startTag.textContent = `${pagePrefix} · 스테이지 ${String(displayStageNumber()).padStart(2, '0')} / ${String(totalStages()).padStart(2, '0')}`;
   startTitle.textContent = stage.name;
   if (stage.type === 'boss') {
     // 보스 안내는 한 덩어리의 긴 문단 대신, 읽는 순서가 보이는 세 줄 구조로 둔다.
@@ -2381,6 +2411,16 @@ function closeStageMenu() {
   stageMenu.classList.add('hidden');
   if (game.phase === 'playing') resumeStageBgm();
   updateHud();
+}
+
+function restartCurrentStage() {
+  if (game.phase !== 'playing' && game.phase !== 'menu') return;
+  // ESC 메뉴에서 즉시 다시 시작해도 보스 타이머·잔상·입력·BGM이 모두 새 도전 기준으로 초기화된다.
+  clearStageIntroTimer();
+  keys.clear();
+  pressed.clear();
+  game.resumePhase = null;
+  startStage();
 }
 
 function fallOffStage(message = '낙사! 기억이 시작점으로 되돌아갔어.') {
@@ -5161,11 +5201,12 @@ function completeStage() {
     });
   }
   campaign.cleared.add(game.stageIndex);
-  campaign.unlocked = Math.max(campaign.unlocked, Math.min(STAGES.length - 1, game.stageIndex + 1));
+  const nextStageIndex = nextPlayableStageIndex(game.stageIndex);
+  campaign.unlocked = Math.max(campaign.unlocked, nextStageIndex ?? game.stageIndex);
   saveCampaignProgress();
   game.challenge = null;
-  if (game.stageIndex < STAGES.length - 1) {
-    game.stageIndex += 1;
+  if (nextStageIndex !== null) {
+    game.stageIndex = nextStageIndex;
     if (storyBeat) showStoryBeat(storyBeat);
     else showStageIntro();
   } else showChapterEnd();
@@ -5437,7 +5478,7 @@ function renderContextControls() {
 function updateHud() {
   const stage = currentStage() || STAGES[0];
   const guide = phaseGuide();
-  stageIndexEl.textContent = `${stagePage() === 2 ? '두 번째 장 · ' : ''}스테이지 ${String(game.stageIndex + 1).padStart(2, '0')} / ${String(totalStages()).padStart(2, '0')}`;
+  stageIndexEl.textContent = `${stagePage() === 2 ? '두 번째 장 · ' : ''}스테이지 ${String(displayStageNumber()).padStart(2, '0')} / ${String(totalStages()).padStart(2, '0')}`;
   stageNameEl.textContent = stage.name;
   objectiveEl.textContent = guide.compact;
   const value = Math.ceil(game.imagination ?? 100);
@@ -9616,6 +9657,7 @@ canvas.addEventListener('click', () => {
 });
 window.addEventListener('pointerdown', primeGameAudio, { passive: true });
 mainMenuButton?.addEventListener('click', showTitleScreen);
+restartCurrentStageButton?.addEventListener('click', restartCurrentStage);
 disconnectSkipButton.addEventListener('click', skipDreamDisconnect);
 bgmToggleButton.addEventListener('click', () => {
   if (stageBgm.enabled && stageBgm.playBlocked) {
