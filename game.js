@@ -8683,14 +8683,9 @@ function drawYunaSilentChoirSprite(b) {
   ctx.globalAlpha = b.flash > 0 ? .92 : 1;
   ctx.drawImage(image, coreX - spriteW / 2, b.y + 4, spriteW, spriteH);
   // 배경은 유지하고, 탄막을 내보내는 입 부분만 공명에 반응한다.
+  // 몸을 감싸는 원형 오라는 쓰지 않고, 빛나는 호흡과 음표 조각으로만 상태를 전달한다.
   ctx.globalCompositeOperation = 'screen';
-  ctx.globalAlpha = .2 + pulse * .2 + restoredRatio * .16;
-  ctx.strokeStyle = '#9effd7'; ctx.lineWidth = 2;
-  for (let ring = 0; ring < 3; ring += 1) {
-    ctx.beginPath();
-    ctx.arc(coreX, coreY, 34 + ring * 19 + pulse * 4, 0, Math.PI * 2);
-    ctx.stroke();
-  }
+  ctx.globalAlpha = .22 + pulse * .16 + restoredRatio * .16;
   ctx.fillStyle = '#d8fff0'; ctx.shadowBlur = 22; ctx.shadowColor = '#8effdc';
   ctx.beginPath(); ctx.ellipse(coreX, coreY, 11 + pulse * 2, 19 + pulse * 3, 0, 0, Math.PI * 2); ctx.fill();
   for (let index = 0; index < b.resonanceProgress; index += 1) {
@@ -8739,18 +8734,14 @@ function drawHarinLaughThiefSprite(b) {
   ctx.globalAlpha = .98 - calmRatio * .13;
   ctx.drawImage(image, coreX - spriteW / 2, b.y - 34, spriteW, spriteH);
   // 광대의 비어 있던 가슴에 별빛이 차오르면 공격 없이도 안심시키는 보스전임을 전달한다.
+  // 원형 오라 대신 작은 별 조각만 남겨 일러스트 실루엣을 가리지 않는다.
   ctx.globalCompositeOperation = 'screen';
-  ctx.globalAlpha = .16 + pulse * .14 + calmRatio * .28;
-  ctx.strokeStyle = calmRatio > .55 ? '#ffe8a5' : '#ff9ac2';
-  ctx.lineWidth = 2;
-  for (let ring = 0; ring < 3; ring += 1) {
-    ctx.beginPath(); ctx.arc(coreX, chestY, 26 + ring * 17 + pulse * 4, 0, Math.PI * 2); ctx.stroke();
-  }
+  ctx.globalAlpha = .4 + pulse * .15 + calmRatio * .2;
   ctx.fillStyle = '#ffe990';
-  for (let star = 0; star < 3; star += 1) {
-    const angle = game.elapsed * .9 + star * 2.1;
-    const x = coreX + Math.cos(angle) * (14 + star * 5);
-    const y = chestY + Math.sin(angle) * (11 + star * 4);
+  for (let star = 0; star < 5; star += 1) {
+    const angle = game.elapsed * .9 + star * 1.26;
+    const x = coreX + Math.cos(angle) * (10 + (star % 3) * 7);
+    const y = chestY + Math.sin(angle) * (9 + (star % 2) * 7);
     ctx.fillRect(Math.round(x - 2), Math.round(y - 2), 4, 4);
   }
   ctx.restore();
@@ -8868,15 +8859,9 @@ function drawHaneulBlackKiteSprite(b) {
   ctx.globalAlpha = b.flash > 0 ? .9 : 1;
   ctx.drawImage(image, coreX - spriteW / 2, b.y - 42, spriteW, spriteH);
   // 탄막이 나오는 중심을 눈과 맞춰 플레이어가 위협의 방향을 읽을 수 있게 한다.
+  // 큰 원형 경고선 대신 세로로 번지는 눈빛만 남긴다.
   ctx.globalCompositeOperation = 'screen';
-  ctx.globalAlpha = .22 + pulse * .17;
-  ctx.strokeStyle = '#a6efff';
-  ctx.lineWidth = 2;
-  for (let ring = 0; ring < 3; ring += 1) {
-    ctx.beginPath();
-    ctx.ellipse(coreX, eyeY, 24 + ring * 14 + pulse * 4, 10 + ring * 6 + pulse * 2, 0, 0, Math.PI * 2);
-    ctx.stroke();
-  }
+  ctx.globalAlpha = .28 + pulse * .2;
   ctx.fillStyle = '#d7fbff';
   ctx.beginPath(); ctx.ellipse(coreX, eyeY, 6 + pulse * 2, 12 + pulse * 2, 0, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
@@ -8890,19 +8875,12 @@ function drawDaughterPerfectGuardianSprite(b) {
   const coreX = b.x + b.w / 2;
   const spriteW = 218 + pulse * 8;
   const spriteH = 327 + pulse * 12;
-  const mirrorY = b.y + 106;
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   ctx.shadowBlur = 24 + pulse * 14;
   ctx.shadowColor = b.flash > 0 ? '#fff5ff' : '#ffacd9';
   ctx.globalAlpha = b.flash > 0 ? .92 : 1;
   ctx.drawImage(image, coreX - spriteW / 2, b.y - 34, spriteW, spriteH);
-  ctx.globalCompositeOperation = 'screen';
-  ctx.globalAlpha = .18 + pulse * .16;
-  ctx.strokeStyle = '#cffff0'; ctx.lineWidth = 2;
-  for (let ring = 0; ring < 3; ring += 1) {
-    ctx.beginPath(); ctx.ellipse(coreX, mirrorY, 26 + ring * 15, 38 + ring * 13, 0, 0, Math.PI * 2); ctx.stroke();
-  }
   ctx.restore();
   return true;
 }
@@ -8917,19 +8895,12 @@ function drawScientistDreamGuardianSprite(b) {
   const baseWidth = awakened ? 282 : 352;
   const spriteW = (baseWidth + pulse * 12) * (1 - releaseRatio * .18);
   const spriteH = spriteW * image.naturalHeight / image.naturalWidth;
-  const coreY = b.y + 112;
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   ctx.shadowBlur = 30 + pulse * 16;
   ctx.shadowColor = b.releaseReady ? '#ffe8ad' : awakened ? '#ffc980' : '#73ddff';
   ctx.globalAlpha = b.releaseReady ? Math.max(.25, .92 - releaseRatio * .58) : 1;
   ctx.drawImage(image, coreX - spriteW / 2, b.y - (awakened ? 42 : 22), spriteW, spriteH);
-  ctx.globalCompositeOperation = 'screen';
-  ctx.globalAlpha = .18 + pulse * .2;
-  ctx.strokeStyle = b.releaseReady ? '#ffe6a7' : awakened ? '#ffd58d' : '#83efff'; ctx.lineWidth = 2;
-  for (let ring = 0; ring < 3; ring += 1) {
-    ctx.beginPath(); ctx.arc(coreX, coreY, 30 + ring * 19 + pulse * 5, 0, Math.PI * 2); ctx.stroke();
-  }
   ctx.restore();
   return true;
 }
@@ -9391,9 +9362,6 @@ function drawBoss() {
       .filter((mask) => !mask.broken && mask.y + mask.h >= calmReflectionBossBottom)
       .forEach(drawCalmReflectionMask);
   }
-  if (!bossIllustration) {
-    ctx.save(); ctx.fillStyle = 'rgba(255, 137, 176, .12)'; ctx.beginPath(); ctx.arc(b.x + 80, b.y + 102, 150, 0, Math.PI * 2); ctx.fill(); ctx.restore();
-  }
   const releaseRatio = b.releaseReady ? b.releaseProgress / b.releaseDuration : 0;
   const scale = b.mode === 'final'
     ? (b.releaseReady ? 1.14 - releaseRatio * .38 : b.attackUnlocked ? 1.14 + (b.phase - 1) * .13 : 1.14)
@@ -9466,10 +9434,6 @@ function drawBoss() {
     } else if (finalPhase === 4 && b.voiceGate) {
       drawFinalVoiceAltar(b.voiceGate, activeTechniques().resonance && overlaps(game.player, b.voiceGate), b.voiceProgress / Math.max(.01, b.voiceDuration));
     }
-  }
-  if (b.mode === 'calm' && !b.calmReflectionActive) {
-    ctx.save(); ctx.translate(b.x + b.w / 2, b.y + b.h / 2); ctx.strokeStyle = '#ffe37e'; ctx.lineWidth = 3; ctx.globalAlpha = .4 + Math.sin(game.elapsed * 5) * .12;
-    ctx.beginPath(); ctx.arc(0, 12, 108, 0, Math.PI * 2); ctx.stroke(); ctx.beginPath(); ctx.arc(0, 12, 128, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
   }
   if (b.mode === 'calm' && b.calmReflectionActive) {
     // 자유 조준은 가면 위의 한 줄 안내와 HUD 숫자만 남겨, 전투 장면을 가리지 않는다.
