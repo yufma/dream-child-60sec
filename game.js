@@ -1270,7 +1270,7 @@ function freshGameState(phase = 'intro') {
     player: freshPlayer(), platforms: [], boss: null, dreamShots: [], nightmareShots: [], fireCooldown: 0,
     nextAttack: 1.2, message: '', completed: [], memories: new Set(campaign.memories), learnedSkills: new Set(campaign.skills), fragments: [], echoes: [], recording: null, memoryRecordsUsed: 0, reactionSeen: new Set(), rewindExpressionTimer: 0, dreamTrails: [], dashTrailClock: 0, dashVisualTimer: 0, memoryPads: [], fallZones: [], transition: 'start', stageIntroTimer: null, dashCooldown: 0, dashTimer: 0, dashDirection: 1, watcherResolved: false,
     carouselRelays: new Set(), carouselSwitches: [],
-    stageRealElapsed: 0, challenge: null, bossGuideKey: '', bossGuideUntil: 0, bossGuideStarted: 0,
+    stageRealElapsed: 0, challenge: null, bossGuideKey: '', bossGuideUntil: 0, bossGuideStarted: 0, mechanicGuideKey: '', mechanicTutorialSeen: new Set(),
     windPillarCollapse: 0, windPillarReleased: false, windPillarCollapseAnnounced: false, headwindHintShown: false, signpostMaze: null,
     stage02Restoration: 0, stage02RestorationAnnounced: false, stageIntroReady: phase !== 'intro',
   };
@@ -2102,15 +2102,20 @@ function phaseGuide() {
     const active = activeMemoryPads(game.memoryPads || []);
     const goal = game.echoGoal || 0;
     const yunaRoute = (stage.chapter || '').includes('유나') && ['chorus', 'choir-balcony', 'chorus-memory', 'harmony-spiral'].includes(stage.layout);
-    if (yunaRoute && goal > active && !activeTechniques().resonance) {
+    if (yunaRoute && goal > active && !mechanicTutorialSeen('resonance') && !activeTechniques().resonance) {
       return { step: 'STEP 1 / 3', text: 'L을 유지해 좁은 악보 발판을 드러내세요. 공명을 멈추면 발판도 사라집니다.', compact: 'L로 공명 길을 유지하라' };
     }
     if (stage.layout === 'carousel') {
+      const rotationLearned = mechanicTutorialSeen('carousel-rotate');
+      const rotationAction = rotationLearned ? '원형벽의 구멍을' : 'P/Y로 원형벽의 구멍을';
+      if (!rotationLearned && game.carouselRotationTimer <= 0 && !game.recording) {
+        return { step: 'CAROUSEL ROTATION', text: 'P/Y를 눌러 원형벽의 구멍을 회전하세요. 구멍이 연결한 통로로만 다음 방에 갈 수 있습니다.', compact: 'P/Y로 원형벽 회전' };
+      }
       if (game.carouselGateOpened && game.carouselRotationTimer <= 0) {
         const exitAligned = carouselPhaseInfo().id === 'exit';
         return exitAligned
           ? { step: 'EAST OPENING', text: '원형벽의 동쪽 틈과 잠금 해제된 꿈의 문이 연결됐습니다. 오른쪽 램프로 빠져나가세요.', compact: '동쪽 틈 → 열린 꿈의 문' }
-          : { step: 'GATE UNLOCKED', text: '꿈의 문 잠금은 풀렸습니다. P/Y로 원형벽을 계속 자유롭게 돌려 오른쪽으로 갈 길을 만드세요.', compact: '문 잠금 해제 · P/Y 자유 회전' };
+          : { step: 'GATE UNLOCKED', text: `꿈의 문 잠금은 풀렸습니다. ${rotationAction} 돌려 오른쪽으로 갈 길을 만드세요.`, compact: '문 잠금 해제 · 출구 길 정렬' };
       }
       if (game.carouselRotationTimer > 0) {
         const target = carouselPhaseInfo(game.carouselTargetPhase);
@@ -2120,10 +2125,10 @@ function phaseGuide() {
       const relayCount = carouselRelayCount();
       const currentPose = carouselPhaseInfo().id;
       if (game.carouselCoreLatched && carouselRelaysReady()) {
-        return { step: 'THREE LOCKS READY', text: '왼쪽 위 기억과 두 외부 잠금 장치가 모두 복구됐습니다. P/Y로 구멍을 동쪽 출구길과 맞추세요.', compact: '세 장치 완료 · 동쪽 출구 정렬' };
+        return { step: 'THREE LOCKS READY', text: `왼쪽 위 기억과 두 외부 잠금 장치가 모두 복구됐습니다. ${rotationAction} 동쪽 출구길과 맞추세요.`, compact: '세 장치 완료 · 동쪽 출구 정렬' };
       }
       if (game.echoes.some((echo) => !echo.holding)) {
-        return { step: 'MEMORY REPLAYING', text: '기억의 나는 왼쪽 위 코어로 계속 이동합니다. 현재의 나는 기다리지 않고 어디서든 P/Y로 다음 방을 열 수 있습니다.', compact: '잔상 재생 중 · P/Y 회전 가능' };
+        return { step: 'MEMORY REPLAYING', text: `기억의 나는 왼쪽 위 코어로 계속 이동합니다. 현재의 나는 기다리지 않고 ${rotationAction} 돌려 다음 방을 열 수 있습니다.`, compact: '잔상 재생 중 · 다음 방 열기' };
       }
       if (game.recording) {
         return { step: 'MEMORY RECORDING', text: '북서쪽 틈을 지나 맵 왼쪽 위 기억 코어까지 이동한 뒤 K를 다시 눌러 되감으세요.', compact: '왼쪽 위 코어에서 K · 되감기' };
@@ -2133,7 +2138,7 @@ function phaseGuide() {
           return { step: 'CENTRAL K START', text: '중앙 발판에서 K로 기록을 시작하고, 북서쪽 구멍을 지나 왼쪽 위 기억 코어까지 이동하세요.', compact: '중앙 발판 K 시작 → 왼쪽 위 기억' };
         }
         if (!game.carouselCoreLatched) {
-          return { step: 'CENTRAL K START', text: '여기가 항상 같은 K 기록 시작점입니다. 먼저 P/Y로 구멍을 북서쪽 기억길과 맞추세요.', compact: 'K 시작 위치 · 북서쪽 구멍 필요' };
+          return { step: 'CENTRAL K START', text: `여기가 항상 같은 K 기록 시작점입니다. 먼저 ${rotationAction} 북서쪽 기억길과 맞추세요.`, compact: 'K 시작 위치 · 북서쪽 구멍 필요' };
         }
         return { step: 'MEMORY COMPLETE', text: `이 중앙 발판의 기억은 고정됐습니다. 외부 잠금 ${relayCount} / ${CAROUSEL_REQUIRED_RELAYS}.`, compact: `기억 ✓ · 잠금 ${relayCount} / ${CAROUSEL_REQUIRED_RELAYS}` };
       }
@@ -2162,7 +2167,7 @@ function phaseGuide() {
       }
       return { step: 'TRUE EXIT OPEN', text: '세 표지판이 모두 진짜 방향을 가리킵니다. 마지막 바람길을 따라 오른쪽 꿈의 문으로 가세요.', compact: '세 표지판 고정 · 출구 열림' };
     }
-    if (stage.layout === 'wall' && !activeTechniques().resonance) {
+    if (stage.layout === 'wall' && !mechanicTutorialSeen('resonance') && !activeTechniques().resonance) {
       return { step: 'STEP 1 / 3', text: 'L 공명 파장을 유지해 세 갈래 공명 길을 드러내세요. 공명을 멈추면 길도 사라집니다.', compact: 'L로 공명 길을 유지하라' };
     }
     if (stage.layout === 'wind-cliff' && !game.windPillarReleased) {
@@ -2613,6 +2618,8 @@ function startStage() {
   game.bossGuideKey = '';
   game.bossGuideUntil = stage.type === 'boss' ? 4.8 : 0;
   game.bossGuideStarted = 0;
+  game.mechanicGuideKey = '';
+  game.mechanicTutorialSeen ??= new Set();
   game.challenge = stage.type === 'boss' ? {
     duration: BOSS_MEMORY_COLLAPSE_SECONDS,
     remaining: BOSS_MEMORY_COLLAPSE_SECONDS,
@@ -2629,7 +2636,7 @@ function startStage() {
   stageMenu.classList.add('hidden');
   endScreen.classList.add('hidden');
   startStageBgm(stage);
-  say(stage.type === 'boss' ? '60초 기억 붕괴가 시작됩니다. 공포를 없애는 것이 아니라, 기억의 역할을 완성하세요.' : stage.hint);
+  refreshMechanicGuide(true);
   updateHud();
 }
 
@@ -3867,6 +3874,7 @@ function rotateCarouselPhase(direction) {
   game.carouselRotationTimer = CAROUSEL_ROTATION_SECONDS;
   game.dropThroughTimer = 0;
   game.dropThroughPlatform = null;
+  markMechanicTutorialSeen('carousel-rotate');
   const target = carouselPhaseInfo(game.carouselTargetPhase);
   return true;
 }
@@ -7241,6 +7249,28 @@ function drawCarouselMazeExit() {
   ctx.restore();
 }
 
+// 단계 목록을 한 번에 보여 주지 않고, 현재 필요한 행동만 남긴다.
+function refreshMechanicGuide(force = false) {
+  if (game.phase !== 'playing') return;
+  const guide = phaseGuide();
+  const key = `${game.stageIndex}:${guide.step}`;
+  if (!force && game.mechanicGuideKey === key) return;
+  game.mechanicGuideKey = key;
+  say(guide.text);
+}
+
+function mechanicTutorialSeen(id) {
+  return Boolean(game.mechanicTutorialSeen?.has(id));
+}
+
+function markMechanicTutorialSeen(id) {
+  if (game.phase !== 'playing' || mechanicTutorialSeen(id)) return;
+  game.mechanicTutorialSeen.add(id);
+  // 같은 단계라도 사용법 안내에서 실제 목표 안내로 즉시 바뀌게 한다.
+  game.mechanicGuideKey = '';
+  refreshMechanicGuide();
+}
+
 function drawFallZone(zone) {
   ctx.save();
   const gradient = ctx.createLinearGradient(zone.x, zone.y, zone.x, zone.y + zone.h);
@@ -9618,6 +9648,7 @@ function update(dt) {
     refreshBossGuide();
     updateMemoryCollapse(dt);
   } else updatePuzzle(dt);
+  refreshMechanicGuide();
   updateDreamTrails(dt);
   updateHud();
 }
@@ -9708,7 +9739,10 @@ ruleCards.forEach((card) => {
   card.addEventListener('pointerdown', () => {
     if (hasSkill(card.dataset.rule)) {
       if (card.dataset.rule === 'dash') triggerDash();
-      else keys.add(keyForRule);
+      else {
+        keys.add(keyForRule);
+        if (card.dataset.rule === 'resonance') markMechanicTutorialSeen('resonance');
+      }
     } else if (isSkillBlocked(card.dataset.rule)) say('이 구역의 꿈 규칙 때문에 이 상상력 기술은 사용할 수 없습니다.');
     else say('이 기술은 다음 스테이지에서 배웁니다.');
     updateHud();
@@ -9757,6 +9791,7 @@ window.addEventListener('keydown', (event) => {
   const skillByKey = { ShiftLeft: 'time', ShiftRight: 'time', KeyL: 'resonance', Space: 'dash' };
   const requestedSkill = skillByKey[event.code];
   if (!event.repeat && requestedSkill && isSkillBlocked(requestedSkill)) say(currentStage().blockedHint || '이 구역의 꿈 규칙 때문에 이 상상력 기술은 사용할 수 없습니다.');
+  if (!event.repeat && requestedSkill === 'resonance' && hasSkill('resonance') && !isSkillBlocked('resonance')) markMechanicTutorialSeen('resonance');
   if (event.code === 'Digit3' && !event.repeat) say(hasSkill('time') ? 'Shift·L은 누르고 있는 동안 상상력을 계속 소모합니다.' : '이 기술은 다음 스테이지에서 배웁니다.');
   if (!event.repeat && event.code === 'KeyK') toggleMemoryRecording();
   if (!event.repeat && event.code === 'KeyJ') triggerBossShot();
