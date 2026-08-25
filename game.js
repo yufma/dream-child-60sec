@@ -67,6 +67,9 @@ const FINAL_CHAPTER_STAGE_MUSIC_PATHS = Object.freeze([
 // 마지막 일러스트는 보스전의 격정적인 트랙 대신, 하린의 해결 테마를 느린 페이드인으로 사용한다.
 // 친구들의 꿈이 돌아왔다는 감정을 먼저 들려 준 뒤, 아버지의 선택을 보여 주기 위한 전용 큐다.
 const ENDING_BGM_SOURCE = 'assets/audio/harin-stage-themes-v12-flute-test/stage-06-resolved-harin-theme-loop-soft-flute-v12.wav';
+// 타이틀은 첫 꿈의 플루트 테마를 낮은 음량으로 사용한다. 이미 첫 장의 정서와 연결되어 있어,
+// 시작 버튼을 누른 뒤 프롤로그로 넘어가도 낯선 곡 전환 없이 자연스럽게 이어진다.
+const TITLE_BGM_SOURCE = 'assets/audio/harin-stage-themes-v12-flute-test/stage-01-harin-theme-loop-soft-flute-v12.wav';
 const HANEUL_STAGE_MUSIC_PATHS = Object.freeze([
   'assets/audio/haneul-wind-path-v1.wav',
   'assets/audio/haneul-wind-path-v1.wav',
@@ -1239,7 +1242,10 @@ function freshGameState(phase = 'intro') {
 }
 
 function newGame() {
-  stopStageBgm();
+  // 타이틀 테마는 프롤로그 대사 동안 낮은 볼륨으로 이어 두고,
+  // 첫 스테이지가 시작될 때만 해당 꿈의 BGM으로 바꾼다.
+  const carryTitleTheme = stageBgm.key === 'title' && stageBgm.audio;
+  if (!carryTitleTheme) stopStageBgm();
   endScreen.classList.remove('epilogue-screen');
   gameHud.classList.remove('hidden');
   game = freshGameState();
@@ -1289,6 +1295,7 @@ function showTitleScreen() {
   endScreen.classList.remove('epilogue-screen');
   endScreen.classList.add('hidden');
   renderCampaignRoute();
+  startStageBgm(null, { key: 'title' });
 }
 
 function clearStageIntroTimer() {
@@ -1343,6 +1350,15 @@ function normalizedBgmSource(source) {
 }
 
 function stageBgmConfig(key) {
+  if (key === 'title') {
+    return {
+      family: 'title',
+      source: normalizedBgmSource(TITLE_BGM_SOURCE),
+      volume: .58,
+      loop: true,
+      fadeInDuration: 900,
+    };
+  }
   if (key === 'ending') {
     return {
       family: 'ending',
@@ -1392,7 +1408,9 @@ function setBgmMasterVolume(value, persist = false) {
   if (stageBgm.audio) {
     cancelStageBgmFade();
     stageBgm.audio.volume = stageBgm.enabled ? (game.phase === 'story' ? storyBgmVolume() : stageBgm.targetVolume) : 0;
-    if (stageBgm.enabled && stageBgm.audio.paused && !stageBgm.frozen && (game.phase === 'playing' || game.phase === 'ending-cinematic' || game.phase === 'truth')) playStageBgm();
+    if (stageBgm.enabled && stageBgm.audio.paused && !stageBgm.frozen && ['title', 'story', 'playing', 'ending-cinematic', 'truth'].includes(game.phase)) {
+      playStageBgm(game.phase === 'story' ? storyBgmVolume() : stageBgm.targetVolume);
+    }
   }
   updateBgmVolumeControl();
   if (persist) saveBgmMasterVolume();
@@ -1629,7 +1647,11 @@ function stopStageBgm() {
 
 function primeGameAudio() {
   primeGameSfx();
-  if ((game.phase === 'playing' || game.phase === 'ending-cinematic' || game.phase === 'truth') && stageBgm.enabled && stageBgm.audio?.paused && !stageBgm.frozen) playStageBgm();
+  // 브라우저의 자동 재생 제한 때문에 첫 클릭/키 입력에서만 타이틀 음악을 열 수 있다.
+  // 이후에는 설정의 음악 토글과 같은 상태 규칙을 그대로 공유한다.
+  if (['title', 'story', 'playing', 'ending-cinematic', 'truth'].includes(game.phase) && stageBgm.enabled && stageBgm.audio?.paused && !stageBgm.frozen) {
+    playStageBgm(game.phase === 'story' ? storyBgmVolume() : stageBgm.targetVolume);
+  }
 }
 
 function syncBossBgmTimeStop() {
