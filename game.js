@@ -3842,7 +3842,7 @@ function updatePuzzle(dt) {
   game.dropThroughTimer = Math.max(0, (game.dropThroughTimer || 0) - dt);
   if (game.dropThroughTimer <= 0) game.dropThroughPlatform = null;
   const dropRequested = pressed.has('ArrowDown') || pressed.has('KeyS');
-  if (dropRequested && p.grounded && game.carouselRotationTimer <= 0) {
+  if (dropRequested && p.grounded) {
     const feet = p.y + p.h;
     const dropEdgeGrace = stage.layout === 'carousel' ? 3 : -3;
     const supportsPlayer = (platform) => !platform.wall
@@ -3865,14 +3865,15 @@ function updatePuzzle(dt) {
       say('발판 아래층으로 내려갑니다.');
     }
   }
-  const carouselRotationLocked = stage.layout === 'carousel' && game.carouselRotationTimer > 0;
-  const axis = carouselRotationLocked ? 0 : horizontalInput();
+  // 회전목마 벽이 움직이는 동안에도 윤호는 계속 걸으며 점프할 수 있다.
+  // P/Y는 구조물만 돌리고 플레이어 입력을 잠그지 않는다.
+  const axis = horizontalInput();
   const movementControl = p.grounded ? 1 : MOVEMENT_TUNING.puzzle.airControl;
-  p.vx = carouselRotationLocked ? 0 : acceleratedVelocity(p.vx, axis, MOVEMENT_TUNING.puzzle, dt, movementControl);
+  p.vx = acceleratedVelocity(p.vx, axis, MOVEMENT_TUNING.puzzle, dt, movementControl);
   if (axis) p.facing = axis;
   const headwind = windCliffHeadwindStrength(stage);
   const jump = pressed.has('ArrowUp') || pressed.has('KeyW');
-  if (jump && p.grounded && !carouselRotationLocked) {
+  if (jump && p.grounded) {
     p.vy = -470; p.grounded = false;
     // 점프가 시작되는 바로 그 프레임에도 바람이 등을 밀어, 역풍 규칙을 명확히 체감시킨다.
     if (headwind > 0) p.vx = Math.max(-390, p.vx - 172 * headwind);
@@ -3891,7 +3892,7 @@ function updatePuzzle(dt) {
   applySignpostMazeWindPhysics(p, dt, stage);
   const oldX = p.x;
   p.x = Math.max(0, Math.min(W - p.w, p.x + p.vx * dt));
-  if (game.dashTimer > 0 && !carouselRotationLocked) {
+  if (game.dashTimer > 0) {
     p.x = Math.max(0, Math.min(W - p.w, p.x + game.dashDirection * 520 * dt));
     p.facing = game.dashDirection;
     p.vx = game.dashDirection * 340;
@@ -4126,13 +4127,14 @@ function spawnNightmarePattern() {
 
   if (b.mode === 'calm') {
     const activeLaughShots = game.nightmareShots.filter((shot) => shot.kind === 'harin-laugh').length;
-    const capacity = Math.max(0, 18 - activeLaughShots);
+    // 5스테이지 2페이즈는 숨 돌릴 여지는 남기되, 가면 조준 중에도 회피가 필요하게 한 단계만 높인다.
+    const capacity = Math.max(0, 22 - activeLaughShots);
     if (!capacity) return;
     const calmOrigin = { x: b.x + b.w / 2, y: b.y + b.h * .5 };
     if (attackNumber % 4 === 0) {
-      launchNightmareRing(calmOrigin, Math.min(6, capacity), { speed: 155, r: 7, kind: 'harin-laugh', offset: threatTime * .36 });
+      launchNightmareRing(calmOrigin, Math.min(7, capacity), { speed: 155, r: 7, kind: 'harin-laugh', offset: threatTime * .36 });
     } else if (attackNumber % 2 === 0) {
-      launchNightmareFan(calmOrigin, p, Math.min(3, capacity), .82, { speed: 190, r: 8, kind: 'harin-laugh' });
+      launchNightmareFan(calmOrigin, p, Math.min(4, capacity), .82, { speed: 190, r: 8, kind: 'harin-laugh' });
     } else {
       launchNightmareFan(calmOrigin, p, 1, 0, { speed: 210, r: 8, kind: 'harin-laugh' });
     }
