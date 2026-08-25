@@ -30,10 +30,10 @@ button { font: inherit; }
 .game-shell {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 50px 0 34px;
+  padding: 25px 0 34px;
 }
 
-.game-heading { margin-bottom: 24px; }
+.game-heading { width: 95%; margin: 0 auto 24px; }
 .eyebrow, .tag {
   margin: 0 0 8px;
   color: var(--cyan);
@@ -47,6 +47,8 @@ button { font: inherit; }
 
 .game-frame {
   position: relative;
+  width: 95%;
+  margin: 0 auto;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 22px;
