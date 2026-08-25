@@ -472,15 +472,11 @@ const STAGES = [
   },
   {
     chapter: '딸 · 완벽한 꿈의 균열', name: '완벽한 꿈의 수호자', type: 'boss', skills: ['resonance', 'dash'], objective: '진짜 기억으로 가짜 풍경을 지우고 수호자의 거울을 깨워라',
-    intro: '딸의 꿈은 스스로를 지키기 위해 “완벽한 꿈의 수호자”를 만들었다. 수호자는 딸을 해치려는 적이 아니라, 슬픔을 보지 않게 하려는 꿈의 방어 본능이야. 먼저 K로 딸이 간직한 진짜 사진의 자리에 기억의 나를 남겨 줘. 그러면 가짜 균열이 사라지고, L로 드러나는 진짜 균열만 Space 질주로 통과할 수 있어.',
+    intro: '딸의 꿈은 스스로를 지키기 위해 “완벽한 꿈의 수호자”를 만들었다. 수호자는 딸을 해치려는 적이 아니라, 슬픔을 보지 않게 하려는 꿈의 방어 본능이야. 먼저 K로 딸이 간직한 진짜 사진의 자리에 기억의 나를 남겨 줘. 그다음 L을 눌러 숨은 거울을 드러내고, Space 질주로 통과할 수 있어.',
     boss: '완벽한 꿈의 수호자', bossConfig: {
       mode: 'mirror', visual: 'mirror',
       moveBounds: { xMin: 45, xMax: 720, yMin: 86, yMax: 437 },
-      memoryPads: [{ x: 160, y: 222, w: 42, h: 42, label: '딸의 진짜 사진' }],
-      fakeMirrorGates: [
-        { x: 334, y: 344, w: 44, h: 60, label: '가짜 웃음' },
-        { x: 548, y: 116, w: 44, h: 60, label: '가짜 친구' },
-      ],
+      memoryPads: [{ x: 184, y: 270, w: 42, h: 42, label: '딸의 진짜 사진', backdropDimming: .18 }],
       mirrorGates: [
         { x: 296, y: 128, w: 48, h: 72, label: '첫 균열' },
         { x: 462, y: 316, w: 48, h: 72, label: '두 번째 균열' },
@@ -488,7 +484,7 @@ const STAGES = [
         { x: 676, y: 320, w: 38, h: 64, label: '진실의 균열' },
       ],
     },
-    hint: '① K로 딸의 진짜 사진에 기억의 나를 남기기 ② 가짜 풍경이 사라지면 L로 진짜 균열을 드러내기 ③ Space 질주로 균열 4개를 통과하세요.',
+    hint: '① K로 딸의 진짜 사진에 기억의 나를 남기기 ② L을 눌러 숨은 거울을 드러내기 ③ Space 질주로 거울 4곳을 통과하세요.',
   },
   {
     page: 2, chapter: 'PAGE 02 · 현실을 향한 마지막 꿈', name: '수면 과학자의 연구실', type: 'boss', skills: ['time', 'resonance', 'dash'], objective: '기억과 공명을 완성해 거대한 꿈의 수호자를 멈춰라',
@@ -841,6 +837,7 @@ function waitForSprite(image) {
 }
 
 let loadingRun = 0;
+let stagePreviewRun = 0;
 
 async function establishFirstDreamLink(onReady) {
   const run = ++loadingRun;
@@ -2013,7 +2010,7 @@ function bossBriefForStage(stage = currentStage()) {
   if (mode === 'calm') return '① 똑같이 보이는 기억 후보를 K 잔상으로 확인  ② WASD 조준 + J 탄환으로 가짜 2회 명중\n③ 세 기억을 본체/잔상 조합으로 동시 활성화  ④ 2페이즈부터 웃음 탄막 회피  ⑤ 가면 가까이에서 J로 직선 발사';
   if (mode === 'resonance') return '① K로 화음 앵커 두 곳 재생  ② 앵커가 불협화음 3회에 사라지기 전 다시 기록  ③ 별빛 박자에 맞춰 L을 짧게 6회  ④ 앵커·잔상 없이 마지막 불협화음 20초 회피';
   if (mode === 'chase') return '① K로 두 바람 기준점 준비  ② 되돌림 바람을 Space로 가로채 순풍 고리 세 개 통과\n③ P/Y 유지로 총 6회 반사  ④ 명중마다 사이드 연 +1  ⑤ 2·4회 명중 뒤 풍압 강화';
-  if (mode === 'mirror') return '① K로 진짜 사진 재생  ② L로 진짜 균열만 드러내기  ③ Space 질주로 균열 네 곳 통과';
+  if (mode === 'mirror') return '① K로 진짜 사진 재생  ② L을 눌러 숨은 거울 드러내기  ③ Space 질주로 거울 네 곳 통과';
   if (mode === 'final') return '① K로 세 친구의 봉인 완성  ② L로 꿈 에너지 분리  ③ J로 첫 기억 반환\n④ 움직이는 진짜 기억 추적  ⑤ 부서진 수호자 체력 모두 해체  ⑥ 마지막에는 딸의 목소리에 L 유지';
   return '기억의 역할을 완성해 공포의 규칙을 바꾸세요.';
 }
@@ -2067,8 +2064,8 @@ function guideKeyHints() {
         : [{ key: 'Space', label: '되돌림 바람 가르기' }, { key: 'W / S', label: '가로채기 위치' }];
   }
   if (boss.mode === 'mirror') return boss.mirrorProgress < boss.mirrorGates.length && boss.activePads >= boss.memoryPads.length
-    ? [{ key: 'L', label: '진짜 균열' }, { key: 'Space', label: '균열 질주' }]
-    : [{ key: 'K', label: '진짜 사진' }];
+    ? [{ key: 'L', label: '거울 드러내기' }, { key: 'Space', label: '거울 질주' }]
+    : [{ key: 'K', label: '진짜 사진' }, { key: 'L', label: 'K 후 거울 드러내기' }];
   if (!boss.attackUnlocked) return [{ key: 'K', label: '세 기억 봉인' }, { key: 'L', label: '공명 해제' }];
   if (finalBossPhase(boss) === 2) return [{ key: 'J', label: 'TRUE 기억 발사' }, { key: 'W / S', label: '탄막 회피' }];
   if (finalBossPhase(boss) === 4) return [{ key: 'L', label: '딸의 목소리 전달' }];
@@ -2230,8 +2227,8 @@ function phaseGuide() {
   }
   if (boss.mode === 'mirror') {
     return boss.activePads < boss.memoryPads.length
-      ? { step: 'STEP 1 / 2', text: 'K로 딸의 진짜 사진에 과거의 나를 남기세요. 사진이 재생되면 가짜 풍경이 사라집니다.', compact: '진짜 사진을 재생하라' }
-      : { step: 'STEP 2 / 2', text: 'L로 남은 진짜 균열을 드러내고 Space 질주로 통과하세요. 분홍 가짜 균열은 피하세요.', compact: `진짜 균열 ${boss.mirrorProgress} / ${boss.mirrorGates.length}` };
+      ? { step: 'STEP 1 / 2', text: 'K로 딸의 진짜 사진에 과거의 나를 남기세요. 사진이 재생되면 L로 숨은 거울을 드러낼 수 있습니다.', compact: '진짜 사진을 재생하라' }
+      : { step: 'STEP 2 / 2', text: 'L을 눌러 숨은 거울을 드러낸 뒤 Space 질주로 통과하세요.', compact: `거울 ${boss.mirrorProgress} / ${boss.mirrorGates.length}` };
   }
   if (boss.releaseReady) return { step: 'LAST MEMORY', text: '딸의 목소리가 닿았습니다. 빼앗은 기억이 모두 제자리로 돌아갑니다.', compact: '아버지가 꿈을 놓아주고 있어요' };
   if (!boss.attackUnlocked) {
@@ -2280,8 +2277,19 @@ function renderStoryLine() {
 
 function prepareCurrentStagePreview() {
   const stage = currentStage();
+  const previewRun = ++stagePreviewRun;
+  const previewStageIndex = game.stageIndex;
   // 반투명 안내·대화창 뒤에는 직전 스테이지의 잔여 상태가 아니라,
   // 곧 시작할 스테이지의 배경·구조물·시작 위치만 보이게 준비한다.
+  // 이미지가 아직 도착하지 않았을 때는 캔버스를 잠시 감춰, 이전 스테이지의
+  // 미완성 화면이 안내창 뒤로 비치는 일을 막는다.
+  canvas.classList.add('stage-preview-pending');
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#060b1d';
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
   game.player = freshPlayer();
   game.imagination = 100;
   game.dreamShots = [];
@@ -2313,6 +2321,17 @@ function prepareCurrentStagePreview() {
     game.boss = null;
     setupPuzzle(stage.layout, stage.echoGoal || 0);
   }
+
+  const previewSprites = stageSpriteSet(previewStageIndex);
+  ensureSprites(previewSprites);
+  Promise.all(previewSprites.map(waitForSprite)).then(() => {
+    // 빠르게 다음 화면으로 넘어간 경우, 늦게 도착한 이전 이미지가 새 장면을
+    // 덮어쓰지 않도록 이번 준비 요청과 스테이지가 모두 같은지 확인한다.
+    if (previewRun !== stagePreviewRun || previewStageIndex !== game.stageIndex) return;
+    if (stage.type === 'boss') drawBoss();
+    else drawPuzzle();
+    canvas.classList.remove('stage-preview-pending');
+  });
 }
 
 function showStoryBeat(beat) {
@@ -2480,7 +2499,7 @@ function removeLatestEcho() {
 }
 
 function startStage() {
-  window.scrollTo(0, 0);
+  // 다음 꿈으로 넘어가도 사용자가 보고 있던 페이지 위치는 유지한다.
   const stage = currentStage();
   document.body.classList.remove('title-screen-active');
   ensureStageVisualAssets();
@@ -2950,7 +2969,7 @@ function setupBoss(name, config = {}) {
     decoyPads: configuredDecoyPads, windGates: (config.windGates || []).map((gate) => ({ ...gate })),
     resonanceGates: (config.resonanceGates || []).map((gate) => ({ ...gate })), resonanceProgress: 0, lastRhythmPulse: null,
     codaDuration: Number(config.codaDuration) || 0, codaElapsed: 0, codaActive: false,
-    mirrorGates: (config.mirrorGates || []).map((gate) => ({ ...gate })), fakeMirrorGates: (config.fakeMirrorGates || []).map((gate) => ({ ...gate })), mirrorProgress: 0, falseMirrorCooldown: 0,
+    mirrorGates: (config.mirrorGates || []).map((gate) => ({ ...gate })), mirrorProgress: 0,
     truthTargets: (config.truthTargets || []).map((target) => ({
       ...target,
       homeX: target.x,
@@ -4831,14 +4850,7 @@ function updatePlayerSizeTransition(player, dt) {
 
 function updateMirrorGates(b, techniques) {
   const photoReady = activeMemoryPads(b.memoryPads || []) >= b.memoryPads.length;
-  if (!photoReady) {
-    const falseGate = b.fakeMirrorGates.find((gate) => techniques.resonance && game.dashTimer > 0 && overlaps(game.player, gate));
-    if (falseGate && b.falseMirrorCooldown <= 0) {
-      b.falseMirrorCooldown = .8;
-      say('가짜 풍경이 되돌아왔습니다. 먼저 K로 딸의 진짜 사진에 기억의 나를 남기세요.');
-    }
-    return;
-  }
+  if (!photoReady) return;
   const nextGate = b.mirrorGates[b.mirrorProgress];
   if (!nextGate || !techniques.resonance || game.dashTimer <= 0 || !overlaps(game.player, nextGate)) return;
   b.mirrorProgress += 1;
@@ -4901,7 +4913,6 @@ function updateBoss(dt) {
   b.flash = Math.max(0, (b.flash || 0) - dt);
   b.memoryShield = Math.max(0, (b.memoryShield || 0) - dt);
   b.memoryReplay = Math.max(0, (b.memoryReplay || 0) - dt);
-  b.falseMirrorCooldown = Math.max(0, (b.falseMirrorCooldown || 0) - dt);
   b.relayPulse = Math.max(0, (b.relayPulse || 0) - dt);
   b.relayMissPulse = Math.max(0, (b.relayMissPulse || 0) - dt);
   b.relayImpactPulse = Math.max(0, (b.relayImpactPulse || 0) - dt);
@@ -5441,7 +5452,7 @@ function bossPhaseNodes(boss = game.boss) {
   ];
   if (boss.mode === 'mirror') return [
     { label: '진짜 사진', done: boss.activePads >= boss.memoryPads.length },
-    { label: '진짜 균열', done: boss.mirrorProgress >= boss.mirrorGates.length },
+    { label: '숨은 거울', done: boss.mirrorProgress >= boss.mirrorGates.length },
   ];
   return [
     { label: '봉인', done: boss.attackUnlocked },
@@ -5541,7 +5552,7 @@ function updateHud() {
     } else if (game.boss.mode === 'mirror') {
       const photoReady = game.boss.activePads >= game.boss.memoryPads.length;
       bossFill.style.width = `${photoReady ? game.boss.mirrorProgress / Math.max(1, game.boss.mirrorGates.length) * 100 : game.boss.activePads / Math.max(1, game.boss.memoryPads.length) * 100}%`;
-      bossHealthEl.textContent = photoReady ? `진짜 균열 ${game.boss.mirrorProgress} / ${game.boss.mirrorGates.length}` : '진짜 사진을 재생하세요';
+      bossHealthEl.textContent = photoReady ? `숨은 거울 ${game.boss.mirrorProgress} / ${game.boss.mirrorGates.length}` : '진짜 사진을 재생하세요';
     } else if (game.boss.releaseReady) {
       bossFill.style.width = `${Math.min(100, game.boss.releaseProgress / game.boss.releaseDuration * 100)}%`;
       bossHealthEl.textContent = '마지막 기억을 놓아주는 중…';
@@ -5633,8 +5644,8 @@ function updateMemoryLoopUI() {
             : `되돌림 가로채기 ${boss.relayProgress} / ${total} · 검은 연에서 “${target?.label || '출발'}” 기준점으로 향하는 바람 사이를 Space 질주로 가르세요.`;
     } else if (boss.mode === 'mirror') {
       memoryStatus.textContent = active < boss.memoryPads.length
-        ? '진짜 사진을 재생해야 가짜 웃음과 가짜 친구가 사라집니다. K로 과거의 나를 사진에 남기세요.'
-        : `진짜 균열 ${boss.mirrorProgress} / ${boss.mirrorGates.length} · L로 진짜 균열을 드러낸 뒤 Space 질주로 통과하세요.`;
+        ? 'K로 과거의 나를 진짜 사진에 남기세요. 준비되면 L로 숨은 거울을 드러낼 수 있습니다.'
+        : `거울 ${boss.mirrorProgress} / ${boss.mirrorGates.length} · L을 눌러 거울을 드러낸 뒤 Space 질주로 통과하세요.`;
     } else if (boss.releaseReady) {
       memoryStatus.textContent = '딸의 선택이 아버지에게 닿았습니다. 이제는 공격하지 않아도 기억이 돌아옵니다.';
     } else if (boss.attackUnlocked) {
@@ -7189,17 +7200,6 @@ function drawCarouselMazeExit() {
   ctx.save();
   ctx.globalAlpha = ready ? 1 : .26;
   drawExit();
-  if (!ready) {
-    const { x, y, w = 36, h = 82 } = game.exit;
-    ctx.globalAlpha = .9;
-    ctx.fillStyle = '#17142d';
-    ctx.fillRect(x + 5, y + 24, w - 10, h - 24);
-    ctx.strokeStyle = '#756a8c';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x + 5.5, y + 24.5, w - 11, h - 25);
-    ctx.fillStyle = '#9a87a8';
-    ctx.fillRect(x + w / 2 - 3, y + 44, 6, 10);
-  }
   ctx.restore();
 }
 
@@ -7343,6 +7343,15 @@ function drawMemoryPad(pad, active, index, role = 'normal') {
   // 프레임이나 사각 명찰 대신 오브젝트 자체에서 튀어나오는 빛·먼지로 상호작용 지점을 표시한다.
   ctx.save();
   ctx.translate(padCenterX, padCenterY);
+  if (pad.backdropDimming) {
+    // 21스테이지의 보랏빛 거울 바닥에서는 기억 발판 아래만 아주 약하게 눌러,
+    // 원화의 분위기를 해치지 않으면서 K 기록 지점을 먼저 읽히게 한다.
+    ctx.globalAlpha = pad.backdropDimming;
+    ctx.fillStyle = '#070b24';
+    ctx.beginPath();
+    ctx.ellipse(0, 6, visualWidth * .62, visualHeight * .38, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
   ctx.globalCompositeOperation = 'screen';
   const time = game.elapsed || 0;
   for (let mote = 0; mote < (active ? 8 : 5); mote += 1) {
@@ -8660,12 +8669,11 @@ function drawFinalVoiceAltar(gate, active, progress = 0) {
 }
 
 function drawDreamGate(gate, active, cleared, kind = 'resonance', revealed = true, heartbeat = 0) {
-  const fakeMirror = kind === 'false-mirror';
-  const mirror = kind === 'mirror' || fakeMirror;
+  const mirror = kind === 'mirror';
   const yunaResonancePad = kind === 'resonance' && game.boss?.mode === 'resonance';
   const nearby = playerNearObject(gate, 94);
   const resonanceImage = platformSprites.yunaResonancePad;
-  const color = fakeMirror ? '#ff789f' : mirror ? '#ffb5df' : '#9effea';
+  const color = mirror ? '#ffb5df' : '#9effea';
   ctx.save();
   ctx.translate(gate.x + gate.w / 2, gate.y + gate.h / 2);
   if (heartbeat > 0) ctx.scale(1 + heartbeat * .16, 1 + heartbeat * .16);
@@ -8687,8 +8695,8 @@ function drawDreamGate(gate, active, cleared, kind = 'resonance', revealed = tru
       ctx.beginPath(); ctx.ellipse(0, 2, gate.w / 2 + 17 + heartbeat * 8, gate.h / 2 + 17 + heartbeat * 8, 0, 0, Math.PI * 2); ctx.stroke();
       ctx.fillStyle = '#dffff5'; ctx.fillRect(-2, -6, 4, 12);
     }
-  } else if (mirror && !fakeMirror && objectSprites.daughterTrueCrack?.complete && objectSprites.daughterTrueCrack.naturalWidth > 0) {
-    // 21스테이지의 진짜 균열은 배경의 장식과 확실히 구별되는 '통과 가능한 문'으로 보인다.
+  } else if (mirror && objectSprites.daughterTrueCrack?.complete && objectSprites.daughterTrueCrack.naturalWidth > 0) {
+    // 20스테이지의 숨은 거울은 배경 장식과 확실히 구별되는 통과 가능한 문으로 보인다.
     const crack = objectSprites.daughterTrueCrack;
     const spriteW = Math.max(76, gate.w * 2.35);
     const spriteH = Math.max(104, gate.h * 2.1);
@@ -8699,7 +8707,6 @@ function drawDreamGate(gate, active, cleared, kind = 'resonance', revealed = tru
   } else if (mirror) {
     ctx.rotate(Math.PI / 4); ctx.strokeRect(-gate.w / 2, -gate.h / 2, gate.w, gate.h);
     ctx.beginPath(); ctx.moveTo(-14, -20); ctx.lineTo(4, -3); ctx.lineTo(-8, 7); ctx.lineTo(17, 22); ctx.stroke();
-    if (fakeMirror) { ctx.beginPath(); ctx.moveTo(-18, 18); ctx.lineTo(18, -18); ctx.stroke(); }
   } else {
     ctx.beginPath(); ctx.arc(0, 0, gate.w / 2, 0, Math.PI * 2); ctx.stroke();
     ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(0, 0, gate.w / 2 + 9, 0, Math.PI * 2); ctx.stroke();
@@ -8713,13 +8720,12 @@ function drawDreamGate(gate, active, cleared, kind = 'resonance', revealed = tru
   }
   ctx.restore();
   if (revealed || cleared) {
-    const symbol = cleared ? '✓' : fakeMirror ? '✕' : mirror ? '⇢' : 'L';
+    const symbol = cleared ? '✓' : mirror ? '⇢' : 'L';
     const detail = cleared
       ? yunaResonancePad ? '음이 돌아왔어요' : mirror ? '기억이 돌아왔어요' : '공명이 이어졌어요'
       : yunaResonancePad ? 'L · 박자에 공명'
-        : fakeMirror ? '가짜 균열'
-          : mirror ? 'Space · 진짜 균열 통과'
-            : 'L · 공명하기';
+        : mirror ? 'Space · 거울 통과'
+          : 'L · 공명하기';
     drawInteractionBeacon({
       x: gate.x + gate.w / 2,
       y: Math.max(17, gate.y - 17),
@@ -8727,7 +8733,7 @@ function drawDreamGate(gate, active, cleared, kind = 'resonance', revealed = tru
       symbol,
       detail,
       active: active || cleared,
-      danger: fakeMirror,
+      danger: false,
       near: nearby,
     });
   }
@@ -9537,7 +9543,6 @@ function drawBoss() {
   }
   if (b.mode === 'mirror') {
     const photoReady = activeMemoryPads(b.memoryPads) >= b.memoryPads.length;
-    b.fakeMirrorGates.forEach((gate) => drawDreamGate(gate, false, false, 'false-mirror', activeTechniques().resonance && !photoReady));
     b.mirrorGates.forEach((gate, index) => drawDreamGate(gate, index === b.mirrorProgress, index < b.mirrorProgress, 'mirror', activeTechniques().resonance && photoReady));
   }
   if (b.mode === 'final' && b.attackUnlocked) {
@@ -9615,6 +9620,13 @@ function update(dt) {
 }
 
 function draw() {
+  // 메인 화면은 제목 원화가 독립적으로 채우므로, 뒤 캔버스에 기본 1스테이지를
+  // 그리지 않는다. 새로고침 순간에도 첫 스테이지가 비쳐 보이지 않게 한다.
+  if (game.phase === 'title') {
+    ctx.fillStyle = '#060b1d';
+    ctx.fillRect(0, 0, W, H);
+    return;
+  }
   if (game.phase === 'ending-cinematic') {
     drawEndingCinematic();
     return;

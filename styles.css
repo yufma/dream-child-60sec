@@ -28,12 +28,12 @@ body {
 button { font: inherit; }
 
 .game-shell {
-  width: min(1180px, calc(100% - 32px));
+  width: min(96vw, 1100px);
   margin: 0 auto;
-  padding: 50px 0 34px;
+  padding: 25px 0 34px;
 }
 
-.game-heading { margin-bottom: 24px; }
+.game-heading { width: 95%; margin: 0 auto 24px; }
 .eyebrow, .tag {
   margin: 0 0 8px;
   color: var(--cyan);
@@ -47,6 +47,8 @@ button { font: inherit; }
 
 .game-frame {
   position: relative;
+  width: 95%;
+  margin: 0 auto;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 22px;
@@ -54,9 +56,23 @@ button { font: inherit; }
   background: #080d1d;
 }
 
+/* FHD에서는 현재 프레임의 90%로 한 단계 더 여유를 둔다. */
+@media (min-width: 1600px) and (max-width: 2199px) and (min-height: 900px) {
+  .game-shell { width: min(96vw, 990px); }
+}
+
+/* FHD에서는 세로 여백을 남겨 한 화면에서 HUD와 게임 장면을 함께 읽고,
+   QHD에서는 해상도 이점을 살려 원화가 과도하게 작아지지 않게 넓힌다. */
+@media (min-width: 2200px) and (min-height: 1200px) {
+  .game-shell { width: min(94vw, 1520px); }
+  .game-heading, .game-frame { width: 95%; max-width: 1440px; }
+}
+
 canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; transition: filter .22s ease; }
 canvas.connection-weak { filter: blur(1.5px) saturate(.72) brightness(.8); }
 canvas.connection-critical { filter: blur(4px) saturate(.4) brightness(.56); }
+/* 다음 스테이지 원화가 도착하기 전에는 직전 장면을 재사용하지 않는다. */
+canvas.stage-preview-pending { visibility: hidden; }
 
 .loading-splash { position: absolute; z-index: 5; inset: 0; display: grid; place-items: center; padding: 22px; background: radial-gradient(circle at 50% 38%, rgba(66, 182, 255, .2), transparent 38%), rgba(4, 8, 24, .92); transition: opacity .25s ease; }
 .loading-splash.hidden { opacity: 0; pointer-events: none; }
