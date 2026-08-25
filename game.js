@@ -9620,6 +9620,13 @@ function update(dt) {
 }
 
 function draw() {
+  // 메인 화면은 제목 원화가 독립적으로 채우므로, 뒤 캔버스에 기본 1스테이지를
+  // 그리지 않는다. 새로고침 순간에도 첫 스테이지가 비쳐 보이지 않게 한다.
+  if (game.phase === 'title') {
+    ctx.fillStyle = '#060b1d';
+    ctx.fillRect(0, 0, W, H);
+    return;
+  }
   if (game.phase === 'ending-cinematic') {
     drawEndingCinematic();
     return;
