@@ -472,7 +472,7 @@ const STAGES = [
   },
   {
     chapter: '딸 · 완벽한 꿈의 균열', name: '완벽한 꿈의 수호자', type: 'boss', skills: ['resonance', 'dash'], objective: '진짜 기억으로 가짜 풍경을 지우고 수호자의 거울을 깨워라',
-    intro: '딸의 꿈은 스스로를 지키기 위해 “완벽한 꿈의 수호자”를 만들었다. 수호자는 딸을 해치려는 적이 아니라, 슬픔을 보지 않게 하려는 꿈의 방어 본능이야. 먼저 K로 딸이 간직한 진짜 사진의 자리에 기억의 나를 남겨 줘. 그다음 L을 눌러 숨은 거울을 드러내고, Space 질주로 통과할 수 있어.',
+    intro: '딸의 꿈은 스스로를 지키기 위해 “완벽한 꿈의 수호자”를 만들었다. 수호자는 딸을 해치려는 적이 아니라, 슬픔을 보지 않게 하려는 꿈의 방어 본능이야. 먼저 K로 딸이 간직한 진짜 사진의 자리에 기억의 나를 남겨 줘. 그다음 L을 눌러 숨은 거울을 드러내고, Space 대시로 부술 수 있어.',
     boss: '완벽한 꿈의 수호자', bossConfig: {
       mode: 'mirror', visual: 'mirror',
       moveBounds: { xMin: 45, xMax: 720, yMin: 86, yMax: 437 },
@@ -484,7 +484,7 @@ const STAGES = [
         { x: 676, y: 320, w: 38, h: 64, label: '진실의 균열' },
       ],
     },
-    hint: '① K로 딸의 진짜 사진에 기억의 나를 남기기 ② L을 눌러 숨은 거울을 드러내기 ③ Space 질주로 거울 4곳을 통과하세요.',
+    hint: '① K로 딸의 진짜 사진에 기억의 나를 남기기 ② L을 눌러 숨은 거울을 드러내기 ③ Space 대시로 거울 4곳을 부수세요.',
   },
   {
     page: 2, chapter: 'PAGE 02 · 현실을 향한 마지막 꿈', name: '수면 과학자의 연구실', type: 'boss', skills: ['time', 'resonance', 'dash'], objective: '기억과 공명을 완성해 거대한 꿈의 수호자를 멈춰라',
@@ -506,7 +506,7 @@ const STAGES = [
       ],
       voiceGate: { x: 662, y: 408, w: 58, h: 44, label: '딸의 목소리' },
     },
-    hint: '① 세 기억 봉인을 채우기 ② L로 꿈 에너지 분리하기 ③ J로 방어막을 깨기 ④ 움직이는 진짜 기억만 맞히기 ⑤ 딸의 목소리를 전달하기.',
+    hint: '① 세 기억 봉인을 채우기 ② L로 꿈 에너지 분리하기 ③ J로 방어막을 깨기 ④ 움직이는 진짜 기억만 맞히기 ⑤ 딸의 목소리 원 안에서 L을 유지하기.',
   },
 ];
 
@@ -2250,7 +2250,7 @@ function phaseGuide() {
   if (boss.mode === 'mirror') {
     return boss.activePads < boss.memoryPads.length
       ? { step: 'STEP 1 / 2', text: 'K로 딸의 진짜 사진에 과거의 나를 남기세요. 사진이 재생되면 L로 숨은 거울을 드러낼 수 있습니다.', compact: '진짜 사진을 재생하라' }
-      : { step: 'STEP 2 / 2', text: 'L을 눌러 숨은 거울을 드러낸 뒤 Space 질주로 통과하세요.', compact: `거울 ${boss.mirrorProgress} / ${boss.mirrorGates.length}` };
+      : { step: 'STEP 2 / 2', text: 'L을 눌러 숨은 거울을 드러낸 뒤 Space 대시로 부수세요.', compact: `거울 ${boss.mirrorProgress} / ${boss.mirrorGates.length}` };
   }
   if (boss.releaseReady) return { step: 'LAST MEMORY', text: '딸의 목소리가 닿았습니다. 빼앗은 기억이 모두 제자리로 돌아갑니다.', compact: '아버지가 꿈을 놓아주고 있어요' };
   if (!boss.attackUnlocked) {
@@ -2425,7 +2425,7 @@ function showStageIntro() {
   hideFriendReaction();
   gameHud.classList.add('hidden');
   bossHud.classList.add('hidden');
-  toast.classList.remove('visible');
+  hideGuide();
   closeTitleModals();
   startScreen.classList.remove('story-mode', 'title-mode');
   startScreen.classList.toggle('boss-intro', stage.type === 'boss');
@@ -3512,7 +3512,7 @@ function finishMemoryRecording() {
   game.rewindExpressionTimer = .55;
   say(replacedOldestEcho
     ? '되감기 완료. 가장 오래된 기억의 나가 사라지고, 새 기록이 세 번째 자리를 이어받았습니다.'
-    : '되감기 완료. 기억의 나가 방금 전 길을 재생해 마지막 발판을 지킵니다. 현재의 나는 다음 기억을 만들러 가세요.');
+    : '되감기 완료. 다음 기억 발판으로 이동해 K를 눌러 새 잔상을 남기세요.');
 }
 
 function toggleMemoryRecording() {
@@ -3586,12 +3586,19 @@ function formatNumberedGuide(text = '') {
   return String(text).replace(/\s*([①②③④⑤⑥⑦⑧⑨⑩])\s*/g, '\n$1 ').trim();
 }
 
+function hideGuide() {
+  clearTimeout(toastTimer);
+  toastTimer = 0;
+  toast.classList.remove('visible');
+  toast.textContent = '';
+}
+
 function say(text) {
   // 토스트는 결과·피격 로그가 아니라, 플레이어가 다음에 수행할 기믹만 안내한다.
   toast.textContent = formatNumberedGuide(text);
   toast.classList.add('visible');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove('visible'), 3000);
+  toastTimer = 0;
 }
 
 function spend(amount) {
@@ -4160,7 +4167,7 @@ function updatePuzzle(dt) {
   }
   const watcherReady = stage.layout !== 'watcher' || game.watcherResolved;
   if (overlaps(p, game.exit)) {
-    if (!watcherReady) say('먼저 과거의 나를 감시선 앞으로 기록하고, 그 기억이 지나갈 때 Shift로 시간을 멈추세요.');
+    if (!watcherReady) say('K를 눌러 과거의 나를 감시선 앞으로 기록하세요. 기억의 나가 감시선을 지날 때 Shift를 길게 눌러 시간을 멈추세요.');
     else if (stage.layout === 'bridge' && memoryPadsReady && !stage02Restored) {
       const percent = Math.floor(Math.max(0, Math.min(1, game.stage02Restoration || 0)) * 100);
       say(`성문을 재건하는 중입니다. 마지막 벽돌이 돌아올 때까지 기다리세요. ${percent}%`);
@@ -4530,6 +4537,7 @@ function updateMemoryCollapse(dt) {
 
 function failMemoryCollapse() {
   if (game.phase !== 'playing') return;
+  hideGuide();
   game.phase = 'failed';
   pauseStageBgm();
   endScreen.classList.remove('disconnect-screen', 'epilogue-screen');
@@ -5100,7 +5108,7 @@ function updateBoss(dt) {
         }
       }
       if (b.mode === 'final' && b.attackUnlocked && finalPhase === 4 && overlaps(rect, b)) {
-        say('이제는 공격할 때가 아닙니다. 딸의 목소리를 전해 주세요.');
+        say('공격을 멈추고, 오른쪽 아래 “딸의 목소리” 원 안으로 이동해 L을 길게 누르세요.');
         return false;
       }
       if (b.mode === 'calm' && overlaps(rect, b)) {
@@ -5117,7 +5125,7 @@ function updateBoss(dt) {
             b.defeated = true;
             b.phase = 4;
             game.nightmareShots = [];
-            say('수호자의 체력이 모두 비었습니다. 이제 공격을 멈추고 딸의 목소리를 아버지에게 전하세요.');
+            say('수호자의 체력이 모두 비었습니다. 오른쪽 아래 “딸의 목소리” 원 안에서 L을 길게 누르세요.');
           }
         }
         game.nextAttack = Math.min(game.nextAttack + .16, b.mode === 'final' ? 1.12 : 1.0);
@@ -5218,12 +5226,13 @@ function updateBoss(dt) {
     b.defeated = true;
     b.phase = 4;
     game.nightmareShots = [];
-    say('수호자의 체력이 모두 비었습니다. 딸의 목소리를 전해 마지막 연결을 풀어주세요.');
+    say('수호자의 체력이 모두 비었습니다. 오른쪽 아래 “딸의 목소리” 원 안에서 L을 길게 누르세요.');
   }
 }
 
 function completeStage() {
   if (game.phase !== 'playing') return;
+  hideGuide();
   const completedStageIndex = game.stageIndex;
   const storyBeat = STORY_BEATS[completedStageIndex];
   // 스토리가 이어지는 구간은 방금 지나온 꿈의 음악을 낮은 볼륨으로 남긴다.
@@ -5363,6 +5372,7 @@ function drawDreamDisconnect() {
 
 function disconnect() {
   if (game.phase !== 'playing') return;
+  hideGuide();
   game.phase = 'disconnecting';
   pauseStageBgm();
   game.disconnect = { elapsed: 0, duration: 4.5, theme: disconnectPresentation() };
@@ -5673,7 +5683,7 @@ function updateMemoryLoopUI() {
     } else if (boss.mode === 'mirror') {
       memoryStatus.textContent = active < boss.memoryPads.length
         ? 'K로 과거의 나를 진짜 사진에 남기세요. 준비되면 L로 숨은 거울을 드러낼 수 있습니다.'
-        : `거울 ${boss.mirrorProgress} / ${boss.mirrorGates.length} · L을 눌러 거울을 드러낸 뒤 Space 질주로 통과하세요.`;
+        : `거울 ${boss.mirrorProgress} / ${boss.mirrorGates.length} · L을 눌러 거울을 드러낸 뒤 Space 대시로 부수세요.`;
     } else if (boss.releaseReady) {
       memoryStatus.textContent = '딸의 선택이 아버지에게 닿았습니다. 이제는 공격하지 않아도 기억이 돌아옵니다.';
     } else if (boss.attackUnlocked) {
