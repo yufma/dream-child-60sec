@@ -57,6 +57,8 @@ button { font: inherit; }
 canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; transition: filter .22s ease; }
 canvas.connection-weak { filter: blur(1.5px) saturate(.72) brightness(.8); }
 canvas.connection-critical { filter: blur(4px) saturate(.4) brightness(.56); }
+/* 다음 스테이지 원화가 도착하기 전에는 직전 장면을 재사용하지 않는다. */
+canvas.stage-preview-pending { visibility: hidden; }
 
 .loading-splash { position: absolute; z-index: 5; inset: 0; display: grid; place-items: center; padding: 22px; background: radial-gradient(circle at 50% 38%, rgba(66, 182, 255, .2), transparent 38%), rgba(4, 8, 24, .92); transition: opacity .25s ease; }
 .loading-splash.hidden { opacity: 0; pointer-events: none; }

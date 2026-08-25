@@ -469,7 +469,7 @@ const STAGES = [
     boss: '완벽한 꿈의 수호자', bossConfig: {
       mode: 'mirror', visual: 'mirror',
       moveBounds: { xMin: 45, xMax: 720, yMin: 86, yMax: 437 },
-      memoryPads: [{ x: 160, y: 222, w: 42, h: 42, label: '딸의 진짜 사진' }],
+      memoryPads: [{ x: 184, y: 270, w: 42, h: 42, label: '딸의 진짜 사진', backdropDimming: .18 }],
       fakeMirrorGates: [
         { x: 334, y: 344, w: 44, h: 60, label: '가짜 웃음' },
         { x: 548, y: 116, w: 44, h: 60, label: '가짜 친구' },
@@ -830,6 +830,7 @@ function waitForSprite(image) {
 }
 
 let loadingRun = 0;
+let stagePreviewRun = 0;
 
 async function establishFirstDreamLink(onReady) {
   const run = ++loadingRun;
@@ -2228,8 +2229,19 @@ function renderStoryLine() {
 
 function prepareCurrentStagePreview() {
   const stage = currentStage();
+  const previewRun = ++stagePreviewRun;
+  const previewStageIndex = game.stageIndex;
   // 반투명 안내·대화창 뒤에는 직전 스테이지의 잔여 상태가 아니라,
   // 곧 시작할 스테이지의 배경·구조물·시작 위치만 보이게 준비한다.
+  // 이미지가 아직 도착하지 않았을 때는 캔버스를 잠시 감춰, 이전 스테이지의
+  // 미완성 화면이 안내창 뒤로 비치는 일을 막는다.
+  canvas.classList.add('stage-preview-pending');
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#060b1d';
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
   game.player = freshPlayer();
   game.imagination = 100;
   game.dreamShots = [];
@@ -2261,6 +2273,17 @@ function prepareCurrentStagePreview() {
     game.boss = null;
     setupPuzzle(stage.layout, stage.echoGoal || 0);
   }
+
+  const previewSprites = stageSpriteSet(previewStageIndex);
+  ensureSprites(previewSprites);
+  Promise.all(previewSprites.map(waitForSprite)).then(() => {
+    // 빠르게 다음 화면으로 넘어간 경우, 늦게 도착한 이전 이미지가 새 장면을
+    // 덮어쓰지 않도록 이번 준비 요청과 스테이지가 모두 같은지 확인한다.
+    if (previewRun !== stagePreviewRun || previewStageIndex !== game.stageIndex) return;
+    if (stage.type === 'boss') drawBoss();
+    else drawPuzzle();
+    canvas.classList.remove('stage-preview-pending');
+  });
 }
 
 function showStoryBeat(beat) {
@@ -7280,6 +7303,15 @@ function drawMemoryPad(pad, active, index, role = 'normal') {
   // 프레임이나 사각 명찰 대신 오브젝트 자체에서 튀어나오는 빛·먼지로 상호작용 지점을 표시한다.
   ctx.save();
   ctx.translate(padCenterX, padCenterY);
+  if (pad.backdropDimming) {
+    // 21스테이지의 보랏빛 거울 바닥에서는 기억 발판 아래만 아주 약하게 눌러,
+    // 원화의 분위기를 해치지 않으면서 K 기록 지점을 먼저 읽히게 한다.
+    ctx.globalAlpha = pad.backdropDimming;
+    ctx.fillStyle = '#070b24';
+    ctx.beginPath();
+    ctx.ellipse(0, 6, visualWidth * .62, visualHeight * .38, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
   ctx.globalCompositeOperation = 'screen';
   const time = game.elapsed || 0;
   for (let mote = 0; mote < (active ? 8 : 5); mote += 1) {
@@ -9689,6 +9721,16 @@ window.addEventListener('blur', () => {
   updateHud();
 });
 
+function openStage21PreviewFromUrl() {
+  // 검수 주소만 제목·프롤로그를 건너뛴다. 일반 주소의 시작 흐름은 그대로 유지한다.
+  if (new URLSearchParams(window.location.search).get('stage') !== '21') return false;
+  stageBgm.enabled = false;
+  game = freshGameState();
+  game.stageIndex = 20;
+  startStage();
+  return true;
+}
+
 updateBgmVolumeControl();
-showTitleScreen();
+if (!openStage21PreviewFromUrl()) showTitleScreen();
 requestAnimationFrame(loop);
