@@ -258,6 +258,12 @@ const disconnectIllustrationImage = document.querySelector('#disconnect-illustra
 const disconnectIllustrationLabel = document.querySelector('#disconnect-illustration-label');
 const disconnectSkipButton = document.querySelector('#disconnect-skip');
 const startButton = document.querySelector('#start-button');
+const storyButton = document.querySelector('#story-button');
+const settingsButton = document.querySelector('#settings-button');
+const titleSettings = document.querySelector('#title-settings-modal');
+const settingsCloseButton = document.querySelector('#settings-close-button');
+const storySummaryModal = document.querySelector('#story-summary-modal');
+const storyCloseButton = document.querySelector('#story-close-button');
 const resumeButton = document.querySelector('#resume-button');
 const stageSelectGrid = document.querySelector('#stage-select-grid');
 const campaignRouteEl = document.querySelector('#campaign-route');
@@ -1241,16 +1247,41 @@ function newGame() {
   establishFirstDreamLink(() => showStoryBeat(PROLOGUE_STORY));
 }
 
+function startGameFromTitle() {
+  stopStageBgm();
+  endScreen.classList.remove('epilogue-screen');
+  gameHud.classList.remove('hidden');
+  game = freshGameState();
+  startStage();
+}
+
+function closeTitleSettings() {
+  titleSettings?.classList.add('hidden');
+  settingsButton?.setAttribute('aria-expanded', 'false');
+}
+
+function closeStorySummary() {
+  storySummaryModal?.classList.add('hidden');
+}
+
+function closeTitleModals() {
+  closeTitleSettings();
+  closeStorySummary();
+}
+
 function showTitleScreen() {
+  window.scrollTo(0, 0);
   loadingRun += 1;
   loadingSplash.classList.add('hidden');
   contextControls.classList.add('hidden');
   hideFriendReaction();
   stopStageBgm();
   game = freshGameState('title');
+  document.body.classList.add('title-screen-active');
   gameHud.classList.add('hidden');
   bossHud.classList.add('hidden');
   storyDialogue.classList.add('hidden');
+  closeTitleModals();
   startScreen.classList.remove('story-mode', 'boss-intro');
   startScreen.classList.add('title-mode');
   startTag.textContent = '꿈의 연결 · 60초 수정실';
@@ -2203,6 +2234,7 @@ function showStoryBeat(beat) {
   contextControls.classList.add('hidden');
   hideFriendReaction();
   game.phase = 'story';
+  document.body.classList.remove('title-screen-active');
   continueStoryBgm();
   game.storyBeat = beat;
   game.storyLineIndex = 0;
@@ -2211,6 +2243,7 @@ function showStoryBeat(beat) {
   startCopy.textContent = '';
   storyDialogue.classList.remove('hidden');
   renderStoryLine();
+  closeTitleModals();
   startScreen.classList.remove('title-mode', 'boss-intro');
   startScreen.classList.add('story-mode');
   startScreen.classList.remove('hidden');
@@ -2235,10 +2268,12 @@ function continueStoryBeat() {
 
 function showStageIntro() {
   const stage = currentStage();
+  document.body.classList.remove('title-screen-active');
   clearStageIntroTimer();
   ensureStageVisualAssets();
   contextControls.classList.add('hidden');
   hideFriendReaction();
+  closeTitleModals();
   startScreen.classList.remove('story-mode', 'title-mode');
   startScreen.classList.toggle('boss-intro', stage.type === 'boss');
   storyDialogue.classList.add('hidden');
@@ -2388,7 +2423,9 @@ function removeLatestEcho() {
 }
 
 function startStage() {
+  window.scrollTo(0, 0);
   const stage = currentStage();
+  document.body.classList.remove('title-screen-active');
   ensureStageVisualAssets();
   hideFriendReaction();
   if (stage.type === 'boss' && stage.bossConfig?.mode === 'resonance') primeGameSfx();
@@ -4692,8 +4729,34 @@ function beginResonanceCoda(b) {
   game.dreamShots = [];
   game.nightmareShots = [];
   game.dreamTrails = [];
+  // 11스테이지 2페이즈에서는 발밑 기준을 유지한 채 주인공과 충돌 판정을 70%로 줄인다.
+  const player = game.player;
+  player.sizeTransition = {
+    elapsed: 0, duration: .45,
+    fromW: player.w, fromH: player.h, fromScale: 1,
+    toW: player.w * .7, toH: player.h * .7, toScale: .7,
+  };
+  player.shrinkPulse = .45;
   game.nextAttack = .3;
   say('마지막 음이 돌아왔습니다. 박자 오브젝트와 잔상 조건이 사라졌습니다. 주인공으로 불협화음을 20초 동안 피하세요!');
+}
+
+function updatePlayerSizeTransition(player, dt) {
+  const transition = player?.sizeTransition;
+  if (!transition) return;
+  transition.elapsed = Math.min(transition.duration, transition.elapsed + dt);
+  const progress = transition.elapsed / transition.duration;
+  // 처음에는 천천히, 끝에서는 빠르게 수축해 꿈이 접히는 감각을 준다.
+  const eased = 1 - (1 - progress) ** 3;
+  const centerX = player.x + player.w / 2;
+  const feetY = player.y + player.h;
+  player.w = transition.fromW + (transition.toW - transition.fromW) * eased;
+  player.h = transition.fromH + (transition.toH - transition.fromH) * eased;
+  player.x = centerX - player.w / 2;
+  player.y = feetY - player.h;
+  player.spriteScale = transition.fromScale + (transition.toScale - transition.fromScale) * eased;
+  player.shrinkPulse = Math.max(0, transition.duration - transition.elapsed);
+  if (progress >= 1) delete player.sizeTransition;
 }
 
 function updateMirrorGates(b, techniques) {
@@ -4760,6 +4823,7 @@ function updateBoss(dt) {
   updateDash(dt);
   imaginationRegen(dt, techniques);
   if (game.phase !== 'playing') return;
+  updatePlayerSizeTransition(p, dt);
   game.elapsed += dt;
   if (!freezeBoss) b.threatElapsed = (b.threatElapsed || 0) + dt;
   if (game.fireCooldown > 0) game.fireCooldown = Math.max(0, game.fireCooldown - dt);
@@ -7390,7 +7454,8 @@ function drawRunningSpritePieces(image, drawX, drawY, drawWidth, drawHeight, swi
 }
 
 function drawSpriteAt(image, player, bossMode = false, motion = {}) {
-  const visualHeight = bossMode ? 54 : 48;
+  const visualScale = Number.isFinite(player.spriteScale) ? player.spriteScale : 1;
+  const visualHeight = (bossMode ? 54 : 48) * visualScale;
   const visualWidth = Math.round(visualHeight * (PLAYER_SPRITE_SIZE.width / PLAYER_SPRITE_SIZE.height));
   const centerX = Math.round(player.x + player.w / 2) + (motion.offsetX || 0);
   const footY = Math.round(player.y + player.h) + (motion.bob || 0) + (motion.offsetY || 0);
@@ -7523,6 +7588,24 @@ function drawCharacterMotion(player, bossMode, motion = {}, visualOverrides = {}
 }
 
 function drawChild(player, bossMode = false) {
+  const pulse = player.shrinkPulse || 0;
+  if (pulse > 0) {
+    const ratio = 1 - pulse / .45;
+    const centerX = player.x + player.w / 2;
+    const centerY = player.y + player.h / 2;
+    const radius = 28 - ratio * 15;
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = Math.max(0, .42 * (1 - ratio));
+    ctx.strokeStyle = '#d9fff7';
+    ctx.lineWidth = 2;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#91f3e4';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
   drawCharacterMotion(player, bossMode, playerMotionState(player, bossMode));
 }
 
@@ -9525,10 +9608,28 @@ function loop(time) {
 }
 
 startButton.addEventListener('click', () => {
-  if (game.phase === 'title') newGame();
+  if (game.phase === 'title') {
+    closeTitleModals();
+    startGameFromTitle();
+  }
   else if (game.phase === 'story') continueStoryBeat();
   else startStage();
 });
+storyButton?.addEventListener('click', () => {
+  if (game.phase !== 'title') return;
+  closeTitleSettings();
+  storySummaryModal?.classList.remove('hidden');
+});
+settingsButton?.addEventListener('click', () => {
+  const opening = titleSettings?.classList.contains('hidden');
+  if (opening) closeStorySummary();
+  titleSettings?.classList.toggle('hidden', !opening);
+  settingsButton.setAttribute('aria-expanded', String(Boolean(opening)));
+  updateBgmVolumeControl();
+  updateBgmToggle(stageBgm.key);
+});
+settingsCloseButton?.addEventListener('click', closeTitleSettings);
+storyCloseButton?.addEventListener('click', closeStorySummary);
 canvas.addEventListener('click', () => {
   if (game.phase === 'ending-cinematic') advanceEndingCinematic();
 });
@@ -9575,7 +9676,7 @@ ruleCards.forEach((card) => {
 function handleConfirmInput() {
   if (game.phase === 'disconnecting') skipDreamDisconnect();
   else if (game.phase === 'ending-cinematic') advanceEndingCinematic();
-  else if (game.phase === 'title') newGame();
+  else if (game.phase === 'title') startGameFromTitle();
   else if (game.phase === 'story') continueStoryBeat();
   else if (game.phase === 'intro' || game.phase === 'failed') startStage();
   else if (game.phase === 'chapter-complete') showFinalTruth();
