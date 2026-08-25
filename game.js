@@ -792,7 +792,8 @@ function stageSpriteSet(stageIndex = game?.stageIndex || 0) {
     if (stage.type === 'boss') sprites.push(bossSprites.harinClown, bossSprites.harinClownMini, bossSprites.harinLaughterMask, memoryPadSprites.distortion, projectileSprites.yunhoImaginationBolt);
   } else if (stageIndex < 12) {
     sprites.push(yunaBackgrounds[stageIndex - 6], gateSprites.yuna, memoryPadSprites.yuna, platformSprites.yunaResonancePad);
-    if (stageIndex === 7) sprites.push(objectSprites.yunaStage08BoyGhostSinger, objectSprites.yunaStage08GirlGhostSinger);
+    // 8·10스테이지 모두 기억 발판 위의 유령 합창 잔상을 사용한다.
+    if (stageIndex === 7 || stageIndex === 9) sprites.push(objectSprites.yunaStage08BoyGhostSinger, objectSprites.yunaStage08GirlGhostSinger);
     if (stage.type === 'boss') sprites.push(bossSprites.yunaChoir);
   } else if (stageIndex < 18) {
     sprites.push(haneulBackgrounds[stageIndex - 12], gateSprites.haneul, memoryPadSprites.haneul, platformSprites.haneulWindLedge);
@@ -7666,6 +7667,92 @@ function drawChoirBalconySingerCues() {
   });
 }
 
+function drawMemoryPadGhostMist(centerX, footY, direction, color, strength, seed) {
+  const time = game.elapsed || 0;
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  ctx.lineCap = 'round';
+  // 발판에서 위로 피어오르는 한 덩어리의 연기. 몸 주위를 도는 원이나 여러 개의 분리된 꼬리는 만들지 않는다.
+  for (let strand = 0; strand < 3; strand += 1) {
+    const phase = time * (1.5 + strand * .16) + seed * .71 + strand * 1.8;
+    const rise = 40 + strand * 9;
+    const sway = Math.sin(phase) * (8 + strand * 3);
+    ctx.globalAlpha = strength * (.15 - strand * .023);
+    ctx.strokeStyle = color;
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = color;
+    ctx.lineWidth = strand === 1 ? 3 : 1.6;
+    ctx.beginPath();
+    ctx.moveTo(centerX - direction * (5 + strand * 2), footY - 7);
+    ctx.bezierCurveTo(
+      centerX + sway, footY - rise * .32,
+      centerX - direction * 7 - sway * .55, footY - rise * .74,
+      centerX + sway * .28, footY - rise,
+    );
+    ctx.stroke();
+  }
+  for (let mote = 0; mote < 7; mote += 1) {
+    const rise = 9 + ((time * 18 + mote * 13 + seed * 7) % 52);
+    const drift = Math.sin(time * 3.2 + mote * 1.8 + seed) * (4 + mote % 3);
+    ctx.globalAlpha = strength * (.28 - rise / 300);
+    ctx.fillStyle = mote % 3 === 0 ? '#fff3c2' : color;
+    ctx.fillRect(Math.round(centerX + drift - direction * (mote % 2) * 3), Math.round(footY - rise), mote % 2 ? 2 : 3, 2);
+  }
+  ctx.restore();
+}
+
+function drawMemoryPadDirectionGhosts() {
+  const layout = game.layout;
+  if (!['harmony-spiral', 'classroom-fracture'].includes(layout) || !game.memoryPads?.length) return;
+  const yunaEcho = layout === 'harmony-spiral';
+  const singers = [objectSprites.yunaStage08BoyGhostSinger, objectSprites.yunaStage08GirlGhostSinger];
+  const defaultSingerDirections = [1, -1];
+  const time = game.elapsed || 0;
+
+  game.memoryPads.forEach((pad, index) => {
+    if (!pad.roleDirection) return;
+    const direction = pad.roleDirection;
+    const active = activeMemoryPads([pad]) > 0;
+    const strength = active ? .28 : .9;
+    const centerX = pad.x + pad.w / 2;
+    const footY = yunaEcho ? pad.y + 3 : pad.y + pad.h - 1;
+    const color = yunaEcho ? (index === 0 ? '#9effea' : '#c7a3ff') : '#ffc1df';
+    const bob = Math.sin(time * 2.6 + index * 1.9) * 1.5;
+
+    drawMemoryPadGhostMist(centerX, footY + bob, direction, color, strength, index + (yunaEcho ? 3 : 11));
+    if (yunaEcho) {
+      const image = ensureSprite(singers[index % singers.length]);
+      if (!image?.complete || image.naturalWidth === 0) return;
+      const visualWidth = 60;
+      const visualHeight = 82;
+      const flip = direction === defaultSingerDirections[index % defaultSingerDirections.length] ? 1 : -1;
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      ctx.globalAlpha = active ? .16 : .43;
+      ctx.filter = 'blur(.62px) saturate(.54) brightness(.76)';
+      ctx.shadowBlur = active ? 5 : 10;
+      ctx.shadowColor = color;
+      ctx.translate(Math.round(centerX), Math.round(footY + bob));
+      ctx.scale(flip, 1);
+      ctx.drawImage(image, -visualWidth / 2, -visualHeight, visualWidth, visualHeight);
+      ctx.restore();
+      return;
+    }
+
+    const image = ensureSprite(playerSprites.idle);
+    if (!image?.complete || image.naturalWidth === 0) return;
+    const ghost = { x: centerX - 12.5, y: footY - 34 + bob, w: 25, h: 34, facing: direction };
+    drawSpriteAt(image, ghost, false, {
+      alpha: active ? .13 : .36,
+      composite: 'screen',
+      filter: 'blur(.42px) saturate(.54) brightness(1.18)',
+      bob: -1,
+      scaleX: .86,
+      scaleY: .86,
+    });
+  });
+}
+
 function releaseCurvePoint(start, control, end, t) {
   const inverse = 1 - t;
   return {
@@ -8037,6 +8124,8 @@ function drawPuzzle() {
   }
   drawDreamTrails(false);
   if (game.player) drawChild(game.player);
+  // 고정된 연기 잔상은 해당 기억 발판에 남길 K 기억의 방향을 미리 보여 준다.
+  drawMemoryPadDirectionGhosts();
   // 8스테이지의 유령 합창단은 K 발판 위의 플레이어·기억보다 앞에 그려,
   // 그 자리에 남겨야 할 목소리임을 분명히 보여 준다.
   drawChoirBalconySingerCues();
