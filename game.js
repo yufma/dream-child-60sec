@@ -1090,6 +1090,7 @@ const PROGRESS_STORAGE_KEY = 'dream-child-campaign-progress-v2';
 const BGM_VOLUME_STORAGE_KEY = 'dream-child-bgm-volume-v2';
 const LEGACY_BGM_VOLUME_STORAGE_KEY = 'dream-child-bgm-volume-v1';
 const BOSS_MEMORY_COLLAPSE_SECONDS = 60;
+const DEFAULT_LEARNED_SKILLS = Object.freeze(['time', 'resonance', 'dash']);
 const campaign = loadCampaignProgress();
 
 const keys = new Set();
@@ -1200,14 +1201,14 @@ function loadCampaignProgress() {
     return {
       unlocked: normalizePlayableStageIndex(savedUnlocked),
       memories: new Set(Array.isArray(saved.memories) ? saved.memories : []),
-      skills: new Set(Array.isArray(saved.skills) ? saved.skills.filter((skill) => skill !== 'gravity') : []),
+      skills: new Set([...DEFAULT_LEARNED_SKILLS, ...(Array.isArray(saved.skills) ? saved.skills.filter((skill) => skill !== 'gravity') : [])]),
       cleared: new Set(Array.isArray(saved.cleared) ? saved.cleared.map(Number).filter(isPlayableStageIndex) : []),
       bossRecords: saved.bossRecords && typeof saved.bossRecords === 'object' ? saved.bossRecords : {},
       puzzleRecords: saved.puzzleRecords && typeof saved.puzzleRecords === 'object' ? saved.puzzleRecords : {},
       routeMode: saved.routeMode === 'campaign' ? 'campaign' : 'development',
     };
   } catch {
-    return { unlocked: 0, memories: new Set(), skills: new Set(), cleared: new Set(), bossRecords: {}, puzzleRecords: {}, routeMode: 'development' };
+    return { unlocked: 0, memories: new Set(), skills: new Set(DEFAULT_LEARNED_SKILLS), cleared: new Set(), bossRecords: {}, puzzleRecords: {}, routeMode: 'development' };
   }
 }
 
@@ -1310,6 +1311,7 @@ function resetCampaignProgress() {
   campaign.unlocked = 0;
   campaign.memories.clear();
   campaign.skills.clear();
+  DEFAULT_LEARNED_SKILLS.forEach((skill) => campaign.skills.add(skill));
   campaign.cleared.clear();
   campaign.bossRecords = {};
   campaign.puzzleRecords = {};
