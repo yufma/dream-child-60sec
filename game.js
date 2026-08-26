@@ -2857,7 +2857,7 @@ function setupPuzzle(layout, echoGoal) {
       { x: 0, y: 500, w: 960, h: 40, label: 'MEMORY WALKWAY' },
       // 성문 그림의 입구 기준점은 유지하고, 실제 막힘 판정만 입구 안쪽으로 12px 물린다.
       // 입구 테두리에서 캐릭터가 걸려 보이는 현상을 막는다.
-      { x: 512, visualX: 500, y: 270, w: 60, h: 230, wall: true, label: 'MEMORY GATE' },
+      { x: 512, visualX: 500, y: 0, w: 60, h: 500, wall: true, label: 'MEMORY GATE' },
     ];
     game.exit = { x: 875, y: 418, w: 36, h: 82, label: 'MEMORY GATE' };
     game.fallZones = [];
